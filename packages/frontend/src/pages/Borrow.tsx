@@ -5,7 +5,7 @@ import { parseEther, erc20Abi } from 'viem'
 import { useUserBalance } from '@/hooks/useUserBalance'
 import { usePrice } from '@/hooks/usePrice'
 import { useOpenTrove } from '@/hooks/useOpenTrove'
-import { usePrivyServerWallet } from '@/hooks/usePrivyServerWallet'
+import { useSmartAccount } from '@/hooks/useSmartAccount'
 import { formatToken } from '@/components/common/TokenAmount'
 import { Info, Bot, ChevronRight, AlertTriangle, Loader2, CheckCircle, Snowflake, Fuel, ArrowRight } from 'lucide-react'
 import { getCollToken, getBranchAddresses } from '@/config/contracts'
@@ -35,7 +35,8 @@ export function Borrow() {
     const [error, setError] = useState<string | null>(null)
 
     const { openTrove, isConfirmed, isReverted } = useOpenTrove()
-    const { hasServerWallet } = usePrivyServerWallet()
+    const { hasAccount, isAgentAuthorized } = useSmartAccount()
+    const hasServerWallet = hasAccount && isAgentAuthorized
     const { writeContractAsync } = useWriteContract()
 
     const branch: 0 | 1 = collType === 'wCTC' ? 0 : 1

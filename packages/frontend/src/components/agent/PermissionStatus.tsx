@@ -1,26 +1,64 @@
 import { useState } from 'react'
-import { Shield, ShieldOff, Bot, Loader2, Wallet } from 'lucide-react'
-import { usePrivyServerWallet } from '@/hooks/usePrivyServerWallet'
+import { useReadContract } from 'wagmi'
+import { erc20Abi } from 'viem'
+import { Shield, ShieldOff, Bot, Loader2, Wallet, Coins, ArrowDownToLine } from 'lucide-react'
+import { useSmartAccount } from '@/hooks/useSmartAccount'
+import addresses from '@/config/addresses.json'
 
 interface PermissionStatusProps {
     onDeactivated?: () => void
 }
 
 export function PermissionStatus({ onDeactivated }: PermissionStatusProps) {
-    const { serverWallet, serverWalletLoading, hasServerWallet, deactivateServerWallet } = usePrivyServerWallet()
+    const {
+        hasAccount,
+        accountAddress,
+        isAgentAuthorized,
+        agentAddress,
+        deactivateAgent,
+        removeAgent,
+        refetch,
+    } = useSmartAccount()
     const [deactivating, setDeactivating] = useState(false)
+    const [withdrawing, setWithdrawing] = useState(false)
+
+    // Token balances in SmartAccount
+    const { data: wCTCBalance } = useReadContract({
+        address: addresses.tokens.wCTC as `0x${string}`,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: accountAddress ? [accountAddress] : undefined,
+        query: { enabled: !!accountAddress },
+    })
+    const { data: lstCTCBalance } = useReadContract({
+        address: addresses.tokens.lstCTC as `0x${string}`,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: accountAddress ? [accountAddress] : undefined,
+        query: { enabled: !!accountAddress },
+    })
+    const { data: sbUSDBalance } = useReadContract({
+        address: addresses.tokens.sbUSD as `0x${string}`,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: accountAddress ? [accountAddress] : undefined,
+        query: { enabled: !!accountAddress },
+    })
 
     const handleDeactivate = async () => {
         setDeactivating(true)
         try {
-            await deactivateServerWallet()
+            await deactivateAgent()
+            await refetch()
             onDeactivated?.()
         } finally {
             setDeactivating(false)
         }
     }
 
-    if (serverWalletLoading) {
+    const loading = !hasAccount && accountAddress === undefined
+
+    if (loading) {
         return (
             <div className="bg-dark-700 border border-dark-400/40 rounded-2xl p-5 flex items-center justify-center gap-2 text-gray-400">
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -29,7 +67,7 @@ export function PermissionStatus({ onDeactivated }: PermissionStatusProps) {
         )
     }
 
-    if (!hasServerWallet) {
+    if (!hasAccount || !isAgentAuthorized) {
         return (
             <div className="bg-dark-700 border border-dark-400/40 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center gap-2">
@@ -37,12 +75,16 @@ export function PermissionStatus({ onDeactivated }: PermissionStatusProps) {
                     <h3 className="font-semibold text-gray-400">Agent Not Active</h3>
                 </div>
                 <p className="text-sm text-gray-500">
-                    Activate the agent to start automated position management.
-                    A Privy server wallet will be created for secure transaction signing.
+                    {!hasAccount
+                        ? 'Create a SmartAccount to start automated position management.'
+                        : 'Authorize the agent on your SmartAccount to enable automated management.'}
                 </p>
             </div>
         )
     }
+
+    const formatBal = (val: bigint | undefined) =>
+        val !== undefined ? (Number(val) / 1e18).toFixed(4) : '—'
 
     return (
         <div className="bg-dark-700 border border-status-safe/30 rounded-2xl p-5 space-y-4">
@@ -56,49 +98,67 @@ export function PermissionStatus({ onDeactivated }: PermissionStatusProps) {
                 </span>
             </div>
 
-            {/* Server wallet info */}
+            {/* SmartAccount info */}
             <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                     <span className="text-gray-400 flex items-center gap-1">
-                        <Wallet className="w-3 h-3" /> Server Wallet
+                        <Wallet className="w-3 h-3" /> SmartAccount
                     </span>
                     <span className="text-white font-mono text-xs">
-                        {serverWallet?.serverWalletAddress
-                            ? `${serverWallet.serverWalletAddress.slice(0, 6)}...${serverWallet.serverWalletAddress.slice(-4)}`
+                        {accountAddress
+                            ? `${accountAddress.slice(0, 6)}...${accountAddress.slice(-4)}`
                             : '—'}
                     </span>
                 </div>
 
                 <div className="flex items-center justify-between">
                     <span className="text-gray-400 flex items-center gap-1">
-                        <Bot className="w-3 h-3" /> Strategy
+                        <Bot className="w-3 h-3" /> Agent
                     </span>
-                    <span className="text-white capitalize">{serverWallet?.strategy ?? '—'}</span>
+                    <span className="text-white font-mono text-xs">
+                        {agentAddress
+                            ? `${agentAddress.slice(0, 6)}...${agentAddress.slice(-4)}`
+                            : '—'}
+                    </span>
                 </div>
+            </div>
 
-                {serverWallet?.createdAt && (
-                    <div className="flex items-center justify-between">
-                        <span className="text-gray-400">Active Since</span>
-                        <span className="text-gray-300 text-xs">
-                            {new Date(serverWallet.createdAt).toLocaleDateString()}
-                        </span>
+            {/* Token balances */}
+            <div className="space-y-1.5">
+                <p className="text-xs text-gray-500 flex items-center gap-1">
+                    <Coins className="w-3 h-3" /> SmartAccount Balances
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-dark-600/50 rounded-lg p-2 text-center">
+                        <p className="text-gray-500">wCTC</p>
+                        <p className="text-white font-mono">{formatBal(wCTCBalance)}</p>
                     </div>
-                )}
+                    <div className="bg-dark-600/50 rounded-lg p-2 text-center">
+                        <p className="text-gray-500">lstCTC</p>
+                        <p className="text-white font-mono">{formatBal(lstCTCBalance)}</p>
+                    </div>
+                    <div className="bg-dark-600/50 rounded-lg p-2 text-center">
+                        <p className="text-gray-500">sbUSD</p>
+                        <p className="text-white font-mono">{formatBal(sbUSDBalance)}</p>
+                    </div>
+                </div>
             </div>
 
             <div className="bg-dark-600/50 rounded-xl p-3 text-xs text-gray-500">
-                The agent is monitoring your positions and will automatically execute
-                transactions through the server wallet based on your strategy settings.
+                The agent is monitoring your positions via your SmartAccount and will
+                automatically execute transactions based on your strategy settings.
             </div>
 
-            {/* Deactivate button */}
-            <button
-                onClick={handleDeactivate}
-                disabled={deactivating}
-                className="w-full py-2 rounded-xl text-sm font-semibold border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-            >
-                {deactivating ? 'Deactivating...' : 'Deactivate Agent'}
-            </button>
+            {/* Action buttons */}
+            <div className="flex gap-2">
+                <button
+                    onClick={handleDeactivate}
+                    disabled={deactivating}
+                    className="flex-1 py-2 rounded-xl text-sm font-semibold border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                >
+                    {deactivating ? 'Deactivating...' : 'Remove Agent'}
+                </button>
+            </div>
         </div>
     )
 }

@@ -284,6 +284,10 @@ async function main() {
   console.log("\n=== Phase 7.5: AgentVault ===");
   const agentVault = await deploy("AgentVault");
 
+  // ==================== Phase 7.6: SmartAccountFactory ====================
+  console.log("\n=== Phase 7.6: SmartAccountFactory ===");
+  const smartAccountFactory = await deploy("SmartAccountFactory");
+
   // ==================== Phase 8: Mint initial tokens ====================
   console.log("\n=== Phase 8: Mint initial tokens ===");
   await send(wCTC.address, wCTC.abi, "mint", [
@@ -315,6 +319,7 @@ async function main() {
       hintHelpers: hh.address,
       multiTroveGetter: mtg.address,
       agentVault: agentVault.address,
+      smartAccountFactory: smartAccountFactory.address,
     },
   };
 

@@ -1,20 +1,22 @@
-import { type Address } from "viem";
+import { type Address, encodeFunctionData, parseAbi } from "viem";
 import { getClients } from "./walletHelper";
 import { monitorLogger } from "./logger";
+import { SmartAccountABI } from "@snowball/shared";
 
 /**
  * In-memory store of user server wallet registrations.
  * In production, this would be backed by a database.
  *
- * The "server wallet" concept with Privy:
- * - Users register their wallet + strategy settings via the frontend
- * - The agent backend (with its own admin wallet) executes transactions
- *   on behalf of users who have granted on-chain approvals
+ * SmartAccount-based delegation:
+ * - Users deploy a SmartAccount on-chain and authorize the agent wallet
+ * - The agent backend calls SmartAccount.execute(target, calldata) so that
+ *   msg.sender = SmartAccount (which is the trove owner), passing BorrowerOperations checks
  * - This store tracks which users have opted-in and their preferences
  */
 interface ServerWalletRecord {
   userAddress: string;
-  serverWalletAddress: string; // The agent's admin wallet that acts on behalf of user
+  serverWalletAddress: string; // The agent's admin wallet
+  smartAccountAddress: string; // User's SmartAccount (trove owner)
   strategy: string;
   minCR: number;
   autoRebalance: boolean;
@@ -32,11 +34,10 @@ function getAgentWalletAddress(): string {
 
 /**
  * Create (register) a server wallet entry for a user.
- * The "server wallet" is actually the agent's admin wallet that will
- * execute transactions on behalf of the user.
  */
 export function createServerWallet(params: {
   userAddress: string;
+  smartAccountAddress?: string;
   strategy: string;
   minCR: number;
   autoRebalance: boolean;
@@ -48,6 +49,7 @@ export function createServerWallet(params: {
   const record: ServerWalletRecord = {
     userAddress: params.userAddress,
     serverWalletAddress: agentAddress,
+    smartAccountAddress: params.smartAccountAddress || "",
     strategy: params.strategy,
     minCR: params.minCR,
     autoRebalance: params.autoRebalance ?? true,
@@ -57,7 +59,10 @@ export function createServerWallet(params: {
   };
 
   serverWallets.set(key, record);
-  monitorLogger.info({ userAddress: params.userAddress, strategy: params.strategy }, "Server wallet created");
+  monitorLogger.info(
+    { userAddress: params.userAddress, strategy: params.strategy, smartAccount: params.smartAccountAddress },
+    "Server wallet created (SmartAccount)",
+  );
   return record;
 }
 
@@ -85,26 +90,93 @@ export function deactivateServerWallet(userAddress: string): boolean {
 }
 
 /**
- * Execute a transaction on behalf of a user using the agent's admin wallet.
- * The user must have previously approved the necessary token allowances
- * to the relevant contracts (BorrowerOperations, etc.).
+ * Execute a transaction via SmartAccount.execute().
+ * agent → SmartAccount.execute(target, calldata) → target receives msg.sender = SmartAccount
  */
-export async function executeForUser(
+export async function executeViaSmartAccount(
+  smartAccountAddress: Address,
   target: Address,
   calldata: `0x${string}`,
   gas?: bigint,
 ): Promise<{ txHash: string; success: boolean }> {
   const { walletClient, publicClient } = getClients();
 
+  const smartAccountAbi = parseAbi(SmartAccountABI as unknown as string[]);
+
+  // Encode SmartAccount.execute(target, calldata)
+  const outerCalldata = encodeFunctionData({
+    abi: smartAccountAbi,
+    functionName: "execute",
+    args: [target, calldata],
+  });
+
   try {
-    // Simulate first
+    // Simulate
+    await publicClient.call({
+      to: smartAccountAddress,
+      data: outerCalldata,
+      account: walletClient.account!,
+    });
+
+    // Execute
+    const hash = await (walletClient as any).sendTransaction({
+      to: smartAccountAddress,
+      data: outerCalldata,
+      gas: gas ?? 800_000n,
+    });
+
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+    monitorLogger.info(
+      { smartAccount: smartAccountAddress, target, txHash: hash, status: receipt.status },
+      `executeViaSmartAccount ${receipt.status === "success" ? "succeeded" : "reverted"}`,
+    );
+
+    return {
+      txHash: hash,
+      success: receipt.status === "success",
+    };
+  } catch (err: any) {
+    monitorLogger.error(
+      { smartAccount: smartAccountAddress, target, error: err.message },
+      "executeViaSmartAccount failed",
+    );
+    throw err;
+  }
+}
+
+/**
+ * Legacy executeForUser — now routes through SmartAccount if available.
+ */
+export async function executeForUser(
+  target: Address,
+  calldata: `0x${string}`,
+  gas?: bigint,
+  userAddress?: string,
+): Promise<{ txHash: string; success: boolean }> {
+  // If user has a SmartAccount, route through it
+  if (userAddress) {
+    const record = getServerWallet(userAddress);
+    if (record?.smartAccountAddress) {
+      return executeViaSmartAccount(
+        record.smartAccountAddress as Address,
+        target,
+        calldata,
+        gas,
+      );
+    }
+  }
+
+  // Fallback: direct execution (for backwards compatibility)
+  const { walletClient, publicClient } = getClients();
+
+  try {
     await publicClient.call({
       to: target,
       data: calldata,
       account: walletClient.account!,
     });
 
-    // Execute
     const hash = await (walletClient as any).sendTransaction({
       to: target,
       data: calldata,
@@ -115,7 +187,7 @@ export async function executeForUser(
 
     monitorLogger.info(
       { target, txHash: hash, status: receipt.status },
-      `executeForUser ${receipt.status === "success" ? "succeeded" : "reverted"}`,
+      `executeForUser (direct) ${receipt.status === "success" ? "succeeded" : "reverted"}`,
     );
 
     return {
@@ -137,6 +209,15 @@ export async function executeForUser(
 export function isUserRegistered(userAddress: string): boolean {
   const record = serverWallets.get(userAddress.toLowerCase());
   return !!record?.active;
+}
+
+/**
+ * Get SmartAccount address for a registered user.
+ */
+export function getSmartAccountAddress(userAddress: string): string | null {
+  const record = serverWallets.get(userAddress.toLowerCase());
+  if (!record?.active) return null;
+  return record.smartAccountAddress || null;
 }
 
 /**

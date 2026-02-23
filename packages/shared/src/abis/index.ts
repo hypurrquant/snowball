@@ -165,6 +165,29 @@ export const AgentVaultABI = [
   "event ExecutedOnBehalf(address indexed user, address indexed agent, address target, bytes4 selector, uint256 value)",
 ] as const;
 
+export const SmartAccountABI = [
+  "function owner() view returns (address)",
+  "function authorized(address) view returns (bool)",
+  "function addAgent(address)",
+  "function removeAgent(address)",
+  "function execute(address, bytes) payable returns (bytes)",
+  "function executeBatch(address[], bytes[]) payable returns (bytes[])",
+  "function withdrawETH(address, uint256)",
+  "function withdrawERC20(address, address, uint256)",
+  "event AgentAdded(address indexed agent)",
+  "event AgentRemoved(address indexed agent)",
+  "event Executed(address indexed target, bytes data, bytes result)",
+  "event ETHReceived(address indexed sender, uint256 amount)",
+] as const;
+
+export const SmartAccountFactoryABI = [
+  "function createAccount(address) returns (address)",
+  "function getAccountAddress(address) view returns (address)",
+  "function hasAccount(address) view returns (bool)",
+  "function accounts(address) view returns (address)",
+  "event AccountCreated(address indexed owner, address indexed account)",
+] as const;
+
 export const ValidationRegistryABI = [
   "function validateAgent(uint256,uint256,string)",
   "function suspendAgent(uint256)",

@@ -41,7 +41,8 @@
     "shared": {
         "collateralRegistry": "0xb368984a9ff400a1adb7c5aaa11df5cc57c0cf62",
         "hintHelpers": "0x1b7e9f814c57a4a31252e860c18c4f18df8400c7",
-        "multiTroveGetter": "0x2f2c2633b6e6c2f16a2155833009bcd8a7abf3bc"
+        "multiTroveGetter": "0x2f2c2633b6e6c2f16a2155833009bcd8a7abf3bc",
+        "smartAccountFactory": "0x0000000000000000000000000000000000000000"
     },
     "erc8004": {
         "identityRegistry": "0x993C9150f074435BA79033300834FcE06897de9B",

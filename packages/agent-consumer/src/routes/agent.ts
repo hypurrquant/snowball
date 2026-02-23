@@ -7,7 +7,7 @@ import {
   createServerWallet as createSW,
   getServerWallet as getSW,
   deactivateServerWallet as deactivateSW,
-} from "../privyHelper";
+} from "../smartAccountHelper";
 import {
   creditcoinTestnet,
   STRATEGIES,
@@ -532,10 +532,10 @@ agentRouter.get("/server-wallet", asyncHandler(async (req: Request, res: Respons
  *         description: Server wallet created
  */
 agentRouter.post("/server-wallet", asyncHandler(async (req: Request, res: Response) => {
-  const { userAddress, strategy = "conservative", minCR = 200, autoRebalance = true, autoRateAdjust = true } = req.body;
+  const { userAddress, smartAccountAddress, strategy = "conservative", minCR = 200, autoRebalance = true, autoRateAdjust = true } = req.body;
   validateAddress(userAddress, "userAddress");
 
-  const record = createSW({ userAddress, strategy, minCR, autoRebalance, autoRateAdjust });
+  const record = createSW({ userAddress, smartAccountAddress, strategy, minCR, autoRebalance, autoRateAdjust });
 
   // Register with monitor
   const monitor = req.app.locals.monitor;

@@ -3,7 +3,7 @@ import { callCDPProvider } from "./a2aClient";
 import { STRATEGIES, BorrowerOperationsABI } from "@snowball/shared";
 import { monitorLogger } from "./logger";
 import { pushMonitorEvent } from "./routes/events";
-import { executeForUser, isUserRegistered } from "./privyHelper";
+import { executeForUser, isUserRegistered, getSmartAccountAddress } from "./smartAccountHelper";
 import { getAddresses } from "./addresses";
 import { encodeFunctionData, parseAbi, type Address } from "viem";
 import type { MarketData } from "@snowball/shared";
@@ -116,10 +116,10 @@ export class PositionMonitor {
             args: [BigInt(pos.troveId), addCollWei],
           });
 
-          const result = await executeForUser(boAddress, calldata);
+          const result = await executeForUser(boAddress, calldata, undefined, address);
           monitorLogger.info(
             { address, troveId: pos.troveId, txHash: result.txHash },
-            "Auto-rebalance via agent wallet",
+            "Auto-rebalance via SmartAccount",
           );
           return `Auto-rebalance: added ${addCollWei.toString()} collateral (tx: ${result.txHash})`;
         }
@@ -229,7 +229,7 @@ export class PositionMonitor {
                         args: [BigInt(pos.troveId), BigInt(newRate), 0n, 0n, BigInt(Math.round(redemptionCheck.avgRate * 1e18))],
                       });
 
-                      const result = await executeForUser(boAddress, calldata);
+                      const result = await executeForUser(boAddress, calldata, undefined, address);
                       directSuccess = result.success;
                       action = (action ? action + " | " : "") + `Auto-adjusted rate to ${redemptionCheck.avgRate.toFixed(2)}% (tx: ${result.txHash})`;
                     }
