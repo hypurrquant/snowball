@@ -21,7 +21,6 @@ export interface DeployedAddresses {
     hintHelpers: string;
     multiTroveGetter: string;
     agentVault?: string;
-    smartAccountFactory?: string;
   };
   erc8004?: {
     identityRegistry: string;
@@ -204,19 +203,6 @@ export interface SPUserDeposit {
   deposit: string;
   boldGain: string;
   collGain: string;
-}
-
-// ==================== SmartAccount Types ====================
-
-export interface SmartAccountInfo {
-  address: string;
-  owner: string;
-  agents: string[];
-  balances: {
-    wCTC: string;
-    lstCTC: string;
-    sbUSD: string;
-  };
 }
 
 // ==================== AgentVault Types ====================

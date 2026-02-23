@@ -10,8 +10,6 @@ import {
   SbUSDTokenABI,
   MockWCTCABI,
   MockLstCTCABI,
-  SmartAccountABI,
-  SmartAccountFactoryABI,
 } from '@snowball/shared'
 import addresses from './addresses.json'
 
@@ -27,8 +25,6 @@ export const abis = {
   sbUSD: parseAbi(SbUSDTokenABI),
   wCTC: parseAbi(MockWCTCABI),
   lstCTC: parseAbi(MockLstCTCABI),
-  smartAccount: parseAbi(SmartAccountABI),
-  smartAccountFactory: parseAbi(SmartAccountFactoryABI),
 } as const
 
 const BRANCHES = [addresses.branches.wCTC, addresses.branches.lstCTC] as const
@@ -62,10 +58,6 @@ export function getCollToken(branch: 0 | 1): `0x${string}` {
 
 export function getSbUSDToken(): `0x${string}` {
   return addresses.tokens.sbUSD as `0x${string}`
-}
-
-export function getSmartAccountFactory(): `0x${string}` {
-  return (addresses.shared as any).smartAccountFactory as `0x${string}`
 }
 
 export const BRANCH_SYMBOLS = ['wCTC', 'lstCTC'] as const

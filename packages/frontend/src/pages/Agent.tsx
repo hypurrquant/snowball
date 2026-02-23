@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi'
 import { useAgents } from '@/hooks/useAgents'
 import { useAgentReputation } from '@/hooks/useAgentReputation'
 import { useUserPositions } from '@/hooks/useUserPositions'
-import { useSmartAccount } from '@/hooks/useSmartAccount'
+import { usePrivyServerWallet } from '@/hooks/usePrivyServerWallet'
 import { AgentStatus } from '@/components/agent/AgentStatus'
 import { AgentSettings } from '@/components/agent/AgentSettings'
 import { AgentActivation } from '@/components/agent/AgentActivation'
@@ -68,7 +68,7 @@ export function Agent() {
     const { address } = useAccount()
     const { data: agents = [], isLoading: agentsLoading } = useAgents()
     const { data: positions = [] } = useUserPositions(address)
-    const { hasAccount, isAgentAuthorized, refetch: refetchSmartAccount } = useSmartAccount()
+    const { hasServerWallet, refetchServerWallet } = usePrivyServerWallet()
 
     // Prefer cdp_provider agent
     const cdpAgent = agents.find((a) => a.type === 'cdp_provider') ?? agents[0]
@@ -145,11 +145,11 @@ export function Agent() {
                     <AgentStatus agentId={agentId} />
 
                     {/* Server wallet status */}
-                    <PermissionStatus onDeactivated={() => refetchSmartAccount()} />
+                    <PermissionStatus onDeactivated={() => refetchServerWallet()} />
 
-                    {/* Activation wizard (shows only when SmartAccount not set up) */}
-                    {!(hasAccount && isAgentAuthorized) && (
-                        <AgentActivation onComplete={() => refetchSmartAccount()} />
+                    {/* Activation wizard (shows only when no server wallet) */}
+                    {!hasServerWallet && (
+                        <AgentActivation onComplete={() => refetchServerWallet()} />
                     )}
 
                     <AgentSettings onSave={handleSettingsSave} />
