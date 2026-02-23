@@ -1,20 +1,24 @@
 import { type Address } from "viem";
 import { getClients } from "./walletHelper";
 import { monitorLogger } from "./logger";
+import {
+  isPrivyConfigured,
+  createWalletForUser,
+  executeAsWallet,
+} from "./privyWalletService";
 
 /**
  * In-memory store of user server wallet registrations.
  * In production, this would be backed by a database.
  *
- * The "server wallet" concept with Privy:
- * - Users register their wallet + strategy settings via the frontend
- * - The agent backend (with its own admin wallet) executes transactions
- *   on behalf of users who have granted on-chain approvals
- * - This store tracks which users have opted-in and their preferences
+ * With Privy integration each user gets a unique server wallet
+ * (the server wallet becomes the trove owner so msg.sender checks pass).
+ * When Privy is not configured, falls back to the shared admin wallet.
  */
 interface ServerWalletRecord {
   userAddress: string;
-  serverWalletAddress: string; // The agent's admin wallet that acts on behalf of user
+  serverWalletAddress: string;
+  privyWalletId: string | null; // null = admin-wallet fallback
   strategy: string;
   minCR: number;
   autoRebalance: boolean;
@@ -32,22 +36,42 @@ function getAgentWalletAddress(): string {
 
 /**
  * Create (register) a server wallet entry for a user.
- * The "server wallet" is actually the agent's admin wallet that will
- * execute transactions on behalf of the user.
+ *
+ * - If Privy is configured → creates a per-user Privy server wallet.
+ * - Otherwise → falls back to the shared admin wallet (legacy behaviour).
  */
-export function createServerWallet(params: {
+export async function createServerWallet(params: {
   userAddress: string;
   strategy: string;
   minCR: number;
   autoRebalance: boolean;
   autoRateAdjust: boolean;
-}): ServerWalletRecord {
+}): Promise<ServerWalletRecord> {
   const key = params.userAddress.toLowerCase();
-  const agentAddress = getAgentWalletAddress();
+
+  let serverWalletAddress: string;
+  let privyWalletId: string | null = null;
+
+  if (isPrivyConfigured()) {
+    const wallet = await createWalletForUser();
+    serverWalletAddress = wallet.address;
+    privyWalletId = wallet.walletId;
+    monitorLogger.info(
+      { userAddress: params.userAddress, privyWalletId, serverWalletAddress },
+      "Privy server wallet assigned to user",
+    );
+  } else {
+    serverWalletAddress = getAgentWalletAddress();
+    monitorLogger.info(
+      { userAddress: params.userAddress, serverWalletAddress },
+      "Privy not configured — using admin wallet fallback",
+    );
+  }
 
   const record: ServerWalletRecord = {
     userAddress: params.userAddress,
-    serverWalletAddress: agentAddress,
+    serverWalletAddress,
+    privyWalletId,
     strategy: params.strategy,
     minCR: params.minCR,
     autoRebalance: params.autoRebalance ?? true,
@@ -85,15 +109,32 @@ export function deactivateServerWallet(userAddress: string): boolean {
 }
 
 /**
- * Execute a transaction on behalf of a user using the agent's admin wallet.
- * The user must have previously approved the necessary token allowances
- * to the relevant contracts (BorrowerOperations, etc.).
+ * Execute a transaction on behalf of a user.
+ *
+ * - If the user has a Privy wallet → route through Privy SDK
+ *   (msg.sender = per-user server wallet = trove owner ✅)
+ * - Otherwise → use the shared admin wallet (legacy)
  */
 export async function executeForUser(
+  userAddress: string,
   target: Address,
   calldata: `0x${string}`,
   gas?: bigint,
 ): Promise<{ txHash: string; success: boolean }> {
+  const record = serverWallets.get(userAddress.toLowerCase());
+
+  // Route via Privy server wallet when available
+  if (record?.privyWalletId) {
+    return executeAsWallet(
+      record.privyWalletId,
+      record.serverWalletAddress as Address,
+      target,
+      calldata,
+      gas,
+    );
+  }
+
+  // Fallback: admin wallet
   const { walletClient, publicClient } = getClients();
 
   try {
@@ -115,7 +156,7 @@ export async function executeForUser(
 
     monitorLogger.info(
       { target, txHash: hash, status: receipt.status },
-      `executeForUser ${receipt.status === "success" ? "succeeded" : "reverted"}`,
+      `executeForUser (admin fallback) ${receipt.status === "success" ? "succeeded" : "reverted"}`,
     );
 
     return {

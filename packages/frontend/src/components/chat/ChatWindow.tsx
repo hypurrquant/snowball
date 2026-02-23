@@ -1,12 +1,35 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Loader2, Snowflake } from 'lucide-react'
+import { Send, Loader2, Snowflake, ExternalLink } from 'lucide-react'
 import { useAccount } from 'wagmi'
+import { useNavigate } from 'react-router-dom'
 import { useChat, ChatMessage, RelatedData } from '@/hooks/useChat'
 import { ChatBubble } from './ChatBubble'
 import { QuickActions } from './QuickActions'
 import { CRGauge } from '@/components/common/CRGauge'
 
-const DEFAULT_ACTIONS = ['Position Summary', 'Strategy Recommendations', 'What is Liquidation?', 'Interest Rate Explained']
+// Actions that navigate to a page instead of sending a chat message
+const ACTION_ROUTES: Record<string, string> = {
+    '담보 추가': '/dashboard',
+    '부채 상환': '/dashboard',
+    '포지션 조정': '/dashboard',
+    '포지션 상세': '/dashboard',
+    'CR 조정하기': '/dashboard',
+    '이자율 조정': '/dashboard',
+    '이자율 변경하기': '/dashboard',
+    'Conservative 전략 적용': '/dashboard',
+    'Moderate 전략 적용': '/dashboard',
+    '포지션 열기': '/borrow',
+    'sbUSD 빌리기': '/borrow',
+    'wCTC로 포지션 열기': '/borrow',
+    'lstCTC로 포지션 열기': '/borrow',
+    'SP 예치하기': '/earn',
+    'Stability Pool 예치': '/earn',
+    'SP 잔액 확인': '/earn',
+    '에이전트 활성화': '/agent',
+    '에이전트 목록': '/agent',
+}
+
+const DEFAULT_ACTIONS = ['Position Summary', 'Strategy Recommendations', 'What is Liquidation?', 'Interest Rate Explained', 'What is a Trove?', 'wCTC vs lstCTC']
 
 interface ChatWindowProps {
     compact?: boolean
@@ -14,6 +37,7 @@ interface ChatWindowProps {
 
 export function ChatWindow({ compact = false }: ChatWindowProps) {
     const { address } = useAccount()
+    const navigate = useNavigate()
     const { mutate: sendMessage, isPending } = useChat()
     const [messages, setMessages] = useState<ChatMessage[]>([
         {
@@ -31,6 +55,15 @@ export function ChatWindow({ compact = false }: ChatWindowProps) {
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
+
+    const handleAction = (action: string) => {
+        const route = ACTION_ROUTES[action]
+        if (route) {
+            navigate(route)
+            return
+        }
+        handleSend(action)
+    }
 
     const handleSend = (text?: string) => {
         const msg = text ?? input.trim()
@@ -81,12 +114,18 @@ export function ChatWindow({ compact = false }: ChatWindowProps) {
                 )}
                 {/* Related data inline visualization */}
                 {relatedData?.currentCR && (
-                    <div className="bg-dark-700 rounded-xl p-3 border border-dark-400/40 text-xs">
-                        <p className="text-gray-400 mb-2">Position Status</p>
+                    <div className="bg-dark-700 rounded-xl p-3 border border-dark-400/40 text-xs space-y-2">
+                        <p className="text-gray-400">Position Status</p>
                         <CRGauge cr={parseFloat(relatedData.currentCR)} mcr={110} />
                         {relatedData.liquidationPrice && (
-                            <p className="text-gray-400 mt-2">Liq. Price: <span className="text-white font-mono">${parseFloat(relatedData.liquidationPrice).toFixed(4)}</span></p>
+                            <p className="text-gray-400">Liq. Price: <span className="text-white font-mono">${parseFloat(relatedData.liquidationPrice).toFixed(4)}</span></p>
                         )}
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="flex items-center gap-1 text-ice-400 hover:text-ice-300 transition-colors font-medium mt-1"
+                        >
+                            <ExternalLink className="w-3 h-3" /> Go to Dashboard to adjust
+                        </button>
                     </div>
                 )}
                 <div ref={bottomRef} />
@@ -95,7 +134,7 @@ export function ChatWindow({ compact = false }: ChatWindowProps) {
             {/* Quick Actions */}
             {!compact && (
                 <div className="px-4">
-                    <QuickActions actions={suggestedActions} onSelect={(a) => handleSend(a)} />
+                    <QuickActions actions={suggestedActions} onSelect={handleAction} />
                 </div>
             )}
 

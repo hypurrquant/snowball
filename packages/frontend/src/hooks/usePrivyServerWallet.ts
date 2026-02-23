@@ -55,8 +55,9 @@ export function usePrivyServerWallet() {
         })
 
         if (!res.ok) {
-            const err = await res.json().catch(() => ({ error: 'Failed to create server wallet' }))
-            throw new Error(err.error)
+            const body = await res.json().catch(() => null)
+            const message = body?.error?.message ?? body?.error ?? body?.message ?? 'Failed to create server wallet'
+            throw new Error(typeof message === 'string' ? message : JSON.stringify(message))
         }
 
         const data = await res.json()

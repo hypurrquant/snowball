@@ -181,7 +181,7 @@ async function deployBranch(
   await send(st.address, st.abi, "setAddresses", [tm.address, bo.address]);
   await send(nft.address, nft.abi, "setAddresses", [tm.address, bo.address]);
   await send(sp.address, sp.abi, "setAddresses", [
-    sbUSDAddr, collTokenAddr, tm.address, ap.address,
+    sbUSDAddr, collTokenAddr, tm.address, ap.address, bo.address,
   ]);
   console.log(`  All contracts wired ✓ (${label})`);
 

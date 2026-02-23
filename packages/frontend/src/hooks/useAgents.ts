@@ -18,10 +18,17 @@ export function useAgents() {
         queryFn: async () => {
             const res = await fetch(`${API_BASE}/agents`)
             if (!res.ok) throw new Error('Failed to fetch agents')
-            return res.json()
+            const data = await res.json()
+            // Normalize API response fields to frontend interface
+            return data.map((a: any) => ({
+                ...a,
+                type: a.type ?? a.agentType?.replace('-', '_'),
+                status: a.status ?? (a.isActive ? 'active' : 'inactive'),
+            }))
         },
         refetchInterval: 30_000,
         staleTime: 15_000,
+        retry: 1,
     })
 }
 

@@ -13,14 +13,16 @@ interface AgentStatusProps {
 }
 
 export function AgentStatus({ agentId }: AgentStatusProps) {
-    const { data: agents = [], isLoading } = useAgents()
+    const { data: agentsData, isLoading } = useAgents()
+    const agents = agentsData ?? []
 
     // Use specified ID or prefer cdp_provider type agent
     const agent = agentId
         ? agents.find((a) => a.id === agentId)
         : agents.find((a) => a.type === 'cdp_provider') ?? agents[0]
 
-    if (isLoading) {
+    // Show skeleton only on first load (no data ever received)
+    if (isLoading && agentsData === undefined) {
         return (
             <div className="bg-dark-700 border border-dark-400/40 rounded-2xl p-5">
                 <div className="flex items-center gap-2 mb-4">

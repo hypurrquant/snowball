@@ -20,7 +20,8 @@ export function PermissionStatus({ onDeactivated }: PermissionStatusProps) {
         }
     }
 
-    if (serverWalletLoading) {
+    // Show spinner only on very first load (no data yet), not on background refetches
+    if (serverWalletLoading && serverWallet === undefined) {
         return (
             <div className="bg-dark-700 border border-dark-400/40 rounded-2xl p-5 flex items-center justify-center gap-2 text-gray-400">
                 <Loader2 className="w-4 h-4 animate-spin" />

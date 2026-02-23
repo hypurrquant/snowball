@@ -18,6 +18,7 @@ contract StabilityPool is IStabilityPool {
     IERC20 public collToken;
     address public troveManager;
     address public activePool;
+    address public borrowerOperations;
 
     uint256 public totalBoldDeposits;
 
@@ -39,6 +40,7 @@ contract StabilityPool is IStabilityPool {
     event DepositMade(address indexed depositor, uint256 amount);
     event DepositWithdrawn(address indexed depositor, uint256 amount);
     event CollGainWithdrawn(address indexed depositor, uint256 amount);
+    event BoldGainWithdrawn(address indexed depositor, uint256 amount);
     event StabilityPoolLiquidation(uint256 debtOffset, uint256 collAdded);
 
     modifier onlyTroveManager() {
@@ -56,13 +58,15 @@ contract StabilityPool is IStabilityPool {
         address _sbUSDToken,
         address _collToken,
         address _troveManager,
-        address _activePool
+        address _activePool,
+        address _borrowerOperations
     ) external {
         require(address(sbUSDToken) == address(0), "Already set");
         sbUSDToken = ISbUSDToken(_sbUSDToken);
         collToken = IERC20(_collToken);
         troveManager = _troveManager;
         activePool = _activePool;
+        borrowerOperations = _borrowerOperations;
     }
 
     function provideToSP(uint256 _amount) external override {
@@ -98,6 +102,15 @@ contract StabilityPool is IStabilityPool {
         if (collGain > 0) {
             dep.collGain = 0;
             collToken.safeTransfer(msg.sender, collGain);
+            emit CollGainWithdrawn(msg.sender, collGain);
+        }
+
+        // Send any bold gain
+        uint256 boldGain = dep.boldGain;
+        if (boldGain > 0) {
+            dep.boldGain = 0;
+            sbUSDToken.mint(msg.sender, boldGain);
+            emit BoldGainWithdrawn(msg.sender, boldGain);
         }
 
         emit DepositWithdrawn(msg.sender, withdrawAmount);
@@ -106,12 +119,20 @@ contract StabilityPool is IStabilityPool {
     function claimReward() external override {
         Deposit storage dep = deposits[msg.sender];
         uint256 collGain = dep.collGain;
-        require(collGain > 0, "No reward");
+        uint256 boldGain = dep.boldGain;
+        require(collGain > 0 || boldGain > 0, "No rewards");
 
-        dep.collGain = 0;
-        collToken.safeTransfer(msg.sender, collGain);
+        if (collGain > 0) {
+            dep.collGain = 0;
+            collToken.safeTransfer(msg.sender, collGain);
+            emit CollGainWithdrawn(msg.sender, collGain);
+        }
 
-        emit CollGainWithdrawn(msg.sender, collGain);
+        if (boldGain > 0) {
+            dep.boldGain = 0;
+            sbUSDToken.mint(msg.sender, boldGain);
+            emit BoldGainWithdrawn(msg.sender, boldGain);
+        }
     }
 
     /// @dev Called by TroveManager during liquidation
@@ -141,9 +162,12 @@ contract StabilityPool is IStabilityPool {
         emit StabilityPoolLiquidation(debtToOffset, _collToAdd);
     }
 
-    /// @dev Called by ActivePool to distribute sbUSD yield (interest revenue) to depositors
+    /// @dev Called by BorrowerOperations or ActivePool to distribute sbUSD yield (interest revenue) to depositors
     function triggerBoldRewards(uint256 _boldYield) external override {
-        require(msg.sender == activePool, "SP: not ActivePool");
+        require(
+            msg.sender == activePool || msg.sender == borrowerOperations,
+            "SP: not authorized"
+        );
         if (totalBoldDeposits == 0 || _boldYield == 0) return;
 
         // Distribute boldYield proportionally to all depositors

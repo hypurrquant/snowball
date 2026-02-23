@@ -4,24 +4,26 @@ interface CRGaugeProps {
     className?: string
 }
 
-function getCRStatus(cr: number) {
-    if (cr >= 200) return { color: 'bg-status-safe', glow: 'shadow-[0_0_8px_rgba(34,197,94,0.5)]', text: 'text-status-safe', label: 'Safe' }
-    if (cr >= 150) return { color: 'bg-status-warn', glow: 'shadow-[0_0_8px_rgba(234,179,8,0.5)]', text: 'text-status-warn', label: 'Warning' }
+function getHFStatus(cr: number) {
+    if (cr >= 200) return { color: 'bg-status-safe', glow: 'shadow-[0_0_8px_rgba(34,197,94,0.5)]', text: 'text-status-safe', label: 'Healthy' }
+    if (cr >= 150) return { color: 'bg-status-warn', glow: 'shadow-[0_0_8px_rgba(234,179,8,0.5)]', text: 'text-status-warn', label: 'At Risk' }
     return { color: 'bg-status-danger', glow: 'shadow-[0_0_8px_rgba(239,68,68,0.5)]', text: 'text-status-danger', label: 'Danger' }
 }
 
 export function CRGauge({ cr, mcr, className = '' }: CRGaugeProps) {
-    const status = getCRStatus(cr)
-    const maxCR = 300
-    const minDisplay = mcr
-    const range = maxCR - minDisplay
-    const filled = Math.min(Math.max((cr - minDisplay) / range, 0), 1)
+    const status = getHFStatus(cr)
+    const hf = cr / 100
+    const minHF = mcr / 100
+    const maxHF = 5
+    const filled = Math.min(Math.max((hf - minHF) / (maxHF - minHF), 0), 1)
 
     return (
         <div className={`space-y-1 ${className}`}>
             <div className="flex items-center justify-between text-xs">
-                <span className={`font-semibold ${status.text}`}>{cr.toFixed(2)}%</span>
-                <span className="text-gray-500 text-[10px]">MCR: {mcr}%</span>
+                <span className="text-gray-500">Health Factor</span>
+                <span className={`font-bold text-sm ${status.text}`}>
+                    {hf.toFixed(2)} <span className={`text-[10px] font-normal ${status.text}`}>({status.label})</span>
+                </span>
             </div>
             <div className="relative h-2 bg-dark-500 rounded-full overflow-hidden">
                 {/* Background gradient track */}
@@ -33,8 +35,8 @@ export function CRGauge({ cr, mcr, className = '' }: CRGaugeProps) {
                 />
             </div>
             <div className="flex justify-between text-[10px] text-gray-500">
-                <span>{mcr}%</span>
-                <span>300%</span>
+                <span>Min {minHF.toFixed(2)}</span>
+                <span>{maxHF.toFixed(1)}</span>
             </div>
         </div>
     )

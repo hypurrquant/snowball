@@ -11,6 +11,14 @@ import "../interfaces/ISortedTroves.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+interface ITroveNFTOwner {
+    function ownerOf(uint256 tokenId) external view returns (address);
+}
+
+interface ICollSurplusPool {
+    function accountSurplus(address _account, uint256 _amount) external;
+}
+
 /// @title TroveManager — Core trove state + liquidation logic (Liquity V2 fork)
 contract TroveManager is ITroveManager {
     using SafeERC20 for IERC20;
@@ -217,6 +225,9 @@ contract TroveManager is ITroveManager {
 
             if (debtToRedeem == troveDebt) {
                 // Close trove by redemption
+                // Record owner before closing (NFT not burned on redemption — owner claims surplus later)
+                address troveOwner = ITroveNFTOwner(troveNFT).ownerOf(currentTroveId);
+
                 totalStakes -= trove.stake;
                 trove.status = Status.closedByRedemption;
                 trove.coll = 0;
@@ -226,9 +237,10 @@ contract TroveManager is ITroveManager {
 
                 sortedTroves.remove(currentTroveId);
 
-                // Send any surplus to CollSurplusPool
+                // Send any surplus to CollSurplusPool and register it for the trove owner
                 uint256 surplus = troveColl - collToRedeem;
                 if (surplus > 0) {
+                    ICollSurplusPool(collSurplusPool).accountSurplus(troveOwner, surplus);
                     activePool.sendColl(collSurplusPool, surplus);
                 }
             } else {

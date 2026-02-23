@@ -43,7 +43,7 @@ export function TroveCard({ position, onAdjust, onClose, onAdjustRate }: TroveCa
                         )}
                     </div>
                 </div>
-                <span className={`text-sm font-bold ${crColor}`}>{position.cr}%</span>
+                <span className={`text-sm font-bold ${crColor}`}>HF {(cr / 100).toFixed(2)}</span>
             </div>
 
             {/* Metrics */}

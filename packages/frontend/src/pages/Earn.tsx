@@ -9,6 +9,7 @@ import { formatEther, parseEther, erc20Abi } from 'viem'
 import { useQueryClient } from '@tanstack/react-query'
 import { Coins, TrendingUp, Wallet, ChevronDown, ChevronUp, Loader2, CheckCircle, AlertTriangle } from 'lucide-react'
 import { getSbUSDToken, getBranchAddresses } from '@/config/contracts'
+import { useUserBalance } from '@/hooks/useUserBalance'
 
 type Step = 'idle' | 'approving' | 'signing' | 'confirming' | 'done'
 
@@ -19,6 +20,9 @@ function PoolCard({ market, userDeposit }: { market: Market; userDeposit?: SPUse
     const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw' | 'claim'>('deposit')
     const [step, setStep] = useState<Step>('idle')
     const [error, setError] = useState<string | null>(null)
+
+    const { data: balances } = useUserBalance(address)
+    const sbUSDBalance = balances ? parseFloat(formatEther(BigInt(balances.sbUSD))) : 0
 
     const { writeContractAsync } = useWriteContract()
     const { deposit, isConfirmed: isDepositConfirmed, isReverted: isDepositReverted, reset: resetDeposit } = useSPDeposit()
@@ -181,28 +185,53 @@ function PoolCard({ market, userDeposit }: { market: Market; userDeposit?: SPUse
 
             {/* Action */}
             {activeTab !== 'claim' ? (
-                <div className="flex gap-2">
-                    <input
-                        type="number"
-                        placeholder={activeTab === 'deposit' ? 'sbUSD amount to deposit' : 'sbUSD amount to withdraw'}
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="flex-1 bg-dark-600 border border-dark-400/40 focus:border-ice-400/50 rounded-xl px-4 py-2.5 text-sm text-white outline-none placeholder-gray-600 transition-colors"
-                        disabled={isLoading}
-                    />
-                    <button
-                        onClick={handleAction}
-                        disabled={!amount || parseFloat(amount) <= 0 || isLoading}
-                        className="px-4 py-2.5 bg-gradient-to-r from-ice-500 to-ice-600 text-white text-sm font-semibold rounded-xl shadow-ice disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-ice-lg transition-all flex items-center gap-1.5"
-                    >
-                        {isLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : activeTab === 'deposit' ? (
-                            <ChevronDown className="w-4 h-4" />
-                        ) : (
-                            <ChevronUp className="w-4 h-4" />
-                        )}
-                    </button>
+                <div className="space-y-2">
+                    {/* 잔액 표시 */}
+                    {activeTab === 'deposit' && sbUSDBalance > 0 && (
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>Wallet Balance</span>
+                            <button
+                                onClick={() => setAmount(sbUSDBalance.toFixed(6))}
+                                className="font-mono text-ice-400 hover:text-ice-300 transition-colors"
+                            >
+                                {sbUSDBalance.toLocaleString('en-US', { maximumFractionDigits: 2 })} sbUSD
+                            </button>
+                        </div>
+                    )}
+                    {activeTab === 'withdraw' && myDeposit > 0 && (
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>Deposited</span>
+                            <button
+                                onClick={() => setAmount(myDeposit.toFixed(6))}
+                                className="font-mono text-ice-400 hover:text-ice-300 transition-colors"
+                            >
+                                {myDepositFormatted} sbUSD
+                            </button>
+                        </div>
+                    )}
+                    <div className="flex gap-2">
+                        <input
+                            type="number"
+                            placeholder={activeTab === 'deposit' ? 'sbUSD amount to deposit' : 'sbUSD amount to withdraw'}
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="flex-1 bg-dark-600 border border-dark-400/40 focus:border-ice-400/50 rounded-xl px-4 py-2.5 text-sm text-white outline-none placeholder-gray-600 transition-colors"
+                            disabled={isLoading}
+                        />
+                        <button
+                            onClick={handleAction}
+                            disabled={!amount || parseFloat(amount) <= 0 || isLoading}
+                            className="px-4 py-2.5 bg-gradient-to-r from-ice-500 to-ice-600 text-white text-sm font-semibold rounded-xl shadow-ice disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-ice-lg transition-all flex items-center gap-1.5 whitespace-nowrap"
+                        >
+                            {isLoading ? (
+                                <><Loader2 className="w-4 h-4 animate-spin" />{activeTab === 'deposit' ? 'Depositing...' : 'Withdrawing...'}</>
+                            ) : activeTab === 'deposit' ? (
+                                <><ChevronDown className="w-4 h-4" />Deposit</>
+                            ) : (
+                                <><ChevronUp className="w-4 h-4" />Withdraw</>
+                            )}
+                        </button>
+                    </div>
                 </div>
             ) : (
                 <button

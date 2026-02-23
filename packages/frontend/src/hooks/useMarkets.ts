@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'viem'
 import { publicClient } from '@/config/publicClient'
-import { abis, getBranchAddresses, getCollToken, BRANCH_SYMBOLS } from '@/config/contracts'
+import { abis, getBranchAddresses, getCollToken, getMultiTroveGetter, BRANCH_SYMBOLS } from '@/config/contracts'
 
 export interface Market {
     branch: number
@@ -29,7 +29,7 @@ export function useMarkets() {
                 branches.map(async (branch) => {
                     const { activePool, priceFeed, stabilityPool } = getBranchAddresses(branch)
 
-                    const [collBalance, boldDebt, aggWeightedDebtSum, totalBoldDeposits, price] =
+                    const [collBalance, boldDebt, totalBoldDeposits, price, troves] =
                         await Promise.all([
                             publicClient.readContract({
                                 address: activePool,
@@ -42,11 +42,6 @@ export function useMarkets() {
                                 functionName: 'getBoldDebt',
                             }),
                             publicClient.readContract({
-                                address: activePool,
-                                abi: abis.activePool,
-                                functionName: 'aggWeightedDebtSum',
-                            }),
-                            publicClient.readContract({
                                 address: stabilityPool,
                                 abi: abis.stabilityPool,
                                 functionName: 'getTotalBoldDeposits',
@@ -56,6 +51,12 @@ export function useMarkets() {
                                 abi: abis.priceFeed,
                                 functionName: 'lastGoodPrice',
                             }),
+                            publicClient.readContract({
+                                address: getMultiTroveGetter(),
+                                abi: abis.multiTroveGetter,
+                                functionName: 'getMultipleSortedTroves',
+                                args: [BigInt(branch), 0n, 1000n],
+                            }),
                         ])
 
                     const priceNum = parseFloat(formatEther(price))
@@ -63,14 +64,29 @@ export function useMarkets() {
                     const debtNum = parseFloat(formatEther(boldDebt))
                     const totalCollUSD = collNum * priceNum
                     const currentCR = debtNum > 0 ? (totalCollUSD / debtNum) * 100 : 0
-                    const avgRate =
-                        debtNum > 0
-                            ? (parseFloat(formatEther(aggWeightedDebtSum)) / debtNum) * 100
-                            : 0
+
+                    // Weighted average interest rate from each trove's annualInterestRate
+                    let weightedSum = 0n
+                    let totalDebtWei = 0n
+                    for (const trove of troves) {
+                        if (trove.status === 1) {
+                            weightedSum += trove.debt * trove.annualInterestRate
+                            totalDebtWei += trove.debt
+                        }
+                    }
+                    const avgRate = totalDebtWei > 0n
+                        ? parseFloat(formatEther(weightedSum / totalDebtWei)) * 100
+                        : 0
 
                     const mcr = branch === 0 ? '110.00' : '120.00'
                     const ccr = branch === 0 ? '150.00' : '160.00'
                     const ltv = branch === 0 ? '90.91' : '83.33'
+
+                    const spDepositsNum = parseFloat(formatEther(totalBoldDeposits))
+                    const spAPY =
+                        spDepositsNum > 0 && debtNum > 0
+                            ? ((avgRate / 100) * debtNum / spDepositsNum * 100).toFixed(2)
+                            : '0.00'
 
                     return {
                         branch,
@@ -85,7 +101,7 @@ export function useMarkets() {
                         totalBorrow: boldDebt.toString(),
                         avgInterestRate: avgRate.toFixed(2),
                         spDeposits: totalBoldDeposits.toString(),
-                        spAPY: '0.00', // calculated from liquidation gains, not available on-chain directly
+                        spAPY,
                     } satisfies Market
                 })
             )

@@ -535,9 +535,17 @@ agentRouter.post("/server-wallet", asyncHandler(async (req: Request, res: Respon
   const { userAddress, strategy = "conservative", minCR = 200, autoRebalance = true, autoRateAdjust = true } = req.body;
   validateAddress(userAddress, "userAddress");
 
-  const record = createSW({ userAddress, strategy, minCR, autoRebalance, autoRateAdjust });
+  let record;
+  try {
+    record = await createSW({ userAddress, strategy, minCR, autoRebalance, autoRateAdjust });
+  } catch (err: any) {
+    return res.status(502).json({
+      error: "Failed to create server wallet via Privy",
+      details: err.message,
+    });
+  }
 
-  // Register with monitor
+  // Register with monitor (keyed by userAddress for lookup consistency)
   const monitor = req.app.locals.monitor;
   if (monitor) {
     monitor.addPosition(userAddress, strategy, `privy-${Date.now()}`);

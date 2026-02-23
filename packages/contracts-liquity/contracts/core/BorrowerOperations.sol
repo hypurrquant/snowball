@@ -7,6 +7,7 @@ import "../interfaces/ISbUSDToken.sol";
 import "../interfaces/ITroveManager.sol";
 import "../interfaces/IPriceFeed.sol";
 import "../interfaces/IActivePool.sol";
+import "../interfaces/IStabilityPool.sol";
 import "../interfaces/ISortedTroves.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -35,6 +36,7 @@ contract BorrowerOperations is IBorrowerOperations {
     ISbUSDToken public sbUSDToken;
     IPriceFeed public priceFeed;
     IActivePool public activePool;
+    IStabilityPool public stabilityPool;
     ISortedTroves public sortedTroves;
     IERC20 public collToken;
     ITroveNFT public troveNFT;
@@ -63,6 +65,7 @@ contract BorrowerOperations is IBorrowerOperations {
         sbUSDToken = ISbUSDToken(addressesRegistry.sbUSDToken());
         priceFeed = IPriceFeed(addressesRegistry.priceFeed());
         activePool = IActivePool(addressesRegistry.activePool());
+        stabilityPool = IStabilityPool(addressesRegistry.stabilityPool());
         sortedTroves = ISortedTroves(addressesRegistry.sortedTroves());
         collToken = IERC20(addressesRegistry.collToken());
         troveNFT = ITroveNFT(addressesRegistry.troveNFT());
@@ -120,9 +123,10 @@ contract BorrowerOperations is IBorrowerOperations {
         // Mint sbUSD to borrower
         sbUSDToken.mint(_owner, _boldAmount);
 
-        // Mint upfront fee sbUSD to gas pool
+        // Distribute upfront fee to Stability Pool as yield (instead of gas pool)
         if (upfrontFee > 0) {
             sbUSDToken.mint(gasPool, upfrontFee);
+            stabilityPool.triggerBoldRewards(upfrontFee);
         }
 
         // Insert into sorted troves
@@ -130,6 +134,9 @@ contract BorrowerOperations is IBorrowerOperations {
     }
 
     function closeTrove(uint256 _troveId) external override onlyTroveOwner(_troveId) {
+        // Apply accrued interest before closing
+        _applyTroveInterest(_troveId);
+
         uint256 debt = troveManager.getTroveDebt(_troveId);
         uint256 coll = troveManager.getTroveColl(_troveId);
 
@@ -189,6 +196,9 @@ contract BorrowerOperations is IBorrowerOperations {
         require(_newAnnualInterestRate >= MIN_ANNUAL_INTEREST_RATE, "Interest rate too low");
         require(_newAnnualInterestRate <= MAX_ANNUAL_INTEREST_RATE, "Interest rate too high");
 
+        // Apply accrued interest at old rate before changing
+        _applyTroveInterest(_troveId);
+
         uint256 currentDebt = troveManager.getTroveDebt(_troveId);
         uint256 upfrontFee = _calcUpfrontFee(currentDebt, _newAnnualInterestRate);
         require(upfrontFee <= _maxUpfrontFee, "Upfront fee exceeds max");
@@ -199,17 +209,38 @@ contract BorrowerOperations is IBorrowerOperations {
         // Re-insert into sorted list at new position
         sortedTroves.reInsert(_troveId, _newAnnualInterestRate, _upperHint, _lowerHint);
 
-        // Mint upfront fee to gas pool
+        // Distribute upfront fee to Stability Pool
         if (upfrontFee > 0) {
             sbUSDToken.mint(gasPool, upfrontFee);
             activePool.increaseBoldDebt(upfrontFee);
-            // Update trove debt for the fee
             troveManager.adjustTrove(_troveId, 0, false, upfrontFee, true);
+            stabilityPool.triggerBoldRewards(upfrontFee);
         }
     }
 
     function claimCollateral() external override {
         ICollSurplusPool(collSurplusPool).claimColl(msg.sender);
+    }
+
+    /// @dev Calculates and applies accrued interest to a trove, distributing yield to the Stability Pool
+    function _applyTroveInterest(uint256 _troveId) internal {
+        uint256 lastUpdate = troveManager.getTroveLastDebtUpdateTime(_troveId);
+        uint256 timeDelta = block.timestamp - lastUpdate;
+        if (timeDelta == 0) return;
+
+        uint256 debt = troveManager.getTroveDebt(_troveId);
+        uint256 rate = troveManager.getTroveAnnualInterestRate(_troveId);
+
+        // accrued = debt * rate * timeDelta / (365 days)
+        uint256 accrued = (debt * rate * timeDelta) / (365 days * DECIMAL_PRECISION);
+        if (accrued == 0) return;
+
+        // Add interest to trove debt
+        troveManager.adjustTrove(_troveId, 0, false, accrued, true);
+        activePool.increaseBoldDebt(accrued);
+
+        // Distribute accrued interest to Stability Pool depositors
+        stabilityPool.triggerBoldRewards(accrued);
     }
 
     function _adjustTroveInternal(
@@ -219,6 +250,9 @@ contract BorrowerOperations is IBorrowerOperations {
         uint256 _boldChange,
         bool _isDebtIncrease
     ) internal {
+        // Apply accrued interest before any adjustment
+        _applyTroveInterest(_troveId);
+
         if (_isCollIncrease && _collChange > 0) {
             collToken.safeTransferFrom(msg.sender, address(activePool), _collChange);
             activePool.increaseCollBalance(_collChange);

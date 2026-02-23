@@ -137,7 +137,7 @@ export function Borrow() {
 
     const errors: string[] = []
     if (debtNum > 0 && debtNum < MIN_DEBT) errors.push(`Minimum debt is ${MIN_DEBT} sbUSD.`)
-    if (summary.cr > 0 && summary.cr < mcr) errors.push(`CR (${summary.cr.toFixed(1)}%) is below MCR (${mcr}%). Increase collateral or reduce debt.`)
+    if (summary.cr > 0 && summary.cr < mcr) errors.push(`Health Factor (${(summary.cr / 100).toFixed(2)}) is below minimum (${(mcr / 100).toFixed(2)}). Increase collateral or reduce debt.`)
     const canOpen = !!collAmount && !!debtAmount && debtNum >= MIN_DEBT && summary.cr >= mcr
 
     // HIGH-2: Dynamic button text
@@ -160,7 +160,7 @@ export function Borrow() {
         if (!collAmount) return 'Enter deposit amount'
         if (!debtAmount) return 'Enter borrow amount'
         if (debtNum > 0 && debtNum < MIN_DEBT) return `Min debt: ${MIN_DEBT} sbUSD`
-        if (summary.cr > 0 && summary.cr < mcr) return `CR below MCR (${mcr}%)`
+        if (summary.cr > 0 && summary.cr < mcr) return `HF too low (min ${(mcr / 100).toFixed(2)})`
         return <>Open Position <ChevronRight className="w-5 h-5" /></>
     }
 
@@ -351,8 +351,8 @@ export function Borrow() {
                     </p>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                         <div className="flex justify-between col-span-2">
-                            <span className="text-gray-400">Collateral Ratio</span>
-                            <span className={`font-bold ${crColor}`}>{summary.cr > 0 ? `${summary.cr.toFixed(2)}%` : '—'}</span>
+                            <span className="text-gray-400">Health Factor</span>
+                            <span className={`font-bold ${crColor}`}>{summary.cr > 0 ? (summary.cr / 100).toFixed(2) : '—'}</span>
                         </div>
                         <div className="flex justify-between col-span-2">
                             <span className="text-gray-400">Liquidation Price</span>
@@ -367,12 +367,12 @@ export function Borrow() {
                             <span className="text-gray-400 font-mono text-xs">~{EST_GAS_TCTC} tCTC</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-gray-400">MCR</span>
-                            <span className="text-gray-300">{mcr}%</span>
+                            <span className="text-gray-400">Min HF</span>
+                            <span className="text-gray-300">{(mcr / 100).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-gray-400">CCR</span>
-                            <span className="text-gray-300">{ccr}%</span>
+                            <span className="text-gray-400">System HF</span>
+                            <span className="text-gray-300">{(ccr / 100).toFixed(2)}</span>
                         </div>
                     </div>
                 </div>

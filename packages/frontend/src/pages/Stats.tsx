@@ -136,12 +136,12 @@ export function Stats() {
                                         Total Collateral
                                     </th>
                                     <th className="text-right px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        CR / MCR
-                                        <InfoIcon tip="Current Collateral Ratio / Minimum Collateral Ratio" />
+                                        Health Factor
+                                        <InfoIcon tip="Health Factor = Collateral Value / Debt. Min 1.10 (wCTC) or 1.20 (lstCTC)" />
                                     </th>
                                     <th className="text-right px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        CCR
-                                        <InfoIcon tip="Critical Collateral Ratio — triggers Recovery Mode when system falls below this level" />
+                                        System HF
+                                        <InfoIcon tip="System Health Factor threshold — triggers Recovery Mode when system falls below this level" />
                                     </th>
                                     <th className="text-right px-4 py-3.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                         LTV
@@ -209,18 +209,18 @@ export function Stats() {
                                                 </p>
                                             </td>
 
-                                            {/* CR / MCR */}
+                                            {/* Health Factor */}
                                             <td className="px-4 py-4 text-right">
                                                 <span className={`font-bold ${crColor(currentCR)}`}>
-                                                    {market.currentCR}%
+                                                    {(currentCR / 100).toFixed(2)}
                                                 </span>
                                                 <span className="text-gray-500 mx-1">/</span>
-                                                <span className="text-gray-400 font-medium">{market.mcr}%</span>
+                                                <span className="text-gray-400 font-medium">{(parseFloat(market.mcr) / 100).toFixed(2)}</span>
                                             </td>
 
-                                            {/* CCR */}
+                                            {/* System HF */}
                                             <td className="px-4 py-4 text-right">
-                                                <span className="text-gray-300 font-medium">{market.ccr}%</span>
+                                                <span className="text-gray-300 font-medium">{(parseFloat(market.ccr) / 100).toFixed(2)}</span>
                                             </td>
 
                                             {/* LTV */}
@@ -267,13 +267,13 @@ export function Stats() {
                             </span>
                             <div className="flex items-center gap-4 text-xs text-gray-600">
                                 <span className="flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-status-safe inline-block" /> CR ≥ 200%: Safe
+                                    <span className="w-2 h-2 rounded-full bg-status-safe inline-block" /> HF ≥ 2.00: Healthy
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-status-warn inline-block" /> 150–200%: Warning
+                                    <span className="w-2 h-2 rounded-full bg-status-warn inline-block" /> 1.50–2.00: At Risk
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-status-danger inline-block" /> &lt; 150%: Danger
+                                    <span className="w-2 h-2 rounded-full bg-status-danger inline-block" /> &lt; 1.50: Danger
                                 </span>
                             </div>
                         </div>
@@ -286,13 +286,13 @@ export function Stats() {
                 <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Protocol Parameters</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                        { label: 'wCTC MCR', value: '110%', tip: 'Minimum Collateral Ratio — wCTC branch' },
-                        { label: 'lstCTC MCR', value: '120%', tip: 'Minimum Collateral Ratio — lstCTC branch' },
+                        { label: 'wCTC Min HF', value: '1.10', tip: 'Minimum Health Factor — wCTC branch (liquidated below this)' },
+                        { label: 'lstCTC Min HF', value: '1.20', tip: 'Minimum Health Factor — lstCTC branch (liquidated below this)' },
                         { label: 'wCTC Price', value: '$0.20', tip: 'Current mock oracle price' },
                         { label: 'lstCTC Price', value: '$0.21', tip: 'Current mock oracle price (1.05× exchange rate)' },
                         { label: 'Min Debt', value: '200 sbUSD', tip: 'Minimum amount to borrow per Trove' },
-                        { label: 'wCTC CCR', value: '150%', tip: 'Critical Collateral Ratio — triggers Recovery Mode when system falls below' },
-                        { label: 'lstCTC CCR', value: '160%', tip: 'Critical Collateral Ratio — triggers Recovery Mode when system falls below' },
+                        { label: 'wCTC System HF', value: '1.50', tip: 'System Health Factor — triggers Recovery Mode when system falls below' },
+                        { label: 'lstCTC System HF', value: '1.60', tip: 'System Health Factor — triggers Recovery Mode when system falls below' },
                         { label: 'Network', value: 'Testnet', tip: 'Creditcoin Testnet (chainId: 102031)' },
                     ].map(({ label, value, tip }) => (
                         <div

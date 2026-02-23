@@ -6,42 +6,43 @@
         "explorer": "https://creditcoin-testnet.blockscout.com"
     },
     "tokens": {
-        "wCTC": "0x495644a75e54e33d75b5809841d1fed2c1a9b56e",
-        "lstCTC": "0xfe83ecb4752128f85acee4b605d537b8ed5c04e9",
-        "sbUSD": "0x46dbeb7edbc082df2754759a9645fcd5da3636c4"
+        "wCTC": "0x92eddc97ca2010de1b2763db4c621b9e2576ba0d",
+        "lstCTC": "0xc14bffa402df08f08e5318c7a5526c4ca923a1b6",
+        "sbUSD": "0x0373d635ab529ba219d61e076b8d4734ad5c2abc"
     },
     "branches": {
         "wCTC": {
-            "addressesRegistry": "0x7cd94decd602b01513a8acb3a1ab589433d5dc72",
-            "borrowerOperations": "0x5015ccbf8f2335d09d8c903ffe80d129c1864acd",
-            "troveManager": "0xd98da26fe3a9ed01de9169da87c8bdba8cf87229",
-            "stabilityPool": "0x017b8dccd19786d045afe268dbd3ab711747f907",
-            "activePool": "0x843e4fd0dc43d8d29eadc8d43248357f2daaa6be",
-            "defaultPool": "0x06a3b401d7132da0a3975e4bc1cbae49e533cafe",
-            "gasPool": "0xbede7613da851226315c1b2cf56b084747670e9e",
-            "collSurplusPool": "0xe860ddfd6d873da3bc834f8167b5b427008dc2d0",
-            "sortedTroves": "0x9b2b472870e4d44caee8e2756977725d183e2fdb",
-            "troveNFT": "0x3b0936c8a1b79bf478e178c40ea12ca3ed4197b0",
-            "priceFeed": "0x04e78c6b26251c2553d3beff655a6f0d3803b7c9"
+            "addressesRegistry": "0x89b18ab63e00ad058f4a8b09eeb8160169ff12db",
+            "borrowerOperations": "0xf1beb1c2cb94ef61a0b59350cc879bbd5c13a25b",
+            "troveManager": "0xd546356895d33f69bb12fc3f50a03c6f457f2309",
+            "stabilityPool": "0x9574a639976e4362e9e2e8163ddca1936efa5044",
+            "activePool": "0x8856133f49cd547bd8446e5536d4ea59ac3149f7",
+            "defaultPool": "0xa22ea7ec774ca278657eb12f2dcc9a2eefcd02c8",
+            "gasPool": "0x647e97456097832fb24611918704f65af3057206",
+            "collSurplusPool": "0x77d8b77cda980a949d3946ce65eabde392eee802",
+            "sortedTroves": "0x8a14bcde76b899b5acf3c8fab456353fcf23697d",
+            "troveNFT": "0xc9ed0cf29b6d4b1d2cf30832b4267e06325749ae",
+            "priceFeed": "0x6dd3462a06e6abe20f86f667a62ee60e75d4666b"
         },
         "lstCTC": {
-            "addressesRegistry": "0x8d1c5382f58a4e3c32f6bc55d219c11e7a5c2b04",
-            "borrowerOperations": "0xe1f8941341fc0281fdd8aedd92c1b5b6211fb1d4",
-            "troveManager": "0xcdf5d1950488d49e4f09fc616a276055a5229a67",
-            "stabilityPool": "0xb686bd4a7fafd04bb4b7899ce3abc2ebb63af45a",
-            "activePool": "0xf79ac4ee4de95f3d63239fd4a64e42756d51fdae",
-            "defaultPool": "0x0a424f5089d0826643578ca646c8edabbddf6470",
-            "gasPool": "0x18bb1a401daef7efd91feffcb9de1edb56e8260b",
-            "collSurplusPool": "0x2e051791196c583ac43be3a2cf737f9e543af11d",
-            "sortedTroves": "0x6bd39af024012e03345df11f816529cfe50a9ea7",
-            "troveNFT": "0xf37af5bab24e87b5aeba2be4395df6a39da2bebd",
-            "priceFeed": "0xdee05408568b0274266672ec0e8015f539663173"
+            "addressesRegistry": "0x663f895b801aafe1e1a0d46bd53e8064a40dd5b4",
+            "borrowerOperations": "0xe900ea761d271dd95e463fb8ab906daded308c1d",
+            "troveManager": "0x6b4135ced3bd3a063f8def704aca43b7a2a7bead",
+            "stabilityPool": "0x37c93db4b1e9bcf6843ec63d3a7928fc51aae8b6",
+            "activePool": "0x296c14840f6ee74c0df67a7fd061ca900c94b95b",
+            "defaultPool": "0x90bcdc9f0ad8eafdf7bb1a483b44e22de096fa03",
+            "gasPool": "0xc0bb6504b8f35cf4da41befd2bb21282613444e4",
+            "collSurplusPool": "0x9ddc7020af4cf877eaff3edeed10147b0d4ddde3",
+            "sortedTroves": "0x4d2606728b43df952817a09a5a2ac5bf652259b5",
+            "troveNFT": "0x7c8525e9f7ea846b2b2d747ca4cec3bed285f630",
+            "priceFeed": "0x1e5f1c7c8df3de72e571365dea1a7d67e5520eba"
         }
     },
     "shared": {
-        "collateralRegistry": "0xb368984a9ff400a1adb7c5aaa11df5cc57c0cf62",
-        "hintHelpers": "0x1b7e9f814c57a4a31252e860c18c4f18df8400c7",
-        "multiTroveGetter": "0x2f2c2633b6e6c2f16a2155833009bcd8a7abf3bc"
+        "collateralRegistry": "0x159ac1d047ba2ad5a756cb8bb566b1d0b2699f53",
+        "hintHelpers": "0xb88d96753b507ad7e9261b80441c898b520746a7",
+        "multiTroveGetter": "0x32e9c5e5844b04c88d820015b36d366206ee79f5",
+        "agentVault": "0x46c446831b22d1d629b344a3b1cdd018c4f107be"
     },
     "erc8004": {
         "identityRegistry": "0x993C9150f074435BA79033300834FcE06897de9B",

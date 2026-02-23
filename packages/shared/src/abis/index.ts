@@ -125,7 +125,7 @@ export const HintHelpersABI = [
 ] as const;
 
 export const MultiTroveGetterABI = [
-  "function getMultipleSortedTroves(uint256,int256,uint256) view returns (tuple(uint256 id, uint256 debt, uint256 coll, uint256 annualInterestRate, uint8 status)[])",
+  "function getMultipleSortedTroves(uint256,int256,uint256) view returns ((uint256 id, uint256 debt, uint256 coll, uint256 annualInterestRate, uint8 status)[])",
 ] as const;
 
 export const IdentityRegistryABI = [

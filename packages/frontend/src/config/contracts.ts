@@ -10,6 +10,7 @@ import {
   SbUSDTokenABI,
   MockWCTCABI,
   MockLstCTCABI,
+  MultiTroveGetterABI,
 } from '@snowball/shared'
 import addresses from './addresses.json'
 
@@ -25,7 +26,12 @@ export const abis = {
   sbUSD: parseAbi(SbUSDTokenABI),
   wCTC: parseAbi(MockWCTCABI),
   lstCTC: parseAbi(MockLstCTCABI),
+  multiTroveGetter: parseAbi(MultiTroveGetterABI),
 } as const
+
+export function getMultiTroveGetter(): `0x${string}` {
+  return addresses.shared.multiTroveGetter as `0x${string}`
+}
 
 const BRANCHES = [addresses.branches.wCTC, addresses.branches.lstCTC] as const
 

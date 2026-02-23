@@ -99,6 +99,9 @@ contract CollateralRegistry is Ownable {
             (uint256 price, ) = IPriceFeed(branch.priceFeed).fetchPrice();
             if (price == 0) continue;
 
+            // Track balance before to calculate exact amount burned by this branch
+            uint256 balanceBefore = ISbUSDToken(sbUSDToken).balanceOf(msg.sender);
+
             ITroveManager(branch.troveManager).redeemCollateral(
                 msg.sender,
                 remainingBold,
@@ -106,9 +109,9 @@ contract CollateralRegistry is Ownable {
                 iterationsPerBranch
             );
 
-            // Check how much sbUSD was actually burned by reading remaining balance
-            uint256 newBalance = ISbUSDToken(sbUSDToken).balanceOf(msg.sender);
-            remainingBold = newBalance < remainingBold ? newBalance : 0;
+            uint256 balanceAfter = ISbUSDToken(sbUSDToken).balanceOf(msg.sender);
+            uint256 burned = balanceBefore > balanceAfter ? balanceBefore - balanceAfter : 0;
+            remainingBold -= burned;
         }
     }
 }
