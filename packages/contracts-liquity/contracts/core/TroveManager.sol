@@ -26,6 +26,7 @@ contract TroveManager is ITroveManager {
     uint256 public constant DECIMAL_PRECISION = 1e18;
     uint256 public constant _100PCT = 1e18;
     uint256 public constant MIN_DEBT = 200e18; // 200 sbUSD minimum
+    uint256 public constant MAX_BATCH_LIQUIDATION = 50; // cap to prevent gas DoS
 
     // Addresses
     IAddressesRegistry public addressesRegistry;
@@ -277,6 +278,7 @@ contract TroveManager is ITroveManager {
     }
 
     function batchLiquidateTroves(uint256[] calldata _troveIds) external override {
+        require(_troveIds.length <= MAX_BATCH_LIQUIDATION, "TroveManager: batch too large");
         for (uint256 i = 0; i < _troveIds.length; i++) {
             Trove storage trove = troves[_troveIds[i]];
             if (trove.status != Status.active) continue;
