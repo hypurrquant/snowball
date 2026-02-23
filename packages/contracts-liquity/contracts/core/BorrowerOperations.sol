@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import "../interfaces/IBorrowerOperations.sol";
 import "../interfaces/IAddressesRegistry.sol";
@@ -49,7 +49,12 @@ contract BorrowerOperations is IBorrowerOperations {
 
     uint256 private _troveIdCounter;
 
+    address public immutable deployer;
     bool public isInitialized;
+
+    constructor() {
+        deployer = msg.sender;
+    }
 
     modifier onlyTroveOwner(uint256 _troveId) {
         require(troveNFT.ownerOf(_troveId) == msg.sender, "BorrowerOps: not owner");
@@ -57,6 +62,7 @@ contract BorrowerOperations is IBorrowerOperations {
     }
 
     function setAddressesRegistry(address _addressesRegistry) external override {
+        require(msg.sender == deployer, "BorrowerOps: not deployer");
         require(!isInitialized, "Already initialized");
         isInitialized = true;
 
@@ -76,6 +82,7 @@ contract BorrowerOperations is IBorrowerOperations {
     }
 
     function setCollateralRegistry(address _collateralRegistry) external override {
+        require(msg.sender == deployer, "BorrowerOps: not deployer");
         require(collateralRegistry == address(0), "Already set");
         collateralRegistry = _collateralRegistry;
     }

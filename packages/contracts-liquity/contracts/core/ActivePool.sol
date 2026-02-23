@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -20,7 +20,12 @@ contract ActivePool is IActivePool {
     uint256 internal boldDebt;
     uint256 internal _aggWeightedDebtSum;
 
+    address public immutable deployer;
     bool public isInitialized;
+
+    constructor() {
+        deployer = msg.sender;
+    }
 
     modifier onlyAuthorized() {
         require(
@@ -34,6 +39,7 @@ contract ActivePool is IActivePool {
     }
 
     function setAddressesRegistry(address _addressesRegistry) external override {
+        require(msg.sender == deployer, "ActivePool: not deployer");
         require(!isInitialized, "Already initialized");
         isInitialized = true;
         addressesRegistry = _addressesRegistry;
@@ -46,6 +52,7 @@ contract ActivePool is IActivePool {
         address _defaultPool,
         address _collToken
     ) external {
+        require(msg.sender == deployer, "ActivePool: not deployer");
         require(borrowerOperations == address(0), "Already set");
         borrowerOperations = _borrowerOperations;
         troveManager = _troveManager;

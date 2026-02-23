@@ -1,25 +1,21 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/ISbUSDToken.sol";
 
 /// @title SbUSDToken — Snowball USD stablecoin (Liquity V2 BOLD fork)
-contract SbUSDToken is ERC20, ERC20Permit, ISbUSDToken {
+/// @dev Uses OpenZeppelin Ownable for standard ownership management (transferOwnership, renounceOwnership).
+contract SbUSDToken is ERC20, ERC20Permit, Ownable, ISbUSDToken {
     address public collateralRegistryAddress;
-    address public owner;
 
     // Per-branch authorized minters/burners
     mapping(address => bool) public troveManagers;
     mapping(address => bool) public stabilityPools;
     mapping(address => bool) public borrowerOperations;
     mapping(address => bool) public activePools;
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "SbUSD: not owner");
-        _;
-    }
 
     modifier onlyAuthorized() {
         require(
@@ -32,9 +28,11 @@ contract SbUSDToken is ERC20, ERC20Permit, ISbUSDToken {
         _;
     }
 
-    constructor() ERC20("Snowball USD", "sbUSD") ERC20Permit("Snowball USD") {
-        owner = msg.sender;
-    }
+    constructor()
+        ERC20("Snowball USD", "sbUSD")
+        ERC20Permit("Snowball USD")
+        Ownable(msg.sender)
+    {}
 
     function setBranchAddresses(
         address _troveManagerAddress,

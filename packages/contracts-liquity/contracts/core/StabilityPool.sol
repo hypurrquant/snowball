@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import "../interfaces/IStabilityPool.sol";
 import "../interfaces/IAddressesRegistry.sol";
@@ -8,6 +8,17 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title StabilityPool — sbUSD deposit pool for liquidation absorption
+/// @dev Uses O(1) epoch-scale accumulator pattern. No loops over depositors.
+///      Gains are computed lazily per-user using cumulative S (coll) and G (bold) trackers.
+///
+///      Math:
+///        S accumulates: collPerUnit * P / DECIMAL_PRECISION at each liquidation
+///        G accumulates: boldYield * DECIMAL_PRECISION / totalBoldDeposits at each interest event
+///        P accumulates: product of (1 - debtLossPerUnit) — tracks deposit compounding
+///
+///        User collGain  = deposit.initialValue * (S - deposit.S) / deposit.P
+///        User boldGain  = compounded * (G - deposit.G) / DECIMAL_PRECISION
+///        compounded     = deposit.initialValue * P / deposit.P
 contract StabilityPool is IStabilityPool {
     using SafeERC20 for IERC20;
 
@@ -22,33 +33,56 @@ contract StabilityPool is IStabilityPool {
 
     uint256 public totalBoldDeposits;
 
+    // ─── Epoch-scale O(1) accumulators ───────────────────────────────────────
+
+    /// @dev Running product of (1 - debtLossPerUnit) across all liquidations.
+    ///      Starts at 1e18. Decreases toward 0 as deposits absorb debt.
+    uint256 public P = DECIMAL_PRECISION;
+
+    /// @dev Cumulative collateral gain per unit of P-adjusted deposit.
+    ///      At each liquidation: S += (coll / totalDeposits) * P
+    uint256 public S;
+
+    /// @dev Cumulative bold yield (interest) per unit of effective deposit.
+    ///      At each triggerBoldRewards: G += yield * DECIMAL_PRECISION / totalDeposits
+    uint256 public G;
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     struct Deposit {
-        uint256 initialValue;
-        uint256 collGain;
-        uint256 boldGain;
+        uint256 initialValue; // Original sbUSD burned (not compounded)
+        uint256 S;            // S accumulator snapshot at deposit time
+        uint256 G;            // G accumulator snapshot at deposit time
+        uint256 P;            // P product snapshot at deposit time
     }
 
     mapping(address => Deposit) public deposits;
-    address[] public depositors;
 
-    // Epoch-scale tracking (simplified for testnet)
-    uint256 public P = DECIMAL_PRECISION; // Product "P"
-    uint256 public totalCollGain;
-
+    // ─── Initialization guard ─────────────────────────────────────────────────
+    address public immutable deployer;
     bool public isInitialized;
+    bool public addressesSet;
 
+    // ─── Events ───────────────────────────────────────────────────────────────
     event DepositMade(address indexed depositor, uint256 amount);
     event DepositWithdrawn(address indexed depositor, uint256 amount);
     event CollGainWithdrawn(address indexed depositor, uint256 amount);
     event BoldGainWithdrawn(address indexed depositor, uint256 amount);
     event StabilityPoolLiquidation(uint256 debtOffset, uint256 collAdded);
 
+    constructor() {
+        deployer = msg.sender;
+    }
+
     modifier onlyTroveManager() {
         require(msg.sender == troveManager, "SP: not TroveManager");
         _;
     }
 
+    // ─── Initialization ───────────────────────────────────────────────────────
+
     function setAddressesRegistry(address _addressesRegistry) external override {
+        require(msg.sender == deployer, "SP: not deployer");
         require(!isInitialized, "Already initialized");
         isInitialized = true;
         addressesRegistry = IAddressesRegistry(_addressesRegistry);
@@ -61,7 +95,9 @@ contract StabilityPool is IStabilityPool {
         address _activePool,
         address _borrowerOperations
     ) external {
-        require(address(sbUSDToken) == address(0), "Already set");
+        require(msg.sender == deployer, "SP: not deployer");
+        require(!addressesSet, "Already set");
+        addressesSet = true;
         sbUSDToken = ISbUSDToken(_sbUSDToken);
         collToken = IERC20(_collToken);
         troveManager = _troveManager;
@@ -69,17 +105,26 @@ contract StabilityPool is IStabilityPool {
         borrowerOperations = _borrowerOperations;
     }
 
+    // ─── User actions ─────────────────────────────────────────────────────────
+
     function provideToSP(uint256 _amount) external override {
         require(_amount > 0, "Amount must be > 0");
 
-        // Transfer sbUSD from depositor
+        // Auto-claim pending gains before updating the deposit position
+        _sendGainsToDepositor(msg.sender);
+
+        // Burn sbUSD from depositor
         sbUSDToken.burn(msg.sender, _amount);
 
+        // Compound existing deposit, then add new amount, and refresh snapshots
         Deposit storage dep = deposits[msg.sender];
-        if (dep.initialValue == 0) {
-            depositors.push(msg.sender);
-        }
-        dep.initialValue += _amount;
+        uint256 compounded = _getCompoundedDeposit(dep);
+
+        dep.initialValue = compounded + _amount;
+        dep.S = S;
+        dep.G = G;
+        dep.P = (P == 0) ? DECIMAL_PRECISION : P; // guard against zero-P edge case
+
         totalBoldDeposits += _amount;
 
         emit DepositMade(msg.sender, _amount);
@@ -87,82 +132,78 @@ contract StabilityPool is IStabilityPool {
 
     function withdrawFromSP(uint256 _amount) external override {
         Deposit storage dep = deposits[msg.sender];
-        uint256 currentDeposit = dep.initialValue;
-        require(currentDeposit > 0, "No deposit");
+        require(dep.initialValue > 0, "No deposit");
 
-        uint256 withdrawAmount = _amount > currentDeposit ? currentDeposit : _amount;
-        dep.initialValue -= withdrawAmount;
-        totalBoldDeposits -= withdrawAmount;
+        // Send all pending gains first
+        _sendGainsToDepositor(msg.sender);
 
-        // Mint sbUSD back to depositor
-        sbUSDToken.mint(msg.sender, withdrawAmount);
+        uint256 compounded = _getCompoundedDeposit(dep);
+        uint256 withdrawAmount = _amount > compounded ? compounded : _amount;
 
-        // Send any collateral gain
-        uint256 collGain = dep.collGain;
-        if (collGain > 0) {
-            dep.collGain = 0;
-            collToken.safeTransfer(msg.sender, collGain);
-            emit CollGainWithdrawn(msg.sender, collGain);
+        // Update deposit and snapshots
+        dep.initialValue = compounded - withdrawAmount;
+        dep.S = S;
+        dep.G = G;
+        dep.P = (P == 0) ? DECIMAL_PRECISION : P;
+
+        if (withdrawAmount > 0) {
+            totalBoldDeposits -= withdrawAmount;
+            sbUSDToken.mint(msg.sender, withdrawAmount);
+            emit DepositWithdrawn(msg.sender, withdrawAmount);
         }
-
-        // Send any bold gain
-        uint256 boldGain = dep.boldGain;
-        if (boldGain > 0) {
-            dep.boldGain = 0;
-            sbUSDToken.mint(msg.sender, boldGain);
-            emit BoldGainWithdrawn(msg.sender, boldGain);
-        }
-
-        emit DepositWithdrawn(msg.sender, withdrawAmount);
     }
 
     function claimReward() external override {
         Deposit storage dep = deposits[msg.sender];
-        uint256 collGain = dep.collGain;
-        uint256 boldGain = dep.boldGain;
+        uint256 collGain = _getPendingCollGain(dep);
+        uint256 boldGain = _getPendingBoldGain(dep);
         require(collGain > 0 || boldGain > 0, "No rewards");
 
+        // Reset gain snapshots (leave initialValue and P intact for future compounding)
+        dep.S = S;
+        dep.G = G;
+
         if (collGain > 0) {
-            dep.collGain = 0;
             collToken.safeTransfer(msg.sender, collGain);
             emit CollGainWithdrawn(msg.sender, collGain);
         }
-
         if (boldGain > 0) {
-            dep.boldGain = 0;
             sbUSDToken.mint(msg.sender, boldGain);
             emit BoldGainWithdrawn(msg.sender, boldGain);
         }
     }
 
-    /// @dev Called by TroveManager during liquidation
+    // ─── Protocol callbacks ───────────────────────────────────────────────────
+
+    /// @dev Called by TroveManager during liquidation.
+    ///      O(1): updates S and P accumulators only — no loop over depositors.
     function offset(uint256 _debtToOffset, uint256 _collToAdd) external override onlyTroveManager {
         if (totalBoldDeposits == 0 || _debtToOffset == 0) return;
 
         uint256 debtToOffset = _debtToOffset > totalBoldDeposits ? totalBoldDeposits : _debtToOffset;
 
-        // Distribute collateral gain proportionally
-        uint256 depositorCount = depositors.length;
-        for (uint256 i = 0; i < depositorCount; i++) {
-            address depositor = depositors[i];
-            Deposit storage dep = deposits[depositor];
-            if (dep.initialValue == 0) continue;
+        // Collateral gain per unit of effective deposit (scaled by P before update)
+        // S += (coll / D) * P   where D = totalBoldDeposits before this liquidation
+        uint256 collGainPerUnitStaked = _collToAdd * DECIMAL_PRECISION / totalBoldDeposits;
+        S += collGainPerUnitStaked * P / DECIMAL_PRECISION;
 
-            uint256 share = (dep.initialValue * DECIMAL_PRECISION) / totalBoldDeposits;
-            uint256 collShare = (_collToAdd * share) / DECIMAL_PRECISION;
-            uint256 debtShare = (debtToOffset * share) / DECIMAL_PRECISION;
-
-            dep.collGain += collShare;
-            dep.initialValue -= debtShare > dep.initialValue ? dep.initialValue : debtShare;
+        // Update P: multiply by (1 - lossRatio)
+        uint256 boldLossPerUnitStaked = debtToOffset * DECIMAL_PRECISION / totalBoldDeposits;
+        if (boldLossPerUnitStaked >= DECIMAL_PRECISION) {
+            // Edge case: total wipeout — reset to avoid division by zero
+            P = DECIMAL_PRECISION; // reset for next cycle; totalBoldDeposits will be 0
+            totalBoldDeposits = 0;
+        } else {
+            P = P * (DECIMAL_PRECISION - boldLossPerUnitStaked) / DECIMAL_PRECISION;
+            if (P == 0) P = 1; // guard against exact-zero due to truncation
+            totalBoldDeposits -= debtToOffset;
         }
-
-        totalBoldDeposits -= debtToOffset;
-        totalCollGain += _collToAdd;
 
         emit StabilityPoolLiquidation(debtToOffset, _collToAdd);
     }
 
-    /// @dev Called by BorrowerOperations or ActivePool to distribute sbUSD yield (interest revenue) to depositors
+    /// @dev Called by BorrowerOperations to distribute sbUSD yield (interest).
+    ///      O(1): updates G accumulator only.
     function triggerBoldRewards(uint256 _boldYield) external override {
         require(
             msg.sender == activePool || msg.sender == borrowerOperations,
@@ -170,34 +211,72 @@ contract StabilityPool is IStabilityPool {
         );
         if (totalBoldDeposits == 0 || _boldYield == 0) return;
 
-        // Distribute boldYield proportionally to all depositors
-        uint256 depositorCount = depositors.length;
-        for (uint256 i = 0; i < depositorCount; i++) {
-            address depositor = depositors[i];
-            Deposit storage dep = deposits[depositor];
-            if (dep.initialValue == 0) continue;
-
-            uint256 share = (dep.initialValue * DECIMAL_PRECISION) / totalBoldDeposits;
-            uint256 boldShare = (_boldYield * share) / DECIMAL_PRECISION;
-            dep.boldGain += boldShare;
-        }
+        // G += yield * DECIMAL_PRECISION / totalBoldDeposits
+        G += _boldYield * DECIMAL_PRECISION / totalBoldDeposits;
     }
 
-    // ==================== View Functions ====================
+    // ─── View functions ───────────────────────────────────────────────────────
 
     function getTotalBoldDeposits() external view override returns (uint256) {
         return totalBoldDeposits;
     }
 
-    function getDepositorBoldGain(address _depositor) external view override returns (uint256) {
-        return deposits[_depositor].boldGain;
+    function getDepositorCollGain(address _depositor) external view override returns (uint256) {
+        return _getPendingCollGain(deposits[_depositor]);
     }
 
-    function getDepositorCollGain(address _depositor) external view override returns (uint256) {
-        return deposits[_depositor].collGain;
+    function getDepositorBoldGain(address _depositor) external view override returns (uint256) {
+        return _getPendingBoldGain(deposits[_depositor]);
     }
 
     function getCompoundedBoldDeposit(address _depositor) external view override returns (uint256) {
-        return deposits[_depositor].initialValue;
+        return _getCompoundedDeposit(deposits[_depositor]);
+    }
+
+    // ─── Internal helpers ─────────────────────────────────────────────────────
+
+    /// @dev Returns the current effective deposit after absorbing any liquidation losses.
+    function _getCompoundedDeposit(Deposit storage dep) internal view returns (uint256) {
+        if (dep.initialValue == 0 || dep.P == 0) return 0;
+        return dep.initialValue * P / dep.P;
+    }
+
+    /// @dev collGain = initialValue * (S - S_snap) / P_snap
+    function _getPendingCollGain(Deposit storage dep) internal view returns (uint256) {
+        if (dep.initialValue == 0 || dep.P == 0) return 0;
+        uint256 gainPerUnit = S - dep.S;
+        if (gainPerUnit == 0) return 0;
+        return dep.initialValue * gainPerUnit / dep.P;
+    }
+
+    /// @dev boldGain = compounded * (G - G_snap) / DECIMAL_PRECISION
+    function _getPendingBoldGain(Deposit storage dep) internal view returns (uint256) {
+        if (dep.initialValue == 0 || dep.P == 0) return 0;
+        uint256 gainPerUnit = G - dep.G;
+        if (gainPerUnit == 0) return 0;
+        uint256 compounded = dep.initialValue * P / dep.P;
+        return compounded * gainPerUnit / DECIMAL_PRECISION;
+    }
+
+    /// @dev Sends all pending gains to depositor and updates gain snapshots.
+    function _sendGainsToDepositor(address _depositor) internal {
+        Deposit storage dep = deposits[_depositor];
+        if (dep.initialValue == 0) return;
+
+        uint256 collGain = _getPendingCollGain(dep);
+        uint256 boldGain = _getPendingBoldGain(dep);
+
+        // Update snapshots before external calls (CEI pattern)
+        dep.S = S;
+        dep.G = G;
+
+        if (collGain > 0) {
+            collToken.safeTransfer(_depositor, collGain);
+            emit CollGainWithdrawn(_depositor, collGain);
+        }
+        if (boldGain > 0) {
+            sbUSDToken.mint(_depositor, boldGain);
+            emit BoldGainWithdrawn(_depositor, boldGain);
+        }
     }
 }

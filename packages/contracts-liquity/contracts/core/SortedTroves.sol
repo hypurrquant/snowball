@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import "../interfaces/ISortedTroves.sol";
 
@@ -22,7 +22,12 @@ contract SortedTroves is ISortedTroves {
     uint256 public tail; // lowest interest rate
     uint256 public size;
 
+    address public immutable deployer;
     bool public isInitialized;
+
+    constructor() {
+        deployer = msg.sender;
+    }
 
     modifier onlyAuthorized() {
         require(
@@ -33,12 +38,14 @@ contract SortedTroves is ISortedTroves {
     }
 
     function setAddressesRegistry(address _addressesRegistry) external override {
+        require(msg.sender == deployer, "SortedTroves: not deployer");
         require(!isInitialized, "Already initialized");
         isInitialized = true;
         addressesRegistry = _addressesRegistry;
     }
 
     function setAddresses(address _troveManager, address _borrowerOperations) external {
+        require(msg.sender == deployer, "SortedTroves: not deployer");
         require(troveManager == address(0), "Already set");
         troveManager = _troveManager;
         borrowerOperations = _borrowerOperations;

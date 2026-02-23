@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 import "../interfaces/ITroveManager.sol";
 import "../interfaces/IAddressesRegistry.sol";
@@ -56,7 +56,12 @@ contract TroveManager is ITroveManager {
     uint256 public L_Coll;
     uint256 public L_BoldDebt;
 
+    address public immutable deployer;
     bool public isInitialized;
+
+    constructor() {
+        deployer = msg.sender;
+    }
 
     event TroveOpened(uint256 indexed troveId, address indexed owner, uint256 coll, uint256 debt);
     event TroveClosed(uint256 indexed troveId);
@@ -72,6 +77,7 @@ contract TroveManager is ITroveManager {
     }
 
     function setAddressesRegistry(address _addressesRegistry) external override {
+        require(msg.sender == deployer, "TroveManager: not deployer");
         require(!isInitialized, "Already initialized");
         isInitialized = true;
 
