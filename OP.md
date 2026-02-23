@@ -124,36 +124,118 @@ cd ../shared && pnpm build
 
 ---
 
-## 2. 환경 변수 (.env)
+## 2. 환경 변수 설정 (신규 환경 세팅)
 
-루트 `.env` 기준:
+> 각 패키지별로 `.env` 파일을 직접 생성해야 합니다. `.gitignore`에 의해 커밋되지 않으므로 **새 환경마다 수동 생성 필수**.
+
+---
+
+### 2-1. 루트 `.env` → `snowball/.env`
 
 ```env
-# 배포자 지갑
-DEPLOYER_PRIVATE_KEY=0x...
+# ─── 배포자 지갑 ───────────────────────────────────────────
+# 컨트랙트 배포 및 관리자 작업에 사용되는 프라이빗 키
+DEPLOYER_PRIVATE_KEY=0x_your_private_key_here
+ADMIN_PRIVATE_KEY=0x_your_private_key_here   # 보통 DEPLOYER와 동일
 
-# Privy (서버 월렛 관리)
-PRIVY_APP_ID=...
-PRIVY_APP_SECRET=...
+# ─── Privy (서버 월렛 관리) ────────────────────────────────
+# https://privy.io 에서 앱 생성 후 발급
+PRIVY_APP_ID=your_privy_app_id
+PRIVY_APP_SECRET=your_privy_app_secret
 
-# OpenAI (챗봇 LLM, 없으면 rule-based fallback)
-OPENAI_API_KEY=sk-...
+# ─── OpenAI (챗봇 LLM) ────────────────────────────────────
+# 없으면 rule-based fallback으로 동작 (선택사항)
+OPENAI_API_KEY=sk-your-openai-api-key
 
-# 포트
-PORT=3000
-CDP_PROVIDER_PORT=3001
-CHATBOT_PORT=3002
+# ─── 포트 설정 ────────────────────────────────────────────
+PORT=3000               # agent-consumer REST API
+CDP_PROVIDER_PORT=3001  # agent-cdp-provider (현재 미사용)
+CHATBOT_PORT=3002       # agent-chatbot
 
-# 개발용 인증 우회
-AUTH_DISABLED=true
-
-# 컨슈머 API URL (챗봇이 참조)
+# ─── 서비스 간 URL ────────────────────────────────────────
+CDP_PROVIDER_URL=http://localhost:3001
 CONSUMER_API_URL=http://localhost:3000
+
+# ─── 개발 옵션 ────────────────────────────────────────────
+AUTH_DISABLED=true      # 개발 전용 — 프로덕션에서 반드시 제거
+# AUTO_REBALANCE=false  # 자동 리밸런스 활성화 여부 (기본 false)
+# LOG_LEVEL=info        # 로그 레벨 (debug | info | warn | error)
 ```
 
-**주의:**
-- `AUTH_DISABLED=true`는 개발 전용. 프로덕션에서 절대 사용 금지
-- `DEPLOYER_PRIVATE_KEY`는 절대 커밋하지 말 것 (`.gitignore`에 포함됨)
+---
+
+### 2-2. agent-consumer `.env` → `snowball/packages/agent-consumer/.env`
+
+위 루트 `.env`를 그대로 복사하거나, 아래 항목만 단독으로 작성:
+
+```env
+DEPLOYER_PRIVATE_KEY=0x_your_private_key_here
+ADMIN_PRIVATE_KEY=0x_your_private_key_here
+PRIVY_APP_ID=your_privy_app_id
+PRIVY_APP_SECRET=your_privy_app_secret
+PORT=3000
+CDP_PROVIDER_URL=http://localhost:3001
+AUTH_DISABLED=true
+```
+
+> agent-consumer는 루트 `.env`를 자동으로 읽으므로 루트에만 있어도 동작합니다.
+
+---
+
+### 2-3. agent-chatbot `.env` → `snowball/packages/agent-chatbot/.env`
+
+```env
+CHATBOT_PORT=3002
+CONSUMER_API_URL=http://localhost:3000
+OPENAI_API_KEY=sk-your-openai-api-key   # 없으면 rule-based fallback
+```
+
+---
+
+### 2-4. frontend `.env` → `snowball/packages/frontend/.env`
+
+```env
+# Privy 앱 ID (공개 키, 노출 가능)
+VITE_PRIVY_APP_ID=your_privy_app_id
+
+# 백엔드 API 엔드포인트
+VITE_API_BASE=http://localhost:3000/api
+VITE_CHAT_API_BASE=http://localhost:3002/api
+```
+
+---
+
+### 2-5. contracts `.env` → `snowball/packages/contracts-liquity/.env`
+
+```env
+# 컨트랙트 배포용 프라이빗 키
+DEPLOYER_PRIVATE_KEY=0x_your_private_key_here
+```
+
+---
+
+### 환경 변수 요약표
+
+| 변수명 | 위치 | 필수 | 설명 |
+|--------|------|------|------|
+| `DEPLOYER_PRIVATE_KEY` | root, contracts, consumer | ✅ | 컨트랙트 배포 및 관리자 트랜잭션 서명 키 |
+| `ADMIN_PRIVATE_KEY` | root, consumer | ✅ | 관리자 작업용 (보통 DEPLOYER와 동일) |
+| `PRIVY_APP_ID` | root, consumer, frontend | ✅ | Privy 앱 식별자 (privy.io에서 발급) |
+| `PRIVY_APP_SECRET` | root, consumer | ✅ | Privy 서버 시크릿 (절대 프론트에 노출 금지) |
+| `OPENAI_API_KEY` | root, chatbot | ❌ | GPT 챗봇용 (없으면 rule-based fallback) |
+| `PORT` | root, consumer | ❌ | consumer API 포트 (기본: 3000) |
+| `CHATBOT_PORT` | root, chatbot | ❌ | chatbot 포트 (기본: 3002) |
+| `CONSUMER_API_URL` | root, chatbot | ❌ | chatbot → consumer 통신 URL |
+| `CDP_PROVIDER_URL` | root, consumer | ❌ | consumer → cdp-provider URL (미사용) |
+| `AUTH_DISABLED` | consumer | ❌ | `true` 시 API 인증 우회 (개발 전용) |
+| `VITE_PRIVY_APP_ID` | frontend | ✅ | 프론트엔드용 Privy App ID |
+| `VITE_API_BASE` | frontend | ✅ | consumer API 기본 URL |
+| `VITE_CHAT_API_BASE` | frontend | ✅ | chatbot API 기본 URL |
+
+**⚠️ 주의사항:**
+- `DEPLOYER_PRIVATE_KEY`, `ADMIN_PRIVATE_KEY`, `PRIVY_APP_SECRET`은 절대 커밋 금지 (`.gitignore` 적용됨)
+- `AUTH_DISABLED=true`는 개발 전용. 프로덕션 배포 시 반드시 제거
+- `VITE_` 접두사 변수는 빌드 시 번들에 포함되므로 시크릿 값 절대 사용 금지
 
 ---
 
