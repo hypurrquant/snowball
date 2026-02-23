@@ -5,6 +5,77 @@
 
 ---
 
+## 0. 신규 환경 세팅 (처음 설치하는 경우)
+
+### 0-1. 필수 도구 설치
+
+| 도구 | 최소 버전 | 설치 방법 |
+|------|-----------|----------|
+| Node.js | 18.0.0 이상 | https://nodejs.org 또는 `nvm` 권장 |
+| pnpm | 8.0.0 이상 | `npm install -g pnpm` |
+| Git | - | https://git-scm.com |
+
+```bash
+# Node.js 버전 확인
+node -v   # v18.x 이상이어야 함
+
+# pnpm 설치 (없는 경우)
+npm install -g pnpm
+
+# pnpm 버전 확인
+pnpm -v   # 8.x 이상 권장
+```
+
+> **nvm 사용 시 (권장):**
+> ```bash
+> nvm install 18
+> nvm use 18
+> ```
+
+---
+
+### 0-2. 저장소 클론 및 의존성 설치
+
+```bash
+# 클론
+git clone https://github.com/hypurrquant/snowball.git
+cd snowball
+
+# 전체 의존성 설치 (pnpm workspace — 루트에서 한 번만 실행)
+pnpm install
+```
+
+> `pnpm install`은 루트에서 한 번만 실행하면 모든 패키지(`packages/*`)에 동시 적용됩니다.
+
+---
+
+### 0-3. 환경 변수 파일 생성
+
+아래 **섹션 2** 참고하여 `.env` 파일들을 생성합니다.
+
+---
+
+### 0-4. shared 패키지 빌드 (최초 1회 필수)
+
+```bash
+# ABI 타입 생성 — 다른 패키지들이 이 빌드 결과물을 참조함
+pnpm --filter @snowball/shared build
+```
+
+> 이 단계를 건너뛰면 frontend/consumer 실행 시 import 오류 발생
+
+---
+
+### 0-5. 컨트랙트 컴파일 (배포 전 필수)
+
+```bash
+cd packages/contracts-liquity
+npx hardhat compile
+cd ../..
+```
+
+---
+
 ## 1. 서버 실행
 
 ### 포트 구성
