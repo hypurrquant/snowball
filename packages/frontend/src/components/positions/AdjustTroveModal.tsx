@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAccount, useWriteContract } from 'wagmi'
+import { useAccount, useWriteContract, usePublicClient } from 'wagmi'
 import { parseEther, formatEther, erc20Abi } from 'viem'
 import { Position } from '@/hooks/useUserPositions'
 import { useAdjustTrove } from '@/hooks/useAdjustTrove'
@@ -32,6 +32,7 @@ export function AdjustTroveModal({ position, onClose }: AdjustTroveModalProps) {
 
     const { adjustTrove, isConfirmed, isReverted } = useAdjustTrove()
     const { writeContractAsync } = useWriteContract()
+    const publicClient = usePublicClient()
 
     const branch = position.branch as 0 | 1
     const collType = position.collateralSymbol
@@ -72,12 +73,13 @@ export function AdjustTroveModal({ position, onClose }: AdjustTroveModalProps) {
             if (needsApprove) {
                 setStep('approving')
                 const tokenAddr = activeTab === 'addColl' ? getCollToken(branch) : getSbUSDToken()
-                await writeContractAsync({
+                const approveTxHash = await writeContractAsync({
                     address: tokenAddr,
                     abi: erc20Abi,
                     functionName: 'approve',
                     args: [borrowerOperations, parsedAmount],
                 })
+                await publicClient!.waitForTransactionReceipt({ hash: approveTxHash })
             }
 
             // Direct contract call

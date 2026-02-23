@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAccount, useWriteContract } from 'wagmi'
+import { useAccount, useWriteContract, usePublicClient } from 'wagmi'
 import { useMarkets, Market } from '@/hooks/useMarkets'
 import { useUserSPDeposits, SPUserDeposit } from '@/hooks/useUserSPDeposits'
 import { useSPDeposit } from '@/hooks/useSPDeposit'
@@ -25,6 +25,7 @@ function PoolCard({ market, userDeposit }: { market: Market; userDeposit?: SPUse
     const sbUSDBalance = balances ? parseFloat(formatEther(BigInt(balances.sbUSD))) : 0
 
     const { writeContractAsync } = useWriteContract()
+    const publicClient = usePublicClient()
     const { deposit, isConfirmed: isDepositConfirmed, isReverted: isDepositReverted, reset: resetDeposit } = useSPDeposit()
     const { withdraw, isConfirmed: isWithdrawConfirmed, isReverted: isWithdrawReverted, reset: resetWithdraw } = useSPWithdraw()
     const { claim, isConfirmed: isClaimConfirmed, isReverted: isClaimReverted, reset: resetClaim } = useSPClaim()
@@ -79,12 +80,13 @@ function PoolCard({ market, userDeposit }: { market: Market; userDeposit?: SPUse
 
                 // Approve sbUSD
                 setStep('approving')
-                await writeContractAsync({
+                const approveTxHash = await writeContractAsync({
                     address: getSbUSDToken(),
                     abi: erc20Abi,
                     functionName: 'approve',
                     args: [stabilityPool, parsedAmount],
                 })
+                await publicClient!.waitForTransactionReceipt({ hash: approveTxHash })
 
                 // Direct contract call
                 setStep('signing')
