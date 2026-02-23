@@ -1,0 +1,51 @@
+{
+    "network": {
+        "name": "Creditcoin Testnet",
+        "chainId": 102031,
+        "rpc": "https://rpc.cc3-testnet.creditcoin.network",
+        "explorer": "https://creditcoin-testnet.blockscout.com"
+    },
+    "tokens": {
+        "wCTC": "0x495644a75e54e33d75b5809841d1fed2c1a9b56e",
+        "lstCTC": "0xfe83ecb4752128f85acee4b605d537b8ed5c04e9",
+        "sbUSD": "0x46dbeb7edbc082df2754759a9645fcd5da3636c4"
+    },
+    "branches": {
+        "wCTC": {
+            "addressesRegistry": "0x7cd94decd602b01513a8acb3a1ab589433d5dc72",
+            "borrowerOperations": "0x5015ccbf8f2335d09d8c903ffe80d129c1864acd",
+            "troveManager": "0xd98da26fe3a9ed01de9169da87c8bdba8cf87229",
+            "stabilityPool": "0x017b8dccd19786d045afe268dbd3ab711747f907",
+            "activePool": "0x843e4fd0dc43d8d29eadc8d43248357f2daaa6be",
+            "defaultPool": "0x06a3b401d7132da0a3975e4bc1cbae49e533cafe",
+            "gasPool": "0xbede7613da851226315c1b2cf56b084747670e9e",
+            "collSurplusPool": "0xe860ddfd6d873da3bc834f8167b5b427008dc2d0",
+            "sortedTroves": "0x9b2b472870e4d44caee8e2756977725d183e2fdb",
+            "troveNFT": "0x3b0936c8a1b79bf478e178c40ea12ca3ed4197b0",
+            "priceFeed": "0x04e78c6b26251c2553d3beff655a6f0d3803b7c9"
+        },
+        "lstCTC": {
+            "addressesRegistry": "0x8d1c5382f58a4e3c32f6bc55d219c11e7a5c2b04",
+            "borrowerOperations": "0xe1f8941341fc0281fdd8aedd92c1b5b6211fb1d4",
+            "troveManager": "0xcdf5d1950488d49e4f09fc616a276055a5229a67",
+            "stabilityPool": "0xb686bd4a7fafd04bb4b7899ce3abc2ebb63af45a",
+            "activePool": "0xf79ac4ee4de95f3d63239fd4a64e42756d51fdae",
+            "defaultPool": "0x0a424f5089d0826643578ca646c8edabbddf6470",
+            "gasPool": "0x18bb1a401daef7efd91feffcb9de1edb56e8260b",
+            "collSurplusPool": "0x2e051791196c583ac43be3a2cf737f9e543af11d",
+            "sortedTroves": "0x6bd39af024012e03345df11f816529cfe50a9ea7",
+            "troveNFT": "0xf37af5bab24e87b5aeba2be4395df6a39da2bebd",
+            "priceFeed": "0xdee05408568b0274266672ec0e8015f539663173"
+        }
+    },
+    "shared": {
+        "collateralRegistry": "0xb368984a9ff400a1adb7c5aaa11df5cc57c0cf62",
+        "hintHelpers": "0x1b7e9f814c57a4a31252e860c18c4f18df8400c7",
+        "multiTroveGetter": "0x2f2c2633b6e6c2f16a2155833009bcd8a7abf3bc"
+    },
+    "erc8004": {
+        "identityRegistry": "0x993C9150f074435BA79033300834FcE06897de9B",
+        "reputationRegistry": "0x3E5E194e39b777F568c9a261f46a5DCC43840726",
+        "validationRegistry": "0x84b9B2121187155C1c85bA6EA34e35c981BbA023"
+    }
+}

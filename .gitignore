@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+coverage/
+
+# Hardhat
+cache/
+artifacts/
+typechain-types/
+
+# Foundry
+out/
+
+# Deployment
+deployments/localhost/
