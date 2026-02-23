@@ -5,75 +5,121 @@
 
 ---
 
-## 1. 서버 실행 (현재 운영 방식)
+## 1. 서버 실행
 
 ### 포트 구성
 
-| 서비스 | 포트 | 설명 | 현재 상태 |
-|--------|------|------|-----------|
-| Frontend | 5173 | Vite dev server | ✅ 운영 중 |
-| agent-consumer | 3000 | 메인 REST API + 포지션 모니터 | ✅ 운영 중 |
-| agent-chatbot | 3002 | AI 챗봇 | ✅ 운영 중 |
-| agent-cdp-provider | 3001 | A2A JSON-RPC 트랜잭션 빌더 | ⏸️ 미사용 (AgentVault 비활성화) |
+| 서비스 | 포트 | 역할 | 상태 |
+|--------|------|------|------|
+| **Frontend** | 5173 | React UI (Vite dev server) | ✅ 운영 중 |
+| **agent-consumer** | 3000 | 메인 REST API + 포지션 모니터 | ✅ 운영 중 |
+| **agent-chatbot** | 3002 | AI 챗봇 서버 | ✅ 운영 중 |
+| agent-cdp-provider | 3001 | A2A 트랜잭션 빌더 | ⏸️ 미사용 |
 
-### 현재 시작 방법 (개발 환경)
+---
+
+### 백엔드 실행 (agent-consumer — port 3000)
 
 ```bash
-# 0. 루트 디렉토리로 이동
-cd /path/to/snowball
+cd snowball/packages/agent-consumer
+pnpm dev
+```
 
-# 1. 기존 프로세스 정리 (재시작 시)
+정상 실행 확인:
+```
+{"msg":"Snowball Consumer Agent API listening on port 3000"}
+{"msg":"API docs: http://localhost:3000/api/docs"}
+{"msg":"Monitor started"}
+```
+
+---
+
+### 백엔드 실행 (agent-chatbot — port 3002)
+
+```bash
+cd snowball/packages/agent-chatbot
+pnpm dev
+```
+
+정상 실행 확인:
+```
+Snowball Chatbot listening on port 3002
+```
+
+---
+
+### 프론트엔드 실행 (port 5173)
+
+```bash
+cd snowball/packages/frontend
+pnpm dev
+```
+
+정상 실행 확인:
+```
+VITE v5.x  ready in xxx ms
+➜  Local:   http://localhost:5173/
+```
+
+브라우저에서 http://localhost:5173 접속
+
+---
+
+### 전체 한 번에 시작 (터미널 3개 사용)
+
+**터미널 1 — agent-consumer:**
+```bash
+cd snowball/packages/agent-consumer && pnpm dev
+```
+
+**터미널 2 — agent-chatbot:**
+```bash
+cd snowball/packages/agent-chatbot && pnpm dev
+```
+
+**터미널 3 — frontend:**
+```bash
+cd snowball/packages/frontend && pnpm dev
+```
+
+---
+
+### 재시작 시 포트 정리
+
+이미 실행 중인 프로세스가 있으면 충돌 발생. 먼저 종료:
+
+```bash
+# 포트 기준 한 번에 종료
 lsof -ti:3000,3002,5173 | xargs kill -9 2>/dev/null
 
-# 2. agent-consumer 실행 (port 3000)
-cd packages/agent-consumer && pnpm dev &
-
-# 3. agent-chatbot 실행 (port 3002)
-cd ../agent-chatbot && pnpm dev &
-
-# 4. 프론트엔드 실행 (port 5173)
-cd ../frontend && pnpm dev
+# 확인
+lsof -i :3000
+lsof -i :3002
+lsof -i :5173
 ```
 
-또는 루트에서 한 번에:
-
-```bash
-pnpm dev:consumer &
-pnpm dev:chatbot &
-pnpm --filter @snowball/frontend dev
-```
-
-### ABI 변경 후 재빌드 순서
-
-```bash
-# 1. 컨트랙트 컴파일
-cd packages/contracts-liquity && npx hardhat compile
-
-# 2. shared ABI 재빌드
-cd ../shared && pnpm build
-
-# 3. 프론트엔드 재시작 (HMR 자동 반영 or 수동)
-# Vite HMR이 자동으로 반영하므로 대부분 재시작 불필요
-```
+---
 
 ### 헬스 체크
 
 ```bash
-curl http://localhost:3000/api/health   # consumer API
+curl http://localhost:3000/api/health   # consumer
 curl http://localhost:3002/health       # chatbot
-# 프론트엔드는 브라우저에서 http://localhost:5173 접속
 ```
 
-### 프로세스 종료
+---
+
+### ABI / 컨트랙트 변경 후 재빌드
 
 ```bash
-# 포트 기준 종료 (가장 안전)
-lsof -ti:3000,3002,5173 | xargs kill -9 2>/dev/null
+# 1. 컨트랙트 컴파일
+cd snowball/packages/contracts-liquity
+npx hardhat compile
 
-# 또는 프로세스명 기준
-pkill -f "agent-consumer"
-pkill -f "agent-chatbot"
-pkill -f "vite"
+# 2. 공유 ABI 재빌드
+cd ../shared && pnpm build
+
+# 3. 프론트엔드는 Vite HMR이 자동 반영 (재시작 불필요)
 ```
 
 ---
