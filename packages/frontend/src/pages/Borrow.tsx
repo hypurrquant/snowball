@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAccount, useWriteContract } from 'wagmi'
+import { useAccount, useWriteContract, usePublicClient } from 'wagmi'
 import { parseEther, erc20Abi } from 'viem'
 import { useUserBalance } from '@/hooks/useUserBalance'
 import { usePrice } from '@/hooks/usePrice'
@@ -37,6 +37,7 @@ export function Borrow() {
     const { openTrove, isConfirmed, isReverted } = useOpenTrove()
     const { hasServerWallet } = usePrivyServerWallet()
     const { writeContractAsync } = useWriteContract()
+    const publicClient = usePublicClient()
 
     const branch: 0 | 1 = collType === 'wCTC' ? 0 : 1
 
@@ -53,12 +54,15 @@ export function Borrow() {
 
             // Step 1: Approve collateral token
             setStep('approving')
-            await writeContractAsync({
+            const approveTxHash = await writeContractAsync({
                 address: getCollToken(branch),
                 abi: erc20Abi,
                 functionName: 'approve',
                 args: [borrowerOperations, collWei],
             })
+
+            // Wait for approve to be confirmed on-chain before opening trove
+            await publicClient!.waitForTransactionReceipt({ hash: approveTxHash })
 
             // Step 2: Direct contract call
             setStep('signing')

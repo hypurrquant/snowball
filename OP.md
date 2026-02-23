@@ -1,54 +1,79 @@
 # OP.md — Snowball Protocol Operations Guide
 
 > 운영 담당자를 위한 가이드. 서버 실행, 배포, 모니터링, 트러블슈팅, 향후 개발 계획을 포함합니다.
+> Last updated: 2026-02-24
 
 ---
 
-## 1. 서버 실행
+## 1. 서버 실행 (현재 운영 방식)
 
 ### 포트 구성
 
-| 서비스 | 포트 | 설명 |
-|--------|------|------|
-| Frontend | 5173 | Vite dev server |
-| agent-consumer | 3000 | 메인 REST API + 포지션 모니터 |
-| agent-cdp-provider | 3001 | A2A JSON-RPC 트랜잭션 빌더 |
-| agent-chatbot | 3002 | AI 챗봇 |
+| 서비스 | 포트 | 설명 | 현재 상태 |
+|--------|------|------|-----------|
+| Frontend | 5173 | Vite dev server | ✅ 운영 중 |
+| agent-consumer | 3000 | 메인 REST API + 포지션 모니터 | ✅ 운영 중 |
+| agent-chatbot | 3002 | AI 챗봇 | ✅ 운영 중 |
+| agent-cdp-provider | 3001 | A2A JSON-RPC 트랜잭션 빌더 | ⏸️ 미사용 (AgentVault 비활성화) |
 
-### 시작 순서
+### 현재 시작 방법 (개발 환경)
 
 ```bash
-# 1. shared 빌드 (ABI 변경 시마다 필요)
-pnpm --filter @snowball/shared build
+# 0. 루트 디렉토리로 이동
+cd /path/to/snowball
 
-# 2. 백엔드 3개 (순서 무관, 백그라운드 실행 권장)
-nohup pnpm dev:provider > /tmp/provider.log 2>&1 &
-nohup pnpm dev:consumer > /tmp/consumer.log 2>&1 &
-nohup pnpm dev:chatbot  > /tmp/chatbot.log  2>&1 &
+# 1. 기존 프로세스 정리 (재시작 시)
+lsof -ti:3000,3002,5173 | xargs kill -9 2>/dev/null
 
-# 3. 프론트엔드
+# 2. agent-consumer 실행 (port 3000)
+cd packages/agent-consumer && pnpm dev &
+
+# 3. agent-chatbot 실행 (port 3002)
+cd ../agent-chatbot && pnpm dev &
+
+# 4. 프론트엔드 실행 (port 5173)
+cd ../frontend && pnpm dev
+```
+
+또는 루트에서 한 번에:
+
+```bash
+pnpm dev:consumer &
+pnpm dev:chatbot &
 pnpm --filter @snowball/frontend dev
+```
+
+### ABI 변경 후 재빌드 순서
+
+```bash
+# 1. 컨트랙트 컴파일
+cd packages/contracts-liquity && npx hardhat compile
+
+# 2. shared ABI 재빌드
+cd ../shared && pnpm build
+
+# 3. 프론트엔드 재시작 (HMR 자동 반영 or 수동)
+# Vite HMR이 자동으로 반영하므로 대부분 재시작 불필요
 ```
 
 ### 헬스 체크
 
 ```bash
-curl http://localhost:3000/api/health
-curl http://localhost:3001/health
-curl http://localhost:3002/health
+curl http://localhost:3000/api/health   # consumer API
+curl http://localhost:3002/health       # chatbot
+# 프론트엔드는 브라우저에서 http://localhost:5173 접속
 ```
 
-### 프로세스 종료 / 재시작
+### 프로세스 종료
 
 ```bash
-# 전체 종료
+# 포트 기준 종료 (가장 안전)
+lsof -ti:3000,3002,5173 | xargs kill -9 2>/dev/null
+
+# 또는 프로세스명 기준
 pkill -f "agent-consumer"
-pkill -f "agent-cdp-provider"
 pkill -f "agent-chatbot"
 pkill -f "vite"
-
-# 개별 재시작
-nohup pnpm --filter @snowball/agent-chatbot dev > /tmp/chatbot.log 2>&1 &
 ```
 
 ---
@@ -205,17 +230,37 @@ ps aux | grep -E "(agent-consumer|agent-cdp-provider|agent-chatbot)" | grep -v g
 
 ## 6. 현재 운영 중인 것
 
+> 마지막 배포: **2026-02-24 v3** (Creditcoin Testnet, Chain ID 102031)
+
 | 항목 | 상태 | 비고 |
 |------|------|------|
-| Creditcoin Testnet 배포 | ✅ 완료 | Chain ID 102031 |
+| Creditcoin Testnet 배포 (v3) | ✅ 완료 | Chain ID 102031 |
 | 프론트엔드 (5173) | ✅ 운영 중 | Privy 로그인, 전체 UI |
 | Consumer API (3000) | ✅ 운영 중 | 포지션 모니터 30초 폴링 |
-| CDP Provider (3001) | ✅ 운영 중 | A2A 트랜잭션 빌더 |
 | Chatbot (3002) | ✅ 운영 중 | Rule-based (OpenAI key 없이 동작) |
+| CDP Provider (3001) | ⏸️ 미사용 | AgentVault 비활성화로 대기 중 |
 | 이자 Accrual → SP 분배 | ✅ 완료 | BorrowerOperations에서 자동 처리 |
 | Claim Reward (both gains) | ✅ 완료 | collGain + boldGain 동시 클레임 |
 | CollSurplusPool accounting | ✅ 완료 | 리뎀션 후 잉여 담보 추적 |
 | CollateralRegistry 리뎀션 | ✅ 완료 | 멀티 브랜치 balance 추적 버그 수정 |
+| **보안 패치 v3 (P1)** | ✅ 완료 | CollSurplusPool deployer guard, SortedTroves MAX_FIND_ITERATIONS=200, CollateralRegistry MAX_BRANCHES=10 |
+| **Approve → OpenTrove 순서 보장** | ✅ 완료 | approve tx 컨펌 후 openTrove 팝업 (waitForTransactionReceipt) |
+
+### 현재 배포 주소 요약
+
+| 토큰/컨트랙트 | 주소 |
+|--------------|------|
+| wCTC (Mock) | `0x8f7f60a0f615d828eafcbbf6121f73efcfb56969` |
+| lstCTC (Mock) | `0x72968ff9203dc5f352c5e42477b84d11c8c8f153` |
+| sbUSD | `0x5772f9415b75ecca00e7667e0c7d730db3b29fbd` |
+| BorrowerOps (wCTC) | `0xe8285b406dc77d16c193e6a1a2b8ecc1f386602c` |
+| BorrowerOps (lstCTC) | `0x34f36f41f912e29c600733d90a4d210a49718a5d` |
+| TroveManager (wCTC) | `0x30ef6615f01be4c9fea06c33b07432b40cab7bdc` |
+| TroveManager (lstCTC) | `0xda7b322d26b3477161dc80282d1ea4d486528232` |
+| CollateralRegistry | `0xb18f7a1944e905739e18f96d6e60427aab93c23d` |
+| HintHelpers | `0x7e8fa8852b0c1d697905fd7594d30afe693c76bb` |
+
+> 전체 주소는 `/SSOT.md` 참조
 
 ---
 
