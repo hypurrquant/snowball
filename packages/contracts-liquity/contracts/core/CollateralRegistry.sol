@@ -18,6 +18,8 @@ contract CollateralRegistry is Ownable {
         bool isActive;
     }
 
+    uint256 public constant MAX_BRANCHES = 10;
+
     Branch[] public branches;
     address public sbUSDToken;
 
@@ -35,6 +37,7 @@ contract CollateralRegistry is Ownable {
         address _activePool,
         address _priceFeed
     ) external onlyOwner {
+        require(branches.length < MAX_BRANCHES, "CollateralRegistry: max branches reached");
         branches.push(Branch({
             token: _token,
             troveManager: _troveManager,

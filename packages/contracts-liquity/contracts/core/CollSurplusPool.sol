@@ -14,6 +14,12 @@ contract CollSurplusPool {
 
     mapping(address => uint256) internal balances;
 
+    address public immutable deployer;
+
+    constructor() {
+        deployer = msg.sender;
+    }
+
     modifier onlyTroveManager() {
         require(msg.sender == troveManager, "CollSurplusPool: not TroveManager");
         _;
@@ -29,6 +35,7 @@ contract CollSurplusPool {
         address _troveManager,
         address _collToken
     ) external {
+        require(msg.sender == deployer, "CollSurplusPool: not deployer");
         require(borrowerOperations == address(0), "Already set");
         borrowerOperations = _borrowerOperations;
         troveManager = _troveManager;

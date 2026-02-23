@@ -25,6 +25,10 @@ contract SortedTroves is ISortedTroves {
     address public immutable deployer;
     bool public isInitialized;
 
+    /// @dev Maximum number of nodes to scan when searching for insert position.
+    ///      Callers must provide valid hints via HintHelpers when list exceeds this size.
+    uint256 public constant MAX_FIND_ITERATIONS = 200;
+
     constructor() {
         deployer = msg.sender;
     }
@@ -165,10 +169,9 @@ contract SortedTroves is ISortedTroves {
     }
 
     function _findInsertPosition(uint256 _annualInterestRate, uint256 _prevId, uint256 _nextId) internal view returns (uint256, uint256) {
-        // Simple linear scan — OK for testnet
         if (size == 0) return (0, 0);
 
-        // Valid hint
+        // Both hints valid: O(1) — preferred path
         if (_prevId != 0 && nodes[_prevId].exists && _nextId != 0 && nodes[_nextId].exists) {
             if (nodes[_prevId].annualInterestRate >= _annualInterestRate &&
                 nodes[_nextId].annualInterestRate <= _annualInterestRate) {
@@ -176,13 +179,44 @@ contract SortedTroves is ISortedTroves {
             }
         }
 
-        // Descending order: head = highest rate
+        // Single hint: prevId only — walk forward from prevId
+        if (_prevId != 0 && nodes[_prevId].exists &&
+            nodes[_prevId].annualInterestRate >= _annualInterestRate) {
+            uint256 cur = nodes[_prevId].nextId;
+            uint256 hintPrev = _prevId;
+            uint256 iters = 0;
+            while (cur != 0 && nodes[cur].annualInterestRate > _annualInterestRate && iters < MAX_FIND_ITERATIONS) {
+                hintPrev = cur;
+                cur = nodes[cur].nextId;
+                iters++;
+            }
+            if (iters < MAX_FIND_ITERATIONS) return (hintPrev, cur);
+        }
+
+        // Single hint: nextId only — walk backward from nextId
+        if (_nextId != 0 && nodes[_nextId].exists &&
+            nodes[_nextId].annualInterestRate <= _annualInterestRate) {
+            uint256 cur = nodes[_nextId].prevId;
+            uint256 next = _nextId;
+            uint256 iters = 0;
+            while (cur != 0 && nodes[cur].annualInterestRate < _annualInterestRate && iters < MAX_FIND_ITERATIONS) {
+                next = cur;
+                cur = nodes[cur].prevId;
+                iters++;
+            }
+            if (iters < MAX_FIND_ITERATIONS) return (cur, next);
+        }
+
+        // Fallback: scan from head (descending by rate). Requires valid hints above this count.
         uint256 current = head;
         uint256 prev = 0;
-        while (current != 0 && nodes[current].annualInterestRate > _annualInterestRate) {
+        uint256 fallbackIters = 0;
+        while (current != 0 && nodes[current].annualInterestRate > _annualInterestRate && fallbackIters < MAX_FIND_ITERATIONS) {
             prev = current;
             current = nodes[current].nextId;
+            fallbackIters++;
         }
+        require(fallbackIters < MAX_FIND_ITERATIONS, "SortedTroves: list too large, provide valid hints");
         return (prev, current);
     }
 }
