@@ -38,19 +38,18 @@ const creditcoinTestnet = {
 } as const;
 
 // ─── Helpers ───
+// Foundry artifact format: { abi, bytecode: { object: "0x..." } }
 function loadArtifact(contractName: string): { abi: Abi; bytecode: `0x${string}` } {
-  const dirs = ["core", "mocks"];
-  for (const dir of dirs) {
-    const p = path.join(
-      __dirname,
-      `../artifacts/contracts/${dir}/${contractName}.sol/${contractName}.json`
-    );
-    if (fs.existsSync(p)) {
-      const artifact = JSON.parse(fs.readFileSync(p, "utf8"));
-      return { abi: artifact.abi, bytecode: artifact.bytecode as `0x${string}` };
-    }
+  const p = path.join(
+    __dirname,
+    `../out/${contractName}.sol/${contractName}.json`
+  );
+  if (fs.existsSync(p)) {
+    const artifact = JSON.parse(fs.readFileSync(p, "utf8"));
+    const bytecode = artifact.bytecode?.object ?? artifact.bytecode;
+    return { abi: artifact.abi, bytecode: bytecode as `0x${string}` };
   }
-  throw new Error(`Artifact not found: ${contractName}`);
+  throw new Error(`Foundry artifact not found: ${contractName} (run 'forge build' first)`);
 }
 
 async function deploy(
@@ -280,6 +279,20 @@ async function main() {
   const hh = await deploy("HintHelpers", [cr.address]);
   const mtg = await deploy("MultiTroveGetter", [cr.address]);
 
+  // RedemptionHelper: needs collateralRegistry + array of addressesRegistries
+  const redemptionHelper = await deploy("RedemptionHelper", [
+    cr.address,
+    [branch0.addressesRegistry as Address, branch1.addressesRegistry as Address],
+  ]);
+  console.log("  RedemptionHelper ✓");
+
+  // DebtInFrontHelper: needs collateralRegistry + hintHelpers
+  const debtInFrontHelper = await deploy("DebtInFrontHelper", [
+    cr.address,
+    hh.address,
+  ]);
+  console.log("  DebtInFrontHelper ✓");
+
   // ==================== Phase 7.5: AgentVault ====================
   console.log("\n=== Phase 7.5: AgentVault ===");
   const agentVault = await deploy("AgentVault");
@@ -314,6 +327,8 @@ async function main() {
       collateralRegistry: cr.address,
       hintHelpers: hh.address,
       multiTroveGetter: mtg.address,
+      redemptionHelper: redemptionHelper.address,
+      debtInFrontHelper: debtInFrontHelper.address,
       agentVault: agentVault.address,
     },
   };
