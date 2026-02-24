@@ -1,0 +1,6 @@
+[submodule "packages/algebra/lib/openzeppelin-contracts"]
+	path = packages/algebra/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/morpho/lib/forge-std"]
+	path = packages/morpho/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

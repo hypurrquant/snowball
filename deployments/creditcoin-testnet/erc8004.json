@@ -1,0 +1,11 @@
+{
+  "network": {
+    "name": "Creditcoin Testnet",
+    "chainId": 102031
+  },
+  "erc8004": {
+    "identityRegistry": "0x993C9150f074435BA79033300834FcE06897de9B",
+    "reputationRegistry": "0x3E5E194e39b777F568c9a261f46a5DCC43840726",
+    "validationRegistry": "0x84b9B2121187155C1c85bA6EA34e35c981BbA023"
+  }
+}

@@ -1,2 +1,6 @@
 packages:
-  - "packages/*"
+  - "packages/liquity"
+  - "packages/algebra"
+  - "packages/morpho"
+  - "packages/erc-8004"
+  - "packages/shared"

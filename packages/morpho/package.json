@@ -1,0 +1,17 @@
+{
+  "name": "@snowball/morpho",
+  "version": "0.1.0",
+  "description": "Snowball Lend -- Morpho Blue fork on Creditcoin",
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "deploy": "npx tsx scripts/deploy-viem.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "viem": "^2.0.0",
+    "dotenv": "^16.0.0"
+  }
+}

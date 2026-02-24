@@ -2,15 +2,16 @@
   "name": "snowball",
   "version": "0.1.0",
   "private": true,
-  "description": "Snowball — AI Agent DeFi Platform on Creditcoin Network",
+  "description": "Snowball — Smart Contract Monorepo for Creditcoin Network",
   "scripts": {
     "build": "pnpm -r build",
     "clean": "pnpm -r clean",
     "test": "pnpm -r test",
-    "deploy:contracts": "pnpm --filter @snowball/contracts-liquity deploy && pnpm --filter @snowball/contracts-8004 deploy",
-    "dev:consumer": "pnpm --filter @snowball/agent-consumer dev",
-    "dev:provider": "pnpm --filter @snowball/agent-cdp-provider dev",
-    "dev:chatbot": "pnpm --filter @snowball/agent-chatbot dev"
+    "deploy:liquity": "pnpm --filter @snowball/liquity deploy",
+    "deploy:erc-8004": "pnpm --filter @snowball/erc-8004 deploy",
+    "deploy:algebra": "pnpm --filter @snowball/algebra deploy",
+    "deploy:morpho": "pnpm --filter @snowball/morpho deploy",
+    "merge-addresses": "npx tsx scripts/merge-addresses.ts"
   },
   "engines": {
     "node": ">=18.0.0"

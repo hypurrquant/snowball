@@ -22,7 +22,7 @@ export const CHAIN_ID = 102031;
 export const RPC_URL = "https://rpc.cc3-testnet.creditcoin.network";
 export const EXPLORER_URL = "https://creditcoin-testnet.blockscout.com";
 
-// ==================== Protocol Constants ====================
+// ==================== Liquity Protocol Constants ====================
 
 export const DECIMAL_PRECISION = 10n ** 18n;
 export const _100PCT = 10n ** 18n;
@@ -44,33 +44,3 @@ export const MIN_DEBT = 200n * DECIMAL_PRECISION; // 200 sbUSD
 
 // Gas compensation
 export const GAS_COMPENSATION = 200n * DECIMAL_PRECISION; // 200 sbUSD
-
-// ==================== Agent Types ====================
-
-export const AGENT_TYPES = {
-  CDP_PROVIDER: "cdp-provider",
-  CONSUMER: "consumer",
-  CHATBOT: "chatbot",
-} as const;
-
-// ==================== Strategy Presets ====================
-
-export const STRATEGIES = {
-  conservative: {
-    name: "Conservative",
-    minCR: 200,
-    description: "CR > 200% — Maximum safety, lower capital efficiency",
-  },
-  moderate: {
-    name: "Moderate",
-    minCR: 160,
-    description: "CR > 160% — Balanced risk/reward",
-  },
-  aggressive: {
-    name: "Aggressive",
-    minCR: 130,
-    description: "CR > 130% — Higher capital efficiency, higher liquidation risk",
-  },
-} as const;
-
-export type StrategyType = keyof typeof STRATEGIES;

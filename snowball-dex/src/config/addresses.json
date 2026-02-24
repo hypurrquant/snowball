@@ -1,0 +1,30 @@
+{
+  "network": {
+    "name": "Creditcoin Testnet",
+    "chainId": 102031
+  },
+  "note": "Run deploy-viem.ts to populate",
+  "core": {
+    "snowballFactory": "",
+    "snowballPoolDeployer": "",
+    "snowballCommunityVault": "",
+    "snowballVaultFactoryStub": "",
+    "snowballRouter": "",
+    "dynamicFeePlugin": "",
+    "nonfungiblePositionManager": "",
+    "nonfungibleTokenPositionDescriptor": "",
+    "quoterV2": ""
+  },
+  "mockTokens": {
+    "sbUSD": "",
+    "wCTC": "",
+    "lstCTC": "",
+    "USDC": ""
+  },
+  "pools": {
+    "sbUSD_USDC": "",
+    "wCTC_sbUSD": "",
+    "wCTC_USDC": "",
+    "lstCTC_wCTC": ""
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "network": {
+    "name": "Creditcoin Testnet",
+    "chainId": 102031
+  },
+  "core": {
+    "snowballLend": "0x7d604b31297b36aace73255931f65e891cf289d3",
+    "adaptiveCurveIRM": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe"
+  },
+  "tokens": {
+    "wCTC": "0x8f7f60a0f615d828eafcbbf6121f73efcfb56969",
+    "lstCTC": "0x72968ff9203dc5f352c5e42477b84d11c8c8f153",
+    "sbUSD": "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd",
+    "mockUSDC": "0xbcaa46ef7a399fcdb64adf4520cdcc6d62fcaaed"
+  },
+  "vaults": {
+    "snowballVaultFactory": "0x6e97df392462b8c2b8d13e2cd77a90168925edf6",
+    "publicAllocator": "0x35b35a8c835eaf78b43137a51c4adccfc5d653b4"
+  },
+  "oracles": {
+    "wCTCOracle": "0x42ca12a83c14e95f567afc940b0118166d8bd852",
+    "lstCTCOracle": "0x192f1feb36f319e79b3bba25a17359ee72266a14",
+    "sbUSDOracle": "0xc39f222e034f4bd4f3c858e6fde9ce4398400a26"
+  },
+  "markets": {
+    "wCTC/sbUSD": {
+      "loanToken": "sbUSD",
+      "collateralToken": "wCTC",
+      "oracle": "0x42ca12a83c14e95f567afc940b0118166d8bd852",
+      "irm": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
+      "lltv": "0.77"
+    },
+    "lstCTC/sbUSD": {
+      "loanToken": "sbUSD",
+      "collateralToken": "lstCTC",
+      "oracle": "0x192f1feb36f319e79b3bba25a17359ee72266a14",
+      "irm": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
+      "lltv": "0.80"
+    },
+    "sbUSD/USDC": {
+      "loanToken": "USDC",
+      "collateralToken": "sbUSD",
+      "oracle": "0xc39f222e034f4bd4f3c858e6fde9ce4398400a26",
+      "irm": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
+      "lltv": "0.86"
+    }
+  }
+}
