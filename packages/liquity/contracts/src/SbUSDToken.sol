@@ -85,6 +85,12 @@ contract SbUSDToken is Ownable, ISbUSDToken, ERC20Permit {
         _transfer(_poolAddress, _receiver, _amount);
     }
 
+    // --- Overrides for Solidity diamond inheritance ---
+
+    function nonces(address owner) public view override(ERC20Permit, IERC20Permit) returns (uint256) {
+        return super.nonces(owner);
+    }
+
     // --- External functions ---
 
     function transfer(address recipient, uint256 amount) public override(ERC20, IERC20) returns (bool) {
