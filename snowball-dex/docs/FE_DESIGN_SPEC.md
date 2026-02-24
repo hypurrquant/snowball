@@ -772,7 +772,7 @@ const config = createConfig({
 
 ### 9.3 ABI Location
 
-ABIs are exported from: `packages/shared/src/abis/index.ts`
+ABIs are exported from: `snowball-dex/src/abis/index.ts`
 
 ```typescript
 import {
@@ -783,7 +783,7 @@ import {
   QuoterV2ABI,
   DynamicFeePluginABI,
   MockERC20ABI,
-} from '@snowball/shared/abis';
+} from "@/abis";
 ```
 
 ---
@@ -889,7 +889,7 @@ QuoterV2 결과가 오래된 경우 (15초 이상):
 ## 12. File Structure (Recommended)
 
 ```
-packages/frontend/
+snowball-dex/
 ├── src/
 │   ├── app/                      # Next.js App Router
 │   │   ├── layout.tsx            # Root layout + providers
@@ -1047,7 +1047,7 @@ export const TOKENS = {
 
 ## Appendix B: Key Contract ABIs
 
-ABIs는 `packages/shared/src/abis/index.ts`에서 import.
+ABIs는 `snowball-dex/src/abis/index.ts`에서 import. (원본: `packages/shared/src/abis/algebra.ts`)
 
 주요 함수 시그니처:
 

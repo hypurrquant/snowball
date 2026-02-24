@@ -2,7 +2,7 @@
 
 ## 1. 개요
 
-Snowball Lend(Morpho Blue 포크)의 렌딩 프로토콜 프론트엔드를 **기존 Snowball FE**(`/snowball/packages/frontend/`)에 통합 개발합니다.
+Snowball Lend(Morpho Blue 포크)의 렌딩 프로토콜 프론트엔드를 **기존 Snowball FE**(`snowball-app/packages/app/`)에 통합 개발합니다.
 
 **기존 Snowball FE**: Liquity 포크 기반 CDP(Trove) 프로토콜 UI
 **추가할 Snowball Lend**: Morpho Blue 포크 기반 P2P 렌딩 마켓 UI
@@ -751,9 +751,10 @@ Phase 5 — 마무리 (1~2일)
 
 ## 18. 참고 자료
 
-- 기존 Snowball FE 코드: `/snowball/packages/frontend/`
-- 배포된 주소: `/ctc-morpho/deployments/addresses.json`
-- ABI 정의: `/ctc-morpho/packages/shared/src/abis/index.ts`
-- 컨트랙트 소스: `/ctc-morpho/packages/contracts-morpho/src/SnowballLend.sol`
+- 기존 Snowball FE 코드: `snowball-app/packages/app/`
+- 배포된 주소: `deployments/creditcoin-testnet/morpho.json`
+- ABI 정의: `packages/shared/src/abis/morpho.ts`
+- 컨트랙트 소스: `packages/morpho/src/SnowballLend.sol`
+- SSOT 문서: `docs/SSOT_MORPHO.md`
 - Morpho Blue 원본 UI 참고: https://app.morpho.org
 - 네트워크: Creditcoin Testnet (Chain ID: 102031, RPC: https://rpc.cc3-testnet.creditcoin.network)
