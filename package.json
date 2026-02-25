@@ -11,6 +11,8 @@
     "deploy:erc-8004": "pnpm --filter @snowball/erc-8004 deploy",
     "deploy:algebra": "pnpm --filter @snowball/algebra deploy",
     "deploy:morpho": "pnpm --filter @snowball/morpho deploy",
+    "deploy:oracle": "pnpm --filter @snowball/oracle deploy",
+    "deploy:options": "pnpm --filter @snowball/options deploy",
     "merge-addresses": "npx tsx scripts/merge-addresses.ts"
   },
   "engines": {

@@ -5,3 +5,6 @@ packages:
   - "packages/erc-8004"
   - "packages/shared"
   - "packages/yield"
+  - "packages/oracle"
+  - "packages/options"
+  - "packages/frontend"

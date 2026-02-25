@@ -10,3 +10,15 @@
 [submodule "packages/liquity/lib/Solady"]
 	path = packages/liquity/lib/Solady
 	url = https://github.com/Vectorized/solady
+[submodule "packages/oracle/lib/forge-std"]
+	path = packages/oracle/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "packages/oracle/lib/openzeppelin-contracts"]
+	path = packages/oracle/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/options/lib/forge-std"]
+	path = packages/options/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "packages/options/lib/openzeppelin-contracts"]
+	path = packages/options/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts

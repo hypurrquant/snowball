@@ -1,0 +1,17 @@
+{
+  "name": "@snowball/oracle",
+  "version": "0.1.0",
+  "description": "Snowball BTC Mock Oracle for Creditcoin",
+  "license": "MIT",
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test",
+    "deploy": "npx tsx scripts/deploy-viem.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "viem": "^2.0.0",
+    "dotenv": "^16.0.0"
+  }
+}
