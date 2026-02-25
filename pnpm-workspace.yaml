@@ -4,3 +4,4 @@ packages:
   - "packages/morpho"
   - "packages/erc-8004"
   - "packages/shared"
+  - "packages/yield"
