@@ -1,7 +1,9 @@
 # SSOT — Snowball Lend (Morpho Blue Fork)
 
 > Single Source of Truth. 모든 통합 작업은 이 문서를 기준으로 합니다.
-> 최종 업데이트: 2025-02-25
+> Version: v1.0.0 | Status: Active
+> Last updated: 2026-02-25
+> [INDEX](INDEX.md)
 
 ---
 

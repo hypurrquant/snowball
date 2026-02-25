@@ -1,5 +1,8 @@
 # Snowball Protocol — AI Agent DeFi Platform on Creditcoin
 
+> Version: v1.0.0 | Status: Active
+> [INDEX](INDEX.md)
+
 ## 한 줄 요약
 
 **CTC 담보로 스테이블코인(sbUSD)을 빌리고, AI 에이전트가 포지션을 자동 관리하는 DeFi 프로토콜.**

@@ -2,6 +2,8 @@
 
 > **"더 이상 홀딩만 하지 마세요. 굴리세요."**
 > *Stop holding. Start snowballing.*
+> Version: v1.0.0 | Status: Archive
+> [INDEX](INDEX.md)
 
 ## Product Overview
 

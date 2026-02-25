@@ -2,6 +2,8 @@
 
 > Single Source of Truth for agent identity, reputation, and validation contracts.
 > Creditcoin Testnet deployment.
+> Version: v1.0.0 | Status: Active
+> [INDEX](INDEX.md)
 
 ---
 

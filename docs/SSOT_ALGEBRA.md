@@ -2,6 +2,8 @@
 
 > Single Source of Truth for contract addresses, tokens, pools, and integration config.
 > Creditcoin Testnet deployment.
+> Version: v1.0.0 | Status: Active
+> [INDEX](INDEX.md)
 
 ---
 

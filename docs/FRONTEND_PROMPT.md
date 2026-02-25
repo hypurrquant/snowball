@@ -1,5 +1,8 @@
 # Snowball 프론트엔드 구현 프롬프트
 
+> Version: v1.0.0 | Status: Archive
+> [INDEX](INDEX.md)
+
 아래 프롬프트를 Gemini(또는 프론트엔드 담당 AI)에게 그대로 전달하세요.
 
 ---
