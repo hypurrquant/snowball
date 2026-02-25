@@ -7,6 +7,10 @@ import { Earn } from '@/pages/Earn'
 import { Stats } from '@/pages/Stats'
 import { Agent } from '@/pages/Agent'
 import { Chat } from '@/pages/Chat'
+import { LendDashboard } from '@/pages/lend/LendDashboard'
+import { LendMarkets } from '@/pages/lend/LendMarkets'
+import { LendMarketDetail } from '@/pages/lend/LendMarketDetail'
+import { LendPositions } from '@/pages/lend/LendPositions'
 
 export default function App() {
     return (
@@ -18,6 +22,13 @@ export default function App() {
                     <Route path="/borrow" element={<Borrow />} />
                     <Route path="/earn" element={<Earn />} />
                     <Route path="/stats" element={<Stats />} />
+
+                    {/* Lend */}
+                    <Route path="/lend" element={<LendDashboard />} />
+                    <Route path="/lend/markets" element={<LendMarkets />} />
+                    <Route path="/lend/markets/:id" element={<LendMarketDetail />} />
+                    <Route path="/lend/positions" element={<LendPositions />} />
+
                     <Route path="/agent" element={<Agent />} />
                     <Route path="/chat" element={<Chat />} />
                 </Route>
