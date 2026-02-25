@@ -59,3 +59,34 @@ NEXT_PUBLIC_TEST_MODE=true pnpm test:e2e:ui
 - **API 모킹**: `page.route()` 인터셉트 (price, options, chat)
 - **브라우저**: Chromium만 (Web3 dApp은 브라우저 차이 미미)
 - **병렬**: `fullyParallel: false` (체인 상태 의존성)
+
+---
+
+## 전체 프로젝트 소스 커밋
+
+E2E 테스트 이후, 미커밋 상태였던 전체 프로젝트 소스를 일괄 커밋 & 푸시.
+
+### 포함된 패키지
+
+| 패키지 | 내용 |
+|--------|------|
+| `backend/` | FastAPI 백엔드 — price, oracle, options relayer |
+| `packages/frontend/` | Next.js 16 프론트엔드 소스 전체 (app, components, hooks, config, abis) |
+| `packages/options/` | Binary Options Solidity 컨트랙트 + 테스트 |
+| `packages/oracle/` | Oracle Solidity 컨트랙트 + 테스트 |
+| `packages/yield/` | Yield 컨트랙트 라이브러리 |
+| `deployments/` | Creditcoin Testnet 배포 주소 (options, oracle) |
+| 루트 | `Makefile`, `docker-compose.yml`, `scripts/`, docs |
+
+### .gitignore 정리
+
+`.next/`, `*.tsbuildinfo` 빌드 아티팩트 제외 추가 → working tree 클린 상태.
+
+### 커밋 로그
+
+```
+28fef51 chore: add .next/ and .tsbuildinfo to gitignore
+3bbb7d3 feat: add full project source — backend, frontend, options, oracle, yield
+f0695f0 docs: add LAST_TASK.md — E2E test implementation summary
+4efcb1c test: add Playwright E2E tests for frontend (77 specs, 100% pass)
+```
