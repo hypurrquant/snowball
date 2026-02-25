@@ -1,0 +1,20 @@
+{
+  "network": {
+    "name": "Creditcoin Testnet",
+    "chainId": 102031
+  },
+  "options": {
+    "clearingHouse": "0xd999f043760b4a372c57645e0c2daab3ce81b741",
+    "clearingHouseImpl": "0x2a0461d19960a62883d4e34010dc51913d62f93b",
+    "vault": "0x7745cc64ff8ec8923876c9fe062d347f2fa78079",
+    "vaultImpl": "0x58a7f3e712b80c2d443fde981d5097c1dacae407",
+    "snowballOptions": "0x595ed79d89623158d486a1a0daada35669ccc352",
+    "snowballOptionsImpl": "0x00fc0430fcf7e1ff38e71b0537da5318e8030591",
+    "relayer": "0xe58f9cdb8ec63b88759bde403de0e062382f13b1",
+    "relayerImpl": "0x292d4ff4251d97b04e8ca00a75f7bd32ab06cb62"
+  },
+  "config": {
+    "oracle": "0xcfad30e844685abb5ae1e8c21f727afd23f46abc",
+    "commissionFee": "500 (5%)"
+  }
+}

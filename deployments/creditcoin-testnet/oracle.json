@@ -1,0 +1,9 @@
+{
+  "network": {
+    "name": "Creditcoin Testnet",
+    "chainId": 102031
+  },
+  "oracle": {
+    "btcMockOracle": "0xcfad30e844685abb5ae1e8c21f727afd23f46abc"
+  }
+}

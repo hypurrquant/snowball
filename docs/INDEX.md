@@ -24,6 +24,12 @@
 | [SSOT_ALGEBRA.md](SSOT_ALGEBRA.md) | v1.0.0 | Active | Algebra V4 DEX — 주소, 풀, 토큰 |
 | [SSOT_ERC8004.md](SSOT_ERC8004.md) | v1.0.0 | Active | ERC-8004 에이전트 시스템 — ID, 레퓨테이션 |
 
+### 운영 문서 (Operations)
+
+| 문서 | 버전 | 상태 | 설명 |
+|------|------|------|------|
+| [OPERATIONS.md](OPERATIONS.md) | v1.0.0 | Active | 전체 운영 플로우, 기능 상세, 유저 플로우, 배포/모니터링 |
+
 ### 참조 문서 (Reference)
 
 | 문서 | 버전 | 상태 | 설명 |
