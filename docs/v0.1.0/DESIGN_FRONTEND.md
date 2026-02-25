@@ -1,10 +1,9 @@
 # Snowball 통합 프론트엔드 설계
 
 > 전 프로토콜을 하나의 UI에서 운영하는 통합 DeFi 프론트엔드
-> Version: v0.2.0 | Status: Draft
+> Version: v0.1.0 | Status: Draft
 > Last updated: 2026-02-25
 > [INDEX](INDEX.md)
-> [v0.1.0 snapshot](v0.1.0/DESIGN_FRONTEND.md)
 
 ---
 
@@ -51,16 +50,10 @@ snowball-app (하나의 앱)
 |------|------|------|
 | 프레임워크 | **Next.js 14** (App Router) | SSR, 라우팅, 성능 |
 | 웹3 | wagmi 2 + viem 2 | 타입 안전, hooks 패턴 |
-| 인증/지갑 | **Privy** (`@privy-io/react-auth`, `@privy-io/wagmi`) | 소셜 로그인 + 지갑 통합, 임베디드 월렛 |
+| 지갑 연결 | RainbowKit 2 | 다중 지갑 지원, UX |
 | 상태 관리 | Zustand + React Query | 서버 상태 + 클라이언트 상태 분리 |
 | UI | Tailwind CSS + Radix UI | 커스텀 디자인 시스템 |
-| 차트 — Options | **Lightweight Charts** (TradingView) | BTC 실시간 캔들/라인 차트 |
-| 차트 — 기타 | Recharts | 포트폴리오, Revenue 차트 |
-
-> **v0.2.0 변경:**
-> - ~~RainbowKit 2~~ → Privy (`@privy-io/react-auth`, `@privy-io/wagmi`)
-> - 추가: `lightweight-charts` (Options BTC 차트)
-> - 제거: `@rainbow-me/rainbowkit`
+| 차트 | Recharts + Lightweight Charts | 포트폴리오 + 가격 차트 |
 
 ---
 
@@ -92,10 +85,6 @@ Snowball App
 │   │   └── Borrow Panel
 │   └── My Positions (/lend/positions)
 │
-├── Earn (/earn) [기존 Liquity]
-│   ├── Borrow (Trove)
-│   └── Stability Pool
-│
 ├── Vault (/vault)
 │   ├── Vault List (/vault)
 │   ├── Vault Detail (/vault/[id])
@@ -103,26 +92,20 @@ Snowball App
 │   │   └── Strategy Info
 │   └── My Vaults (/vault/positions)
 │
-├── Options (/options) ★NEW
-│   ├── BTC 바이너리 옵션 트레이딩 (/options)
-│   │   ├── BTC 실시간 차트 (Lightweight Charts)
-│   │   ├── Trade Panel (Over/Under, EIP-712 서명)
-│   │   ├── Round Info (현재 라운드)
-│   │   └── Recent Trades
-│   └── Options LP Vault (/options/vault) ★NEW
-│       ├── LP 입금/출금
-│       └── Vault 성과 (TVL, APY)
-│
 ├── Stake (/stake)
 │   ├── SNOW → sSNOW Staking
 │   ├── Revenue Dashboard
 │   ├── Cooldown Status
 │   └── Claim History
 │
-└── Govern (/govern)
-    ├── Proposal List (/govern)
-    ├── Proposal Detail (/govern/[id])
-    └── Create Proposal (/govern/new)
+├── Govern (/govern)
+│   ├── Proposal List (/govern)
+│   ├── Proposal Detail (/govern/[id])
+│   └── Create Proposal (/govern/new)
+│
+└── Earn (/earn) [기존 Liquity]
+    ├── Borrow (Trove)
+    └── Stability Pool
 ```
 
 ---
@@ -399,15 +382,14 @@ StableSwap 탭 전환 시:
 ### 5-1. 글로벌 네비게이션
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│  [❄ Snowball]  Dashboard  Swap  Pool  Lend  Vault  Options      │
-│                                                                  │
-│                        Stake  Govern                             │
-│                                        [Login / Connect] (Privy)│
-│                                                                  │
-│  sSNOW: 1,250 ($2,825)  │  SNOW: $2.00  │  Revenue 24h: $234   │
-│  BTC: $97,312 (WS live) │                                       │
-└──────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│  [❄ Snowball]  Dashboard  Swap  Pool  Lend  Vault  Stake      │
+│                                                                │
+│                              Govern                            │
+│                                                [Connect Wallet]│
+│                                                                │
+│  sSNOW: 1,250 ($2,825)  │  SNOW: $2.00  │  Revenue 24h: $234 │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 하단 status bar에 항상 표시:
@@ -419,9 +401,9 @@ StableSwap 탭 전환 시:
 
 ```
 Bottom Tab Bar:
-┌───────────────────────────────────────────────┐
-│  [Home]  [Swap]  [Options]  [Earn]  [Stake] [≡]│
-└───────────────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│  [Home]  [Swap]  [Earn]  [Stake]  [≡]│
+└──────────────────────────────────────┘
 
 Earn = Pool + Lend + Vault 통합
 ≡ = Govern, Settings, More
@@ -526,27 +508,6 @@ src/components/layout/
 | `useVote()` | 투표 트랜잭션 |
 | `useCreateProposal()` | 제안 생성 |
 
-### 7-8. Options 훅 (v0.2.0 신규)
-
-| 훅 | 설명 |
-|-----|------|
-| `useSignOrder()` | EIP-712 서명 생성 + 백엔드 제출 |
-| `useSubmitOrder()` | POST /api/options/order 호출 |
-| `useOrderHistory()` | 유저 거래 내역 조회 |
-| `useRounds()` | 현재/과거 라운드 데이터 |
-| `useOptionsBalance()` | ClearingHouse 잔고 (available + escrow) |
-| `useOptionsVault()` | LP 볼트 상태 (TVL, APY, share price) |
-| `useOptionsVaultDeposit()` | LP 입금 트랜잭션 |
-| `useOptionsVaultWithdraw()` | LP 출금 (24h 딜레이) 트랜잭션 |
-
-### 7-9. Price 훅 (v0.2.0 신규)
-
-| 훅 | 설명 |
-|-----|------|
-| `useBTCPrice()` | WebSocket `/ws/price` 실시간 BTC 가격 스트리밍 |
-| `usePriceHistory()` | GET /api/price/btc/history — 히스토리 |
-| `useOHLCV()` | GET /api/price/btc/ohlcv — OHLCV 차트 데이터 (Lightweight Charts용) |
-
 ---
 
 ## 8. 디렉토리 구조
@@ -574,9 +535,6 @@ snowball-app/
 │   │   │   └── [id]/page.tsx         # Vault Detail
 │   │   ├── stake/
 │   │   │   └── page.tsx              # sSNOW Staking (/stake)
-│   │   ├── options/                   # ★NEW (v0.2.0)
-│   │   │   ├── page.tsx              # Options Trading (/options)
-│   │   │   └── vault/page.tsx        # Options LP Vault (/options/vault)
 │   │   ├── govern/
 │   │   │   ├── page.tsx              # Proposal List
 │   │   │   ├── new/page.tsx          # Create Proposal
@@ -628,13 +586,6 @@ snowball-app/
 │   │   │   ├── RevenueBreakdown.tsx
 │   │   │   ├── PricePerShareChart.tsx
 │   │   │   └── EarningsHistory.tsx
-│   │   ├── options/                    # ★NEW (v0.2.0)
-│   │   │   ├── BTCChart.tsx           # Lightweight Charts 실시간 BTC
-│   │   │   ├── TradePanel.tsx         # Over/Under 주문 패널
-│   │   │   ├── RoundInfo.tsx          # 현재 라운드 정보
-│   │   │   ├── RecentTrades.tsx       # 최근 거래 목록
-│   │   │   ├── OptionsVaultPanel.tsx  # LP Vault 입출금
-│   │   │   └── OrderHistory.tsx       # 거래 이력 + PnL
 │   │   └── govern/
 │   │       ├── ProposalList.tsx
 │   │       ├── ProposalDetail.tsx
@@ -676,19 +627,6 @@ snowball-app/
 │   │   │   ├── useVaultDeposit.ts
 │   │   │   ├── useVaultWithdraw.ts
 │   │   │   └── useVaultPositions.ts
-│   │   ├── options/                    # ★NEW (v0.2.0)
-│   │   │   ├── useSignOrder.ts
-│   │   │   ├── useSubmitOrder.ts
-│   │   │   ├── useOrderHistory.ts
-│   │   │   ├── useRounds.ts
-│   │   │   ├── useOptionsBalance.ts
-│   │   │   ├── useOptionsVault.ts
-│   │   │   ├── useOptionsVaultDeposit.ts
-│   │   │   └── useOptionsVaultWithdraw.ts
-│   │   ├── price/                      # ★NEW (v0.2.0)
-│   │   │   ├── useBTCPrice.ts
-│   │   │   ├── usePriceHistory.ts
-│   │   │   └── useOHLCV.ts
 │   │   └── govern/
 │   │       ├── useProposals.ts
 │   │       ├── useProposalDetail.ts
@@ -697,7 +635,7 @@ snowball-app/
 │   │
 │   ├── config/
 │   │   ├── chain.ts                   # Creditcoin Testnet 정의
-│   │   ├── wagmi.ts                   # Wagmi config (Privy adapter)
+│   │   ├── wagmi.ts                   # Wagmi config
 │   │   ├── contracts.ts               # 전체 컨트랙트 주소 통합
 │   │   ├── tokens.ts                  # 토큰 목록 + 메타데이터
 │   │   └── abis/
@@ -710,10 +648,6 @@ snowball-app/
 │   │       ├── snowballLend.ts
 │   │       ├── snowballVault.ts
 │   │       ├── governor.ts
-│   │       ├── snowballOptions.ts      # ★NEW (v0.2.0)
-│   │       ├── optionsClearingHouse.ts  # ★NEW (v0.2.0)
-│   │       ├── optionsVault.ts         # ★NEW (v0.2.0)
-│   │       ├── btcMockOracle.ts        # ★NEW (v0.2.0)
 │   │       └── erc20.ts
 │   │
 │   ├── lib/
@@ -793,7 +727,7 @@ snowball-app/
 Phase 1: 기반 구축 (Week 1-2)
 ├── Next.js 14 프로젝트 생성
 ├── 디자인 시스템 (Tailwind + 공통 컴포넌트)
-├── Privy + wagmi 설정 (@privy-io/react-auth, @privy-io/wagmi)
+├── wagmi/RainbowKit 설정
 └── AppShell + Navbar + StatusBar
 
 Phase 2: 기존 기능 마이그레이션 (Week 3-4)
@@ -805,9 +739,6 @@ Phase 2: 기존 기능 마이그레이션 (Week 3-4)
 Phase 3: 신규 기능 (Week 5-6)
 ├── /vault 페이지 구현
 ├── /stake (sSNOW) 페이지 구현
-├── /options 트레이딩 UI (Lightweight Charts + EIP-712 서명) ★NEW
-├── /options/vault LP UI ★NEW
-├── useBTCPrice() WebSocket 훅 ★NEW
 ├── Dashboard (/) 구현
 └── Portfolio + Revenue 훅
 

@@ -1,10 +1,9 @@
 # Snowball Options — 바이너리 옵션 프로토콜 설계
 
 > BTC 바이너리 옵션 | CDP 결제 | Meta-Transaction (Gasless) | Snowball Revenue Union 연동
-> Version: v0.2.0 | Status: Draft
+> Version: v0.1.0 | Status: Draft
 > Last updated: 2026-02-25
 > [INDEX](INDEX.md)
-> [v0.1.0 snapshot](v0.1.0/DESIGN_OPTIONS.md)
 
 ---
 
@@ -153,64 +152,8 @@ contracts/
 │   ├── IOptionsClearingHouse.sol
 │   ├── IOptionsVault.sol
 │   └── IPriceOracle.sol
-└── (오라클은 별도 packages/oracle/ 패키지)
-```
-
-#### 별도 오라클 패키지 (packages/oracle/)
-
-Creditcoin Testnet에 Pyth/Chainlink가 없으므로 BTCMockOracle 컨트랙트를 직접 배포합니다.
-FastAPI 백엔드가 Binance 실시간 가격을 ~10초마다 온체인에 푸시합니다.
-
-```
-packages/oracle/
-├── foundry.toml
-├── package.json
-├── src/
-│   ├── BTCMockOracle.sol          -- 통합 오라클 (Liquity IPriceFeed + Morpho getPrice 호환)
-│   └── interfaces/
-│       └── IBTCMockOracle.sol
-├── test/BTCMockOracle.t.sol
-└── script/DeployBTCOracle.s.sol
-```
-
-**BTCMockOracle 핵심 설계:**
-
-```solidity
-contract BTCMockOracle is AccessControl {
-    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
-
-    uint256 public price;           // 1e18 단위 (Liquity 호환)
-    uint256 public lastUpdated;
-    uint256 public constant MAX_PRICE_AGE = 120;  // 120초 stale 체크
-
-    // ─── Operator 전용 (FastAPI 백엔드가 호출) ───
-    function updatePrice(uint256 _price) external onlyRole(OPERATOR_ROLE) {
-        price = _price;
-        lastUpdated = block.timestamp;
-        emit PriceUpdated(_price, block.timestamp);
-    }
-
-    // ─── Liquity IPriceFeed 호환 ───
-    function fetchPrice() external view returns (uint256, bool) {
-        bool isStale = block.timestamp - lastUpdated > MAX_PRICE_AGE;
-        return (price, !isStale);  // (price in 1e18, isFresh)
-    }
-
-    // ─── Morpho 호환 (1e36) ───
-    function getPrice() external view returns (uint256) {
-        require(block.timestamp - lastUpdated <= MAX_PRICE_AGE, "Stale price");
-        return price * 1e18;  // 1e18 → 1e36
-    }
-
-    // ─── Options 호환 ───
-    function verifyAndGetPrice(
-        bytes calldata, /* priceData (unused — mock) */
-        uint256 /* productId */
-    ) external view returns (uint256) {
-        require(block.timestamp - lastUpdated <= MAX_PRICE_AGE, "Stale price");
-        return price;
-    }
-}
+└── oracle/
+    └── BTCPriceOracle.sol        -- BTC 가격 피드 (Pyth / Chainlink)
 ```
 
 ### 3-2. SnowballOptions.sol (옵션 엔진)
@@ -655,109 +598,57 @@ contract OptionsVault is
 
 ---
 
-## 4. 통합 백엔드 설계 (Python FastAPI)
-
-> **v0.2.0 변경:** Node.js/Express → Python FastAPI 통합 서버.
-> Oracle 가격 푸시, Options Relayer, Settlement Bot, Price API를 하나의 FastAPI에 통합.
+## 4. Relayer Backend 설계
 
 ### 4-1. 아키텍처
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  FastAPI 통합 서버 (Python + uvicorn)                     │
+│  Relayer Server (Node.js + Express)                       │
 │                                                          │
-│  ┌─── Oracle Service ────────────────────────────────┐   │
-│  │                                                    │   │
-│  │  Binance WebSocket (primary)                      │   │
-│  │  CoinGecko REST (fallback)                        │   │
-│  │  → BTCMockOracle.updatePrice() ~10초마다 호출     │   │
-│  │                                                    │   │
-│  └────────────────────────────────────────────────────┘   │
+│  ┌─── API Layer ───────────────────────────────────────┐ │
+│  │                                                      │ │
+│  │  POST /api/options/order     ← 서명된 주문 접수     │ │
+│  │  GET  /api/options/balance   ← CDP 잔고 조회        │ │
+│  │  GET  /api/options/rounds    ← 라운드 현황          │ │
+│  │  GET  /api/options/history   ← 거래 이력            │ │
+│  │  WS   /ws/options/price      ← BTC 실시간 가격     │ │
+│  │                                                      │ │
+│  └──────────────────────────────────────────────────────┘ │
 │                                                          │
-│  ┌─── Options API Layer ─────────────────────────────┐   │
-│  │                                                    │   │
-│  │  POST /api/options/order     ← 서명된 주문 접수   │   │
-│  │  GET  /api/options/balance   ← CDP 잔고 조회      │   │
-│  │  GET  /api/options/rounds    ← 라운드 현황        │   │
-│  │  GET  /api/options/history   ← 거래 이력          │   │
-│  │                                                    │   │
-│  └────────────────────────────────────────────────────┘   │
+│  ┌─── Order Matching Engine ───────────────────────────┐ │
+│  │                                                      │ │
+│  │  1. 서명 검증 (EIP-712 ecrecover)                   │ │
+│  │  2. 잔고 확인 (ClearingHouse 조회)                  │ │
+│  │  3. Over ↔ Under 매칭 (FIFO 큐)                    │ │
+│  │  4. 매칭 완료 → FilledOrder 생성                    │ │
+│  │  5. 배치 제출 (50개/tx, Relayer 컨트랙트 호출)      │ │
+│  │                                                      │ │
+│  └──────────────────────────────────────────────────────┘ │
 │                                                          │
-│  ┌─── Price API Layer ───────────────────────────────┐   │
-│  │                                                    │   │
-│  │  GET  /api/price/btc/current  ← 현재 BTC 가격    │   │
-│  │  GET  /api/price/btc/history  ← 히스토리          │   │
-│  │  GET  /api/price/btc/ohlcv    ← OHLCV 차트 데이터│   │
-│  │  WS   /ws/price               ← 실시간 스트리밍  │   │
-│  │                                                    │   │
-│  └────────────────────────────────────────────────────┘   │
+│  ┌─── Settlement Worker ───────────────────────────────┐ │
+│  │                                                      │ │
+│  │  매 라운드 종료 시:                                  │ │
+│  │  1. BTC Oracle 가격 조회                             │ │
+│  │  2. executeRound(priceData) 호출                     │ │
+│  │  3. 미정산 주문 스캔                                 │ │
+│  │  4. settleOrders() 배치 호출                         │ │
+│  │  5. 결과 로깅 + WebSocket 브로드캐스트               │ │
+│  │                                                      │ │
+│  │  폴링 주기: 5초 (60초 라운드 기준)                   │ │
+│  │                                                      │ │
+│  └──────────────────────────────────────────────────────┘ │
 │                                                          │
-│  ┌─── Order Matching Engine ─────────────────────────┐   │
-│  │                                                    │   │
-│  │  1. EIP-712 서명 검증 (eth-account)               │   │
-│  │  2. 잔고 확인 (ClearingHouse 조회)                │   │
-│  │  3. Over ↔ Under 매칭 (FIFO 큐)                  │   │
-│  │  4. 매칭 완료 → FilledOrder 생성                  │   │
-│  │  5. 배치 제출 (50개/tx, Relayer 컨트랙트 호출)    │   │
-│  │                                                    │   │
-│  └────────────────────────────────────────────────────┘   │
-│                                                          │
-│  ┌─── Settlement Worker ─────────────────────────────┐   │
-│  │                                                    │   │
-│  │  매 라운드 종료 시:                                │   │
-│  │  1. BTCMockOracle에서 최신 가격 확인              │   │
-│  │  2. executeRound() 호출                            │   │
-│  │  3. 미정산 주문 스캔                               │   │
-│  │  4. settleOrders() 배치 호출 (50건 단위)          │   │
-│  │  5. 결과 로깅 + WebSocket 브로드캐스트             │   │
-│  │                                                    │   │
-│  │  폴링 주기: 5초                                    │   │
-│  │                                                    │   │
-│  └────────────────────────────────────────────────────┘   │
-│                                                          │
-│  ┌─── Common Services ──────────────────────────────┐    │
-│  │                                                    │   │
-│  │  web3_client.py — web3.py + 논스 매니저 (mutex)   │   │
-│  │  gas_manager.py — Operator 지갑 CTC 잔고 모니터   │   │
-│  │                   잔고 부족 시 알림                 │   │
-│  │                                                    │   │
-│  └────────────────────────────────────────────────────┘   │
+│  ┌─── Gas Manager ────────────────────────────────────┐  │
+│  │                                                      │ │
+│  │  Operator 지갑 CTC 잔고 모니터링                     │ │
+│  │  가스비 추정 → 트랜잭션 최적화                       │ │
+│  │  잔고 부족 시 알림                                   │ │
+│  │                                                      │ │
+│  └──────────────────────────────────────────────────────┘ │
 │                                                          │
 └──────────────────────────────────────────────────────────┘
 ```
-
-### 4-1b. 디렉토리 구조
-
-```
-backend/
-├── pyproject.toml
-├── requirements.txt
-├── Dockerfile
-├── .env.example
-├── app/
-│   ├── main.py              -- FastAPI app + lifespan (background tasks)
-│   ├── config.py             -- pydantic-settings
-│   ├── oracle/
-│   │   ├── service.py        -- 10초 주기 가격 푸시
-│   │   ├── sources.py        -- Binance WS (primary) + CoinGecko REST (fallback)
-│   │   └── contracts.py      -- BTCMockOracle 호출
-│   ├── options/
-│   │   ├── router.py         -- POST /api/options/order, GET history/rounds
-│   │   ├── relayer.py        -- FIFO 매칭 엔진
-│   │   ├── settlement.py     -- 5초 폴링, 50건 배치 정산
-│   │   ├── eip712.py         -- EIP-712 서명 검증
-│   │   └── schemas.py        -- Pydantic 모델
-│   ├── price/
-│   │   ├── router.py         -- GET /api/price/btc/current, history, ohlcv
-│   │   ├── websocket.py      -- WS /ws/price 스트리밍
-│   │   └── cache.py          -- 인메모리 가격 히스토리
-│   └── common/
-│       ├── web3_client.py    -- web3.py + 논스 매니저 (mutex)
-│       └── gas_manager.py    -- 가스비 모니터링
-└── tests/
-```
-
-핵심 의존성: `fastapi`, `uvicorn`, `web3`, `eth-account`, `pydantic`, `websockets`, `httpx`, `apscheduler`
 
 ### 4-2. 주문 매칭 로직
 
@@ -785,72 +676,54 @@ Under Queue: [Dave 10 CDP] [Eve 15 CDP]
 
 ### 4-3. API 엔드포인트
 
-```
-# ─── Options API ───
-
-POST /api/options/order          ← 서명된 주문 접수
+```typescript
+// ─── 주문 제출 ───
+POST /api/options/order
 Body: {
-    "user": "0x...",
-    "position": 0,               // 0=Over, 1=Under
-    "amount": "10000000000000000000",  // 10 CDP (18 decimals)
-    "productId": 0,              // BTC
-    "epoch": 42,
-    "deadline": 1740528000,
-    "nonce": 7,
-    "signature": "0x..."         // EIP-712 서명
+    user: "0x...",
+    position: 0,              // 0=Over, 1=Under
+    amount: "10000000000000000000",  // 10 CDP (18 decimals)
+    productId: 0,             // BTC
+    epoch: 42,
+    deadline: 1740528000,
+    nonce: 7,
+    signature: "0x..."        // EIP-712 서명
 }
 Response: {
-    "orderId": "uuid-...",
-    "status": "queued",          // queued → matched → submitted → settled
-    "matchedWith": null
+    orderId: "uuid-...",
+    status: "queued",         // queued → matched → submitted → settled
+    matchedWith: null
 }
 
+// ─── 잔고 조회 ───
 GET /api/options/balance?address=0x...
 Response: {
-    "available": "10000000000000000000",
-    "inEscrow": "5000000000000000000",
-    "total": "15000000000000000000"
+    available: "10000000000000000000",   // 사용 가능 CDP
+    inEscrow: "5000000000000000000",     // 잠긴 CDP
+    total: "15000000000000000000"
 }
 
+// ─── 라운드 현황 ───
 GET /api/options/rounds
 Response: {
-    "currentEpoch": 42,
-    "currentRound": {
-        "startPrice": "97250.00",
-        "startTime": 1740527940,
-        "endsIn": 45,
-        "totalOverVolume": "500.00",
-        "totalUnderVolume": "480.00"
+    currentEpoch: 42,
+    currentRound: {
+        startPrice: "97250.00",      // BTC 시작 가격
+        startTime: 1740527940,
+        endsIn: 45,                  // 초
+        totalOverVolume: "500.00",   // CDP
+        totalUnderVolume: "480.00"
     },
-    "recentRounds": [...]
+    recentRounds: [...]
 }
 
-GET /api/options/history?address=0x...
-Response: [...]
-
-# ─── Price API ───
-
-GET /api/price/btc/current
-Response: {
-    "price": "97312.45",
-    "timestamp": 1740527985,
-    "source": "binance"
-}
-
-GET /api/price/btc/history?interval=1m&limit=100
-Response: [...]
-
-GET /api/price/btc/ohlcv?interval=1m&limit=100
-Response: [...]
-
-# ─── WebSocket (실시간 가격 스트리밍) ───
-
-WS /ws/price
+// ─── 실시간 가격 (WebSocket) ───
+WS /ws/options/price
 Message: {
-    "type": "price",
-    "symbol": "BTCUSDT",
-    "price": "97312.45",
-    "timestamp": 1740527985
+    type: "price",
+    productId: 0,
+    price: "97312.45",
+    timestamp: 1740527985
 }
 ```
 
@@ -858,49 +731,50 @@ Message: {
 
 ## 5. 오라클 설계
 
-> **v0.2.0 변경:** Creditcoin Testnet에 Pyth/Chainlink가 없으므로 BTCMockOracle 직접 배포.
-> Python FastAPI 백엔드가 Binance에서 실시간 가격을 가져와 온체인에 푸시.
-
 ### 5-1. BTC 가격 소스
 
 | 소스 | 우선순위 | 특징 |
 |------|----------|------|
-| **Binance WebSocket** | 1순위 | 실시간 btcusdt@trade 스트림 |
-| **CoinGecko REST** | 2순위 (fallback) | 무료, 레이트 리밋 주의 |
-| ~~Pyth Network~~ | ~~미사용~~ | ~~Creditcoin Testnet 미지원~~ |
-| ~~Chainlink~~ | ~~미사용~~ | ~~Creditcoin Testnet 미지원~~ |
+| **Pyth Network** | 1순위 | 서브초 업데이트, 검증 가능, 수수료 |
+| **Chainlink** | 2순위 (fallback) | 안정적, 업데이트 느림 |
+| **DEX TWAP** | 비상용 | 자체 DEX 가격 참조 |
 
-### 5-2. 가격 푸시 흐름
+### 5-2. 오라클 래퍼
 
+```solidity
+contract BTCPriceOracle is IPriceOracle {
+    IPyth public pyth;
+    AggregatorV3Interface public chainlinkFeed;
+    bytes32 public btcPriceFeedId;    // Pyth BTC/USD feed ID
+
+    uint256 public constant MAX_PRICE_AGE = 60;  // 60초 이내 가격만 유효
+
+    function getPrice(uint256 /* productId */) external view returns (uint256) {
+        // Pyth 우선
+        try pyth.getPriceNoOlderThan(btcPriceFeedId, MAX_PRICE_AGE) returns (PythStructs.Price memory price) {
+            return _convertPythPrice(price);
+        } catch {}
+
+        // Chainlink fallback
+        (, int256 answer,, uint256 updatedAt,) = chainlinkFeed.latestRoundData();
+        require(block.timestamp - updatedAt < MAX_PRICE_AGE, "Stale price");
+        return uint256(answer) * 1e10;  // 8 decimals → 18 decimals
+    }
+
+    function verifyAndGetPrice(
+        bytes calldata priceData,
+        uint256 /* productId */
+    ) external payable returns (uint256) {
+        // Pyth 서명 검증 + 가격 추출
+        bytes[] memory updateData = new bytes[](1);
+        updateData[0] = priceData;
+        pyth.updatePriceFeeds{value: msg.value}(updateData);
+
+        PythStructs.Price memory price = pyth.getPriceNoOlderThan(btcPriceFeedId, MAX_PRICE_AGE);
+        return _convertPythPrice(price);
+    }
+}
 ```
-┌──────────────────────────────────────────────────────────┐
-│                                                          │
-│  Binance WebSocket ──→ FastAPI (app/oracle/sources.py)   │
-│  (btcusdt@trade)        │                                │
-│                         ├── 인메모리 캐시 (가격 히스토리)│
-│                         ├── WS /ws/price 브로드캐스트    │
-│                         │                                │
-│                         ▼  ~10초마다                      │
-│                  BTCMockOracle.updatePrice(price_1e18)    │
-│                  (OPERATOR_ROLE, web3.py 호출)            │
-│                                                          │
-│  CoinGecko REST ──→ fallback (Binance 다운 시)           │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
-```
-
-### 5-3. BTCMockOracle 인터페이스
-
-| 함수 | 용도 | 호환 |
-|------|------|------|
-| `updatePrice(uint256)` | OPERATOR_ROLE, FastAPI가 ~10초마다 호출 | — |
-| `fetchPrice() → (uint256, bool)` | Liquity IPriceFeed 호환 (1e18) | Liquity |
-| `getPrice() → uint256` | Morpho 호환 (1e36) | Morpho |
-| `verifyAndGetPrice(bytes, uint256) → uint256` | Options 호환 | Options |
-
-- `MAX_PRICE_AGE = 120초` — 120초 이상 업데이트 없으면 stale 판정
-- `AccessControl` — OPERATOR_ROLE만 가격 업데이트 가능
-- 3개 프로토콜 (Liquity, Morpho, Options) 모두에서 동일 오라클 사용 가능
 
 ---
 
@@ -1044,7 +918,7 @@ useOptionsVaultWithdraw()          // LP 출금 (24h 딜레이)
 | 리스크 | 심각도 | 대응 |
 |--------|--------|------|
 | Relayer 서버 다운 | High | 다중 Relayer, 유저 직접 제출 fallback |
-| 오라클 가격 조작 | Critical | BTCMockOracle OPERATOR_ROLE 제한, MAX_PRICE_AGE 120초, Binance+CoinGecko 이중 소스 |
+| 오라클 가격 조작 | Critical | Pyth + Chainlink 이중 검증, 가격 편차 체크 |
 | Replay Attack (서명 재사용) | High | nonce 관리 + deadline 필수 |
 | 프론트러닝 (MEV) | Medium | 서명 → Relayer 경로로 MEV 노출 최소화 |
 | LP 과다 노출 | Medium | maxCollateralRatio 80% 제한 |
@@ -1081,28 +955,26 @@ Relayer 장애 시:
 
 ## 9. 배포 로드맵
 
-### Phase 1: 컨트랙트 + 오라클 (Week 1-2)
+### Phase 1: 컨트랙트 (Week 1-2)
 - [ ] Capture 컨트랙트를 Creditcoin용으로 포팅
 - [ ] USDC → CDP 토큰 변경
 - [ ] HYPE → BTC underlying 변경
 - [ ] OptionsRelayer (EIP-712 메타 트랜잭션) 구현
-- [ ] **BTCMockOracle (packages/oracle/) 구현 + 배포**
+- [ ] BTCPriceOracle (Pyth + Chainlink) 구현
 - [ ] Forge 테스트 작성
 
-### Phase 2: Backend — FastAPI 통합 서버 (Week 3-4)
-- [ ] **Python FastAPI 프로젝트 구축 (backend/)**
-- [ ] **Oracle Service: Binance WS → BTCMockOracle.updatePrice()**
-- [ ] **Price API: /api/price/btc/*, WS /ws/price**
-- [ ] Options Relayer: 주문 접수 + FIFO 매칭 엔진
-- [ ] Settlement Worker: 5초 폴링, 50건 배치 정산
-- [ ] Gas Manager + 논스 매니저 (mutex)
+### Phase 2: Backend (Week 3-4)
+- [ ] Relayer API 서버 구축
+- [ ] 주문 매칭 엔진 구현
+- [ ] Settlement Worker 구현
+- [ ] Gas Manager 구현
+- [ ] WebSocket BTC 가격 스트림
 
-### Phase 3: Frontend — Privy + Options UI (Week 5-6)
-- [ ] **RainbowKit → Privy 마이그레이션**
-- [ ] /options 트레이딩 UI (**Lightweight Charts** BTC 실시간 차트)
+### Phase 3: Frontend (Week 5-6)
+- [ ] /options 트레이딩 UI
 - [ ] /options/vault LP UI
 - [ ] EIP-712 서명 플로우 (wagmi signTypedData)
-- [ ] **useBTCPrice() WebSocket 훅**
+- [ ] 실시간 BTC 차트
 - [ ] 거래 이력 + PnL
 
 ### Phase 4: 통합 (Week 7-8)
@@ -1120,7 +992,7 @@ Relayer 장애 시:
 | 체인 | HyperEVM (998) | Creditcoin (102031) |
 | 토큰 | USDC (6 dec) | CDP (18 dec) |
 | 기초 자산 | HYPE | BTC |
-| 오라클 | HyperCore precompile | **BTCMockOracle (FastAPI 가격 푸시)** |
+| 오라클 | HyperCore precompile | Pyth + Chainlink |
 | 주문 제출 | Operator 직접 | **EIP-712 서명 + Relayer** |
 | 가스비 | 유저 부담 가능 | **프로토콜 대납 (Gasless)** |
 | 수수료 귀속 | 자체 Treasury | **Revenue Union → sSNOW** |

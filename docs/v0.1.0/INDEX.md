@@ -12,8 +12,8 @@
 | 문서 | 버전 | 상태 | 설명 |
 |------|------|------|------|
 | [DESIGN_TOKENOMICS.md](DESIGN_TOKENOMICS.md) | v0.1.0 | Draft | SNOW/sSNOW 토크노믹스, Revenue Union, Buyback |
-| [DESIGN_FRONTEND.md](DESIGN_FRONTEND.md) | v0.2.0 | Draft | 통합 프론트엔드 IA, 페이지 설계, Hooks, 디자인 시스템 |
-| [DESIGN_OPTIONS.md](DESIGN_OPTIONS.md) | v0.2.0 | Draft | BTC 바이너리 옵션, Oracle, FastAPI 백엔드, Meta-tx Relayer |
+| [DESIGN_FRONTEND.md](DESIGN_FRONTEND.md) | v0.1.0 | Draft | 통합 프론트엔드 IA, 페이지 설계, Hooks, 디자인 시스템 |
+| [DESIGN_OPTIONS.md](DESIGN_OPTIONS.md) | v0.1.0 | Draft | BTC 바이너리 옵션, CDP 결제, Meta-tx Relayer |
 
 ### SSOT 문서 (Single Source of Truth)
 
@@ -31,14 +31,6 @@
 | [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | v1.0.0 | Active | 프로젝트 전체 개요 |
 | [FRONTEND_HANDOFF.md](FRONTEND_HANDOFF.md) | v1.0.0 | Archive | Gemini 핸드오프용 프론트엔드 스펙 |
 | [FRONTEND_PROMPT.md](FRONTEND_PROMPT.md) | v1.0.0 | Archive | 프론트엔드 구현 프롬프트 |
-
----
-
-## Archived Versions
-
-| 버전 | 폴더 | 설명 |
-|------|------|------|
-| [v0.1.0](v0.1.0/) | `docs/v0.1.0/` | 초기 설계 문서 스냅샷 (2026-02-25) |
 
 ---
 

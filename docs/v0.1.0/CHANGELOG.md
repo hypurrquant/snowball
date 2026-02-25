@@ -5,39 +5,7 @@
 
 ---
 
-## 2026-02-25 — v0.2.0
-
-### 폴더 버전화
-
-- `docs/v0.1.0/` 스냅샷 생성 — 12개 파일 아카이브 복사
-- INDEX.md에 Archived Versions 섹션 추가
-
-### DESIGN_OPTIONS.md v0.1.0 → v0.2.0
-
-| 섹션 | 변경 내용 |
-|------|-----------|
-| Oracle | Pyth/Chainlink → **BTCMockOracle** (AccessControl, OPERATOR_ROLE, packages/oracle/) |
-| Backend | Node.js/Express → **Python FastAPI** 통합 서버 (Oracle + Options + Price API) |
-| Price API | 신규: `/api/price/btc/*`, `WS /ws/price` 엔드포인트 |
-| 배포 로드맵 | FastAPI, BTCMockOracle, Privy 반영 |
-| 보안 | 오라클 대응 전략 업데이트 (BTCMockOracle + Binance/CoinGecko 이중 소스) |
-
-### DESIGN_FRONTEND.md v0.1.0 → v0.2.0
-
-| 섹션 | 변경 내용 |
-|------|-----------|
-| Auth/지갑 | ~~RainbowKit~~ → **Privy** (`@privy-io/react-auth`, `@privy-io/wagmi`) |
-| 차트 | Options에 **Lightweight Charts** (TradingView) 추가, 기타 Recharts 유지 |
-| 라우트 | `/options`, `/options/vault` 신규 추가 |
-| Hooks | `hooks/options/*` (8개), `hooks/price/*` (3개) 신규 |
-| 컴포넌트 | `components/options/*` (6개) 신규 |
-| ABIs | Options 관련 ABI 4개 추가 |
-| 패키지 | 추가: `@privy-io/react-auth`, `@privy-io/wagmi`, `lightweight-charts` / 제거: `@rainbow-me/rainbowkit` |
-| 마이그레이션 | Phase 3에 Options UI + WebSocket 훅 추가 |
-
----
-
-## 2026-02-25 — v0.1.0
+## 2026-02-25
 
 ### 신규 문서
 
