@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
+import { Providers } from "@/components/providers";
+import { Navbar } from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
   title: "Snowball DEX",
@@ -15,8 +17,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-bg-primary text-text-primary antialiased">
-        {/* TODO: Wrap with WagmiProvider, QueryClientProvider, RainbowKitProvider */}
-        {children}
+        <Providers>
+          <Navbar />
+          <main className="flex-1">
+            {children}
+          </main>
+        </Providers>
       </body>
     </html>
   );

@@ -5,21 +5,21 @@
   },
   "note": "Run deploy-viem.ts to populate",
   "core": {
-    "snowballFactory": "",
-    "snowballPoolDeployer": "",
+    "snowballFactory": "0x04dca03a979b2ad38ee964e8d32c9d36c1301040",
+    "snowballPoolDeployer": "0x71f39dc01dce21358e0733a9981f4b5010312dbb",
     "snowballCommunityVault": "",
     "snowballVaultFactoryStub": "",
-    "snowballRouter": "",
-    "dynamicFeePlugin": "",
-    "nonfungiblePositionManager": "",
+    "snowballRouter": "0x151211ea233c72d466e7c159bf07673771164e4e",
+    "dynamicFeePlugin": "0x962267ce45eeef519212243fe8d954b951e31f2c",
+    "nonfungiblePositionManager": "0x16534c66e4249ac8cd39a8c91cc80d3f0389a71f",
     "nonfungibleTokenPositionDescriptor": "",
-    "quoterV2": ""
+    "quoterV2": "0x36bab7a5dcfb2c4e980dc5bf86009e61a3c35c77"
   },
   "mockTokens": {
-    "sbUSD": "",
-    "wCTC": "",
-    "lstCTC": "",
-    "USDC": ""
+    "sbUSD": "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd",
+    "wCTC": "0x8f7f60a0f615d828eafcbbf6121f73efcfb56969",
+    "lstCTC": "0x72968ff9203dc5f352c5e42477b84d11c8c8f153",
+    "USDC": "0xbcaa46ef7a399fcdb64adf4520cdcc6d62fcaaed"
   },
   "pools": {
     "sbUSD_USDC": "",
