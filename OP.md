@@ -1,7 +1,21 @@
 # OP.md — Snowball Protocol Operations Guide
 
 > 운영 담당자를 위한 가이드. 서버 실행, 배포, 모니터링, 트러블슈팅, 향후 개발 계획을 포함합니다.
-> Last updated: 2026-02-24
+> Last updated: 2026-02-25
+
+---
+
+## 패키지별 운영 가이드
+
+이 문서는 **Liquity 기반 코어 프로토콜 + 에이전트 시스템**의 운영 가이드입니다.
+각 서브 프로젝트는 별도의 OP.md를 참조하세요:
+
+| 패키지 | OP.md | 설명 |
+|--------|-------|------|
+| **Snowball DEX** | [`snowball-dex/OP.md`](snowball-dex/OP.md) | Algebra V4 DEX — 스왑, 풀 생성, LP 관리 |
+| **Snowball Lend App** | [`snowball-app/OP.md`](snowball-app/OP.md) | Morpho Blue 렌딩 UI — Supply, Borrow, 포지션 관리 |
+| **Snowball Yield Vault** | [`packages/yield/OP.md`](packages/yield/OP.md) | Beefy V7 Yield Optimizer — Vault, Strategy, Harvest |
+| **Snowball Lend (Morpho)** | [`packages/morpho/OP.md`](packages/morpho/OP.md) | Morpho Blue 포크 — 마켓 생성, 오라클, 배포 |
 
 ---
 
