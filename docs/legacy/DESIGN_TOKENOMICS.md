@@ -1,7 +1,10 @@
 # Snowball 통합 토크노믹스 설계
 
+> **DEPRECATED** — 이 문서는 [DESIGN_TOKENOMICS_V2.md](DESIGN_TOKENOMICS_V2.md) (Buyback & Burn + Utility 모델)로 대체되었습니다.
+> sSNOW 복리 모델은 폐기되었으며, 이 문서는 참고용으로만 보존됩니다.
+
 > Snowball Revenue Union — 전 프로토콜 수익을 자동 복리로 공유하는 통합 DeFi 모델
-> Version: v0.1.0 | Status: Draft
+> Version: v0.1.0 | Status: ~~Draft~~ Deprecated
 > Last updated: 2026-02-25
 > [INDEX](INDEX.md)
 
