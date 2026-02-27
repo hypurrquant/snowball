@@ -1,0 +1,14 @@
+{
+  "name": "@snowball/usc-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bridge": "node scripts/bridge-e2e.mjs",
+    "build": "forge build"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "ethers": "^6.15.0"
+  }
+}
