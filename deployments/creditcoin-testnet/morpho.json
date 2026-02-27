@@ -20,7 +20,8 @@
   "oracles": {
     "wCTCOracle": "0x42ca12a83c14e95f567afc940b0118166d8bd852",
     "lstCTCOracle": "0x192f1feb36f319e79b3bba25a17359ee72266a14",
-    "sbUSDOracle": "0xc39f222e034f4bd4f3c858e6fde9ce4398400a26"
+    "sbUSDOracle": "0xc39f222e034f4bd4f3c858e6fde9ce4398400a26",
+    "dnOracle": "0xcd240E13ec3c33fE73d0c5C3196F9d9179008965"
   },
   "markets": {
     "wCTC/sbUSD": {
@@ -43,6 +44,16 @@
       "oracle": "0xc39f222e034f4bd4f3c858e6fde9ce4398400a26",
       "irm": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
       "lltv": "0.86"
+    },
+    "DN/sbUSD": {
+      "marketId": "0x2e41beddb531dab95695661b4473e1bc49454763eb6b1d7dedcbf847dbc76da2",
+      "loanToken": "sbUSD",
+      "collateralToken": "DN",
+      "collateralAddress": "0xCc2C598356011fb0a32734B138b1Fa363BbC7Cec",
+      "oracle": "0xcd240E13ec3c33fE73d0c5C3196F9d9179008965",
+      "irm": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
+      "lltv": "0.80",
+      "note": "Bridged DN token as collateral — USC bridge PoC integration"
     }
   }
 }

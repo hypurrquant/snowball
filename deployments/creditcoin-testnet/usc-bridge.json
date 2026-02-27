@@ -29,6 +29,25 @@
     "ChainInfo": "0x0000000000000000000000000000000000000fd3"
   },
   "proofAPI": "https://proof-gen-api.usc-testnet2.creditcoin.network",
+  "creditcoinTestnet": {
+    "network": "creditcoin-testnet",
+    "chainId": 102031,
+    "rpc": "https://rpc.cc3-testnet.creditcoin.network",
+    "contracts": {
+      "DNToken": {
+        "address": "0xCc2C598356011fb0a32734B138b1Fa363BbC7Cec",
+        "description": "DN Token ERC20 (1M supply) for DEX/Lend integration"
+      }
+    },
+    "pools": {
+      "DN_wCTC": {
+        "address": "0xb32f8487d54bE5D2C8Eb3766a5639c113aC8FABb",
+        "token0": "wCTC",
+        "token1": "DN",
+        "initialLiquidity": "1000 each"
+      }
+    }
+  },
   "e2eTest": {
     "burnTx": "0x38e8709932361abe12bb0702af793c9827537558c82f17642159b2f009f6d418",
     "mintTx": "0x04dc38f88f1124b864c272b1784f224f77f973d50dbe28a343a00b37a4fe8430",
