@@ -16,6 +16,7 @@ import {
   Bot,
   MessageSquare,
   Snowflake,
+  Vault,
 } from "lucide-react";
 
 interface NavItem {
@@ -43,6 +44,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/lend", label: "Lend", icon: <Landmark className="w-4 h-4" /> },
       { href: "/borrow", label: "Borrow", icon: <HandCoins className="w-4 h-4" /> },
       { href: "/earn", label: "Earn", icon: <Percent className="w-4 h-4" /> },
+      { href: "/yield", label: "Yield", icon: <Vault className="w-4 h-4" /> },
     ],
   },
   {

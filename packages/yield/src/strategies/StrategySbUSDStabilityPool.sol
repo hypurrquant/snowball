@@ -37,24 +37,24 @@ contract StrategySbUSDStabilityPool is SnowballStrategyBase {
     function _deposit(uint256 _amount) internal override {
         if (_amount > 0) {
             wantToken.forceApprove(address(stabilityPool), _amount);
-            stabilityPool.provideToSP(_amount, false);
+            stabilityPool.provideToSP(_amount);
         }
     }
 
     function _withdraw(uint256 _amount) internal override {
-        stabilityPool.withdrawFromSP(_amount, true);
+        stabilityPool.withdrawFromSP(_amount);
     }
 
     function _emergencyWithdraw() internal override {
         uint256 deposited = stabilityPool.getCompoundedBoldDeposit(address(this));
         if (deposited > 0) {
-            stabilityPool.withdrawFromSP(deposited, true);
+            stabilityPool.withdrawFromSP(deposited);
         }
     }
 
     function _claim() internal override {
         // Trigger yield + collateral claim by doing a zero withdraw.
-        stabilityPool.withdrawFromSP(0, true);
+        stabilityPool.withdrawFromSP(0);
     }
 
     function _verifyRewardToken(address) internal pure override {
@@ -64,7 +64,6 @@ contract StrategySbUSDStabilityPool is SnowballStrategyBase {
     }
 
     function balanceOfPool() public view override returns (uint256) {
-        return stabilityPool.getCompoundedBoldDeposit(address(this))
-            + stabilityPool.getDepositorYieldGainWithPending(address(this));
+        return stabilityPool.getCompoundedBoldDeposit(address(this));
     }
 }

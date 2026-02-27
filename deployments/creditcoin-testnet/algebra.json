@@ -3,28 +3,45 @@
     "name": "Creditcoin Testnet",
     "chainId": 102031
   },
-  "note": "Run deploy-viem.ts to populate",
   "core": {
-    "snowballFactory": "",
-    "snowballPoolDeployer": "",
-    "snowballCommunityVault": "",
-    "snowballVaultFactoryStub": "",
-    "snowballRouter": "",
-    "dynamicFeePlugin": "",
-    "nonfungiblePositionManager": "",
-    "nonfungibleTokenPositionDescriptor": "",
-    "quoterV2": ""
+    "snowballFactory": "0xd478a63345d7cd17881a540e15943919604691f6",
+    "snowballPoolDeployer": "0x1ff0fa39ae0db2c37b400fbbaf234ad6eee3bd86",
+    "snowballCommunityVault": "0xb4f83f40ef1a54052295ceaa5ccb4834a44ac7a6",
+    "snowballVaultFactoryStub": "0xf27691ca1ea4a463e7d28f074354e42f15479a1e",
+    "snowballRouter": "0xd604593426538fd1fa5b2660e3e443fa1ce93411",
+    "dynamicFeePlugin": "0x5b0901f4c205fa4a92bbc3fecaef9b0b72ef4246",
+    "nonfungiblePositionManager": "0x54b8584dd202cee8db0fbfa3522f78cb7d9bf6dd",
+    "nonfungibleTokenPositionDescriptor": "0xf428a1c63ce3cc6785746fbed320cc292bc955c5",
+    "quoterV2": "0xeb2b122a28dceaeecb87b745173d6aa3c990d5c0"
   },
   "mockTokens": {
-    "sbUSD": "",
-    "wCTC": "",
-    "lstCTC": "",
-    "USDC": ""
+    "sbUSD": "0x2fb12bd306ef0699cecb5a3f3f1a53f7d0722fae",
+    "wCTC": "0xa031af452b5bc0c122e71febbb484d28c0f9614b",
+    "lstCTC": "0x51c7cca6d27d7c4cd3943b6a07ecbf4fc0d6c9fa",
+    "USDC": "0x126ddcb68218da3195cf870df5991c66f210dd1f"
   },
   "pools": {
-    "sbUSD_USDC": "",
-    "wCTC_sbUSD": "",
-    "wCTC_USDC": "",
-    "lstCTC_wCTC": ""
+    "sbUSD_USDC": "0x2CB59078c54DcBc94D378f0E09c89C6c1e61Dc07",
+    "wCTC_sbUSD": "0xECA2908d81aC151A6f530b7f91E41C02704E65E2",
+    "wCTC_USDC": "0x992C2B184807Ce60132a535791b44142CA198D10",
+    "lstCTC_wCTC": "0x134D6F5D497538842adf361bD198c393D32321A2"
+  },
+  "mockPools": {
+    "sbUSD_USDC": "0xfdfBC7373BafD4483c5485C3f38f22740DAb143f",
+    "wCTC_sbUSD": "0x1600B86319240692C8330B46aCc99fD4119616A3",
+    "wCTC_USDC": "0x3EE6B434b9744AC9cAC7fa43c5783a443f79Acd5",
+    "lstCTC_wCTC": "0xbd46A45dcddb1C5a4Af59ff89d385252386A26d8"
+  },
+  "mockTokens_deprecated": {
+    "sbUSD": "0x2fb12bd306ef0699cecb5a3f3f1a53f7d0722fae",
+    "wCTC": "0xa031af452b5bc0c122e71febbb484d28c0f9614b",
+    "lstCTC": "0x51c7cca6d27d7c4cd3943b6a07ecbf4fc0d6c9fa",
+    "USDC": "0x126ddcb68218da3195cf870df5991c66f210dd1f"
+  },
+  "realTokens": {
+    "sbUSD": "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd",
+    "wCTC": "0x8f7f60a0f615d828eafcbbf6121f73efcfb56969",
+    "lstCTC": "0x72968ff9203dc5f352c5e42477b84d11c8c8f153",
+    "USDC": "0xbcaa46ef7a399fcdb64adf4520cdcc6d62fcaaed"
   }
 }

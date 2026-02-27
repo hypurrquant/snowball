@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 ABI_DIR="$ROOT_DIR/backend/abi"
 
-mkdir -p "$ABI_DIR/oracle" "$ABI_DIR/options"
+mkdir -p "$ABI_DIR/oracle" "$ABI_DIR/options" "$ABI_DIR/yield"
 
 extract() {
     local package="$1"
@@ -39,6 +39,14 @@ extract "options" "OptionsClearingHouse"
 extract "options" "OptionsVault"
 extract "options" "SnowballOptions"
 extract "options" "OptionsRelayer"
+
+# Yield Vaults
+extract "yield" "SnowballYieldVault"
+extract "yield" "SnowballStrategyBase"
+extract "yield" "StrategySbUSDStabilityPool"
+extract "yield" "StrategySbUSDMorpho"
+extract "yield" "StrategyWCTCMorpho"
+extract "yield" "StrategyUSDCMorpho"
 
 echo ""
 echo "ABIs extracted to: $ABI_DIR"
