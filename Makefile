@@ -1,14 +1,17 @@
-.PHONY: build-contracts test deploy-oracle deploy-options extract-abi backend-dev docker-build docker-up docker-down frontend-dev frontend-build
+.PHONY: build-contracts test deploy-oracle deploy-options deploy-algebra deploy-yield deploy-all extract-abi backend-dev docker-build docker-up docker-down frontend-dev frontend-build
 
 # ─── Smart Contracts ───
 
 build-contracts:
 	cd packages/oracle && forge build
 	cd packages/options && forge build
+	cd packages/algebra && forge build
+	cd packages/yield && forge build
 
 test:
 	cd packages/oracle && forge test -v
 	cd packages/options && forge test -v
+	cd packages/yield && forge test -v
 
 deploy-oracle:
 	cd packages/oracle && npx tsx scripts/deploy-viem.ts
@@ -16,7 +19,13 @@ deploy-oracle:
 deploy-options:
 	cd packages/options && npx tsx scripts/deploy-viem.ts
 
-deploy-all: deploy-oracle deploy-options
+deploy-algebra:
+	cd packages/algebra && npx tsx scripts/deploy-viem.ts
+
+deploy-yield:
+	cd packages/yield && npx tsx scripts/deploy-viem.ts
+
+deploy-all: deploy-oracle deploy-options deploy-algebra deploy-yield
 
 # ─── Backend ───
 

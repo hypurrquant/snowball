@@ -1,0 +1,61 @@
+{
+  "network": {
+    "name": "Creditcoin Testnet",
+    "chainId": 102031
+  },
+  "vaults": {
+    "sbUSD-StabilityPool": {
+      "vault": "0x8d0ed3fd144530fb2e763ecb68993fd6e73cc511",
+      "strategy": "0xa15d3d2eaefcc677d2255f2fc7f5c1c59f0904a4",
+      "want": "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd",
+      "wantSymbol": "sbUSD",
+      "name": "Stability Pool"
+    },
+    "sbUSD-Morpho": {
+      "vault": "0x8076a963a86daa86ee8f0929c03d075e2bd62ccf",
+      "strategy": "0x5c3f1b8d16abb5114f08ed7d9c6aa2ab425fcfdb",
+      "want": "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd",
+      "wantSymbol": "sbUSD",
+      "name": "Morpho sbUSD"
+    },
+    "wCTC-Morpho": {
+      "vault": "0x3927608bdbb9165deeb518b07cef4e3efadaaefc",
+      "strategy": "0x6aac79123e76075ace9777e41dee8212c4b13ea0",
+      "want": "0x8f7f60a0f615d828eafcbbf6121f73efcfb56969",
+      "wantSymbol": "wCTC",
+      "name": "Morpho wCTC"
+    },
+    "USDC-Morpho": {
+      "vault": "0xb5fd93247f0fd8cbf3b8db7963e699e35bc79b97",
+      "strategy": "0xb76d6fbc6403d4890202e9c6cd39cecd078ac734",
+      "want": "0xbcaa46ef7a399fcdb64adf4520cdcc6d62fcaaed",
+      "wantSymbol": "USDC",
+      "name": "Morpho USDC"
+    }
+  },
+  "deprecated_vaults": {
+    "sbUSD-StabilityPool-v1": {
+      "vault": "0xd91035c1c48bd28dc7072f78a0b6a9adf55a38cd",
+      "strategy": "0x282d87f4e4f20ad2d38d8570a76b72f8031ac88d",
+      "reason": "provideToSP(uint256,bool) signature mismatch — fixed to provideToSP(uint256)"
+    },
+    "sbUSD-StabilityPool-v2": {
+      "vault": "0xa5e192431faca93d7a32db601c73845e8b417ab4",
+      "strategy": "0x8b2c38fc295ebc0e431220b08640655bb6377af1",
+      "reason": "getDepositorYieldGainWithPending() does not exist in deployed SP bytecode — removed from balanceOfPool()"
+    },
+    "wCTC-Morpho-v1": {
+      "vault": "0x5796211d1e317ca07f4f5315b8a47f2f9eb433ea",
+      "strategy": "0xd61fc96c85f39199abdee0db5f8676c794620bc9",
+      "reason": "Wrong marketId — wCTC was collateral not loanToken in Morpho market"
+    }
+  },
+  "config": {
+    "swapRouter": "0xd604593426538fd1fa5b2660e3e443fa1ce93411",
+    "poolDeployer": "0x1ff0fa39ae0db2c37b400fbbaf234ad6eee3bd86",
+    "snowballLend": "0x7d604b31297b36aace73255931f65e891cf289d3",
+    "stabilityPool": "0x91c9983499f257015597d756108efdf26746db81",
+    "strategist": "0xf00F6cB5D43f9A38B10FA0B8e1B26cDB34D20d9d",
+    "treasury": "0xf00F6cB5D43f9A38B10FA0B8e1B26cDB34D20d9d"
+  }
+}

@@ -6,6 +6,12 @@
   "scripts": {
     "build": "forge build",
     "test": "forge test",
-    "clean": "forge clean"
+    "clean": "forge clean",
+    "deploy": "npx tsx scripts/deploy-viem.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "viem": "^2.0.0",
+    "dotenv": "^16.0.0"
   }
 }

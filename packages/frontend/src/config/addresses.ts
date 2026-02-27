@@ -22,12 +22,12 @@ export const TOKEN_INFO: Record<string, { symbol: string; name: string; decimals
 
 // ─── DEX (Algebra V4 Integral) ───
 export const DEX = {
-  snowballFactory: "0x04dca03a979b2ad38ee964e8d32c9d36c1301040" as Address,
-  snowballPoolDeployer: "0x71f39dc01dce21358e0733a9981f4b5010312dbb" as Address,
-  snowballRouter: "0x151211ea233c72d466e7c159bf07673771164e4e" as Address,
-  dynamicFeePlugin: "0x962267ce45eeef519212243fe8d954b951e31f2c" as Address,
-  nonfungiblePositionManager: "0x16534c66e4249ac8cd39a8c91cc80d3f0389a71f" as Address,
-  quoterV2: "0x36bab7a5dcfb2c4e307c088bc4ddff74f5e0dc246404b7a1c0096771d1fa6b077" as Address,
+  snowballFactory: "0xd478a63345d7cd17881a540e15943919604691f6" as Address,
+  snowballPoolDeployer: "0x1ff0fa39ae0db2c37b400fbbaf234ad6eee3bd86" as Address,
+  snowballRouter: "0xd604593426538fd1fa5b2660e3e443fa1ce93411" as Address,
+  dynamicFeePlugin: "0x5b0901f4c205fa4a92bbc3fecaef9b0b72ef4246" as Address,
+  nonfungiblePositionManager: "0x54b8584dd202cee8db0fbfa3522f78cb7d9bf6dd" as Address,
+  quoterV2: "0xeb2b122a28dceaeecb87b745173d6aa3c990d5c0" as Address,
 } as const;
 
 // ─── Liquity (Borrow / Earn) ───
@@ -111,6 +111,44 @@ export const OPTIONS = {
   engine: "0x595ed79d89623158d486a1a0daada35669ccc352" as Address,
   relayer: "0xe58f9cdb8ec63b88759bde403de0e062382f13b1" as Address,
   oracle: "0xcfad30e844685abb5ae1e8c21f727afd23f46abc" as Address,
+} as const;
+
+// ─── Yield Vaults (Beefy V7 Fork) ───
+export const YIELD = {
+  vaults: [
+    {
+      address: "0xd91035c1c48bd28dc7072f78a0b6a9adf55a38cd" as Address,
+      strategy: "0x282d87f4e4f20ad2d38d8570a76b72f8031ac88d" as Address,
+      want: TOKENS.sbUSD,
+      wantSymbol: "sbUSD",
+      name: "Stability Pool",
+      description: "Liquity 청산 수익 자동 복리",
+    },
+    {
+      address: "0x8076a963a86daa86ee8f0929c03d075e2bd62ccf" as Address,
+      strategy: "0x5c3f1b8d16abb5114f08ed7d9c6aa2ab425fcfdb" as Address,
+      want: TOKENS.sbUSD,
+      wantSymbol: "sbUSD",
+      name: "Morpho sbUSD",
+      description: "SnowballLend sbUSD 공급 이자",
+    },
+    {
+      address: "0x5796211d1e317ca07f4f5315b8a47f2f9eb433ea" as Address,
+      strategy: "0xd61fc96c85f39199abdee0db5f8676c794620bc9" as Address,
+      want: TOKENS.wCTC,
+      wantSymbol: "wCTC",
+      name: "Morpho wCTC",
+      description: "SnowballLend wCTC 공급 이자",
+    },
+    {
+      address: "0xb5fd93247f0fd8cbf3b8db7963e699e35bc79b97" as Address,
+      strategy: "0xb76d6fbc6403d4890202e9c6cd39cecd078ac734" as Address,
+      want: TOKENS.USDC,
+      wantSymbol: "USDC",
+      name: "Morpho USDC",
+      description: "SnowballLend USDC 공급 이자",
+    },
+  ],
 } as const;
 
 // ─── ERC-8004 (Agent) ───
