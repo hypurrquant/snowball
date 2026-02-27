@@ -1,0 +1,38 @@
+{
+  "network": "creditcoin-usc-testnet",
+  "chainId": 102036,
+  "rpc": "https://rpc.usc-testnet2.creditcoin.network",
+  "deployer": "0xf00F6cB5D43f9A38B10FA0B8e1B26cDB34D20d9d",
+  "deployedAt": "2026-02-28",
+  "contracts": {
+    "DNBridgeUSC": {
+      "address": "0x23E741a87ad9567Dff27eb34FaABa1444154D458",
+      "description": "USC Bridge — verifies Sepolia burn proofs and mints DN tokens",
+      "constructorArgs": {
+        "sepoliaDNToken": "0xE964cb9cc1C8DA4847C24E3960aDa2F8Ff12C380"
+      }
+    }
+  },
+  "sourceChain": {
+    "network": "sepolia",
+    "chainId": 11155111,
+    "chainKey": 1,
+    "contracts": {
+      "DNToken": {
+        "address": "0xE964cb9cc1C8DA4847C24E3960aDa2F8Ff12C380",
+        "description": "ERC20 with bridgeBurn — burn-to-bridge pattern"
+      }
+    }
+  },
+  "precompiles": {
+    "NativeQueryVerifier": "0x0000000000000000000000000000000000000FD2",
+    "ChainInfo": "0x0000000000000000000000000000000000000fd3"
+  },
+  "proofAPI": "https://proof-gen-api.usc-testnet2.creditcoin.network",
+  "e2eTest": {
+    "burnTx": "0x38e8709932361abe12bb0702af793c9827537558c82f17642159b2f009f6d418",
+    "mintTx": "0x04dc38f88f1124b864c272b1784f224f77f973d50dbe28a343a00b37a4fe8430",
+    "amount": "100000000000000000000",
+    "status": "verified"
+  }
+}
