@@ -1,0 +1,15 @@
+{
+  "name": "@snowball/integration",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test -vvv",
+    "deploy": "npx tsx scripts/deploy-viem.ts",
+    "deploy:all": "npx tsx scripts/deploy-all.ts"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "viem": "^2.46.3"
+  }
+}

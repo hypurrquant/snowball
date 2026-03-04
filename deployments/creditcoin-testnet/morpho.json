@@ -4,56 +4,44 @@
     "chainId": 102031
   },
   "core": {
-    "snowballLend": "0x7d604b31297b36aace73255931f65e891cf289d3",
-    "adaptiveCurveIRM": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe"
+    "morpho": "0xd68a8b2a77a23f33072dc61780322be7e6314168",
+    "adaptiveCurveIRM": "0x7f636314430469864df322a47327d8bed418dac1"
   },
   "tokens": {
-    "wCTC": "0x8f7f60a0f615d828eafcbbf6121f73efcfb56969",
-    "lstCTC": "0x72968ff9203dc5f352c5e42477b84d11c8c8f153",
-    "sbUSD": "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd",
-    "mockUSDC": "0xbcaa46ef7a399fcdb64adf4520cdcc6d62fcaaed"
+    "wCTC": "0xfe5cfe04d195d769a71fde671202762f3359ca6e",
+    "lstCTC": "0x76cfc24e19791c4bc0edda3ecf33dc8b3bf37d11",
+    "sbUSD": "0x29eb846b7249b411d89806fcfdcdbf3a58e8f236",
+    "mockUSDC": "0x1f76a2c43f4420b6e61b6b83c7ffd9360cef92d3"
   },
   "vaults": {
-    "snowballVaultFactory": "0x6e97df392462b8c2b8d13e2cd77a90168925edf6",
-    "publicAllocator": "0x35b35a8c835eaf78b43137a51c4adccfc5d653b4"
+    "metaMorphoFactory": "0x0000000000000000000000000000000000000000"
   },
   "oracles": {
-    "wCTCOracle": "0x42ca12a83c14e95f567afc940b0118166d8bd852",
-    "lstCTCOracle": "0x192f1feb36f319e79b3bba25a17359ee72266a14",
-    "sbUSDOracle": "0xc39f222e034f4bd4f3c858e6fde9ce4398400a26",
-    "dnOracle": "0xcd240E13ec3c33fE73d0c5C3196F9d9179008965"
+    "wCTC": "0xdaf918ed52a4050210d47319fa2f1c6a8eb0dc0c",
+    "lstCTC": "0x0c0034aed8da86e5b7d8f8874e6add60abf22acb",
+    "sbUSD": "0xcbe23912139d21f4901f2bda4d921a8b95507e6e"
   },
   "markets": {
     "wCTC/sbUSD": {
       "loanToken": "sbUSD",
       "collateralToken": "wCTC",
-      "oracle": "0x42ca12a83c14e95f567afc940b0118166d8bd852",
-      "irm": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
+      "oracle": "0xdaf918ed52a4050210d47319fa2f1c6a8eb0dc0c",
+      "irm": "0x7f636314430469864df322a47327d8bed418dac1",
       "lltv": "0.77"
     },
     "lstCTC/sbUSD": {
       "loanToken": "sbUSD",
       "collateralToken": "lstCTC",
-      "oracle": "0x192f1feb36f319e79b3bba25a17359ee72266a14",
-      "irm": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
+      "oracle": "0x0c0034aed8da86e5b7d8f8874e6add60abf22acb",
+      "irm": "0x7f636314430469864df322a47327d8bed418dac1",
       "lltv": "0.80"
     },
     "sbUSD/USDC": {
       "loanToken": "USDC",
       "collateralToken": "sbUSD",
-      "oracle": "0xc39f222e034f4bd4f3c858e6fde9ce4398400a26",
-      "irm": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
+      "oracle": "0xcbe23912139d21f4901f2bda4d921a8b95507e6e",
+      "irm": "0x7f636314430469864df322a47327d8bed418dac1",
       "lltv": "0.86"
-    },
-    "DN/sbUSD": {
-      "marketId": "0x2e41beddb531dab95695661b4473e1bc49454763eb6b1d7dedcbf847dbc76da2",
-      "loanToken": "sbUSD",
-      "collateralToken": "DN",
-      "collateralAddress": "0xCc2C598356011fb0a32734B138b1Fa363BbC7Cec",
-      "oracle": "0xcd240E13ec3c33fE73d0c5C3196F9d9179008965",
-      "irm": "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
-      "lltv": "0.80",
-      "note": "Bridged DN token as collateral — USC bridge PoC integration"
     }
   }
 }

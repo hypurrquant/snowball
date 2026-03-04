@@ -1,0 +1,33 @@
+{
+  "network": {
+    "name": "Creditcoin Testnet",
+    "chainId": 102031
+  },
+  "oracle": {
+    "snowballOracle": "0x581668e3c2174a60840cdf98517c43e5b526ec53",
+    "operator": "0xf00F6cB5D43f9A38B10FA0B8e1B26cDB34D20d9d",
+    "liquityAdapters": {
+      "wCTC": "0x297bffc0cdf7d5c066346ae00d995b8cbad4db07",
+      "lstCTC": "0x549bfe594f0a5fa1eb69d472c66ff0a0763aebf2"
+    },
+    "morphoAdapters": {
+      "wCTC": "0xdaf918ed52a4050210d47319fa2f1c6a8eb0dc0c",
+      "lstCTC": "0x0c0034aed8da86e5b7d8f8874e6add60abf22acb",
+      "sbUSD": "0xcbe23912139d21f4901f2bda4d921a8b95507e6e"
+    }
+  },
+  "interestRouter": {
+    "address": "0x9525f5deccdd9d4db922a8acba08ac57cdb279a6",
+    "morphoTarget": "0xd68a8b2a77a23f33072dc61780322be7e6314168",
+    "treasury": "0xf00F6cB5D43f9A38B10FA0B8e1B26cDB34D20d9d",
+    "morphoSplitBps": 7000
+  },
+  "router": {
+    "address": "0x03334ded84b44525601dd2c11a7b4cc6354bad22",
+    "whitelisted": {
+      "borrowerOps_wCTC": "0xf513b271f4a42e8663ebbaf155815a6077cb7fb7",
+      "borrowerOps_lstCTC": "0x2f57d2396fb3f2f0f4bd4fe4a497e10d587ae65f",
+      "morpho": "0xd68a8b2a77a23f33072dc61780322be7e6314168"
+    }
+  }
+}
