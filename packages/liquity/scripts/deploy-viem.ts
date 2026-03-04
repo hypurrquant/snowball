@@ -108,6 +108,12 @@ const walletClient = createWalletClient({
 });
 
 // ─── Main ───
+function loadDeployment(name: string): Record<string, any> {
+  const p = path.join(__dirname, `../../../deployments/creditcoin-testnet/${name}.json`);
+  if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf8"));
+  return {};
+}
+
 interface BranchAddresses {
   addressesRegistry: string;
   borrowerOperations: string;
@@ -120,11 +126,13 @@ interface BranchAddresses {
   sortedTroves: string;
   troveNFT: string;
   priceFeed: string;
+  interestRouter: string;
 }
 
 async function deployBranch(
   collTokenAddr: Address,
   priceFeedAddr: Address,
+  interestRouterAddr: Address,
   sbUSDAddr: Address,
   mcr: bigint,
   ccr: bigint,
@@ -144,12 +152,12 @@ async function deployBranch(
   const st = await deploy("SortedTroves");
   const nft = await deploy("TroveNFT");
 
-  // 2. Wire AddressesRegistry
+  // 2. Wire AddressesRegistry (includes interestRouter)
   console.log(`  Wiring AddressesRegistry (${label})...`);
   await send(ar.address, ar.abi, "setAddresses", [
     bo.address, tm.address, sp.address, ap.address,
     dp.address, gp.address, csp.address, st.address,
-    nft.address, priceFeedAddr, sbUSDAddr, collTokenAddr,
+    nft.address, priceFeedAddr, interestRouterAddr, sbUSDAddr, collTokenAddr,
   ]);
   console.log(`  AddressesRegistry wired ✓`);
 
@@ -204,6 +212,7 @@ async function deployBranch(
     sortedTroves: st.address,
     troveNFT: nft.address,
     priceFeed: priceFeedAddr,
+    interestRouter: interestRouterAddr,
   };
 }
 
@@ -212,12 +221,39 @@ async function main() {
   console.log(`Deploying with: ${account.address}`);
   console.log(`Balance: ${formatEther(balance)} tCTC\n`);
 
+  // Load integration deployment for oracle adapters and interest router
+  const integration = loadDeployment("integration");
+
   // ==================== Phase 1: Mock Tokens & Oracles ====================
-  console.log("=== Phase 1: Mock Tokens & Oracles ===");
+  console.log("=== Phase 1: Mock Tokens & Price Feeds ===");
   const wCTC = await deploy("MockWCTC");
   const lstCTC = await deploy("MockLstCTC");
-  const pfWCTC = await deploy("MockPriceFeed", [parseEther("0.2")]);
-  const pfLstCTC = await deploy("MockPriceFeed", [parseEther("0.2")]);
+
+  // Use integration LiquityPriceFeedAdapters if available, fallback to MockPriceFeed
+  let pfWCTC: { address: Address; abi: Abi };
+  let pfLstCTC: { address: Address; abi: Abi };
+  let interestRouterAddr: Address;
+
+  if (integration.oracle?.liquityAdapters) {
+    pfWCTC = { address: integration.oracle.liquityAdapters.wCTC as Address, abi: [] };
+    pfLstCTC = { address: integration.oracle.liquityAdapters.lstCTC as Address, abi: [] };
+    console.log(`  Using LiquityPriceFeedAdapter (wCTC): ${pfWCTC.address}`);
+    console.log(`  Using LiquityPriceFeedAdapter (lstCTC): ${pfLstCTC.address}`);
+  } else {
+    pfWCTC = await deploy("MockPriceFeed", [parseEther("0.2")]);
+    pfLstCTC = await deploy("MockPriceFeed", [parseEther("0.2")]);
+    console.log("  (fallback: MockPriceFeed — run integration deploy first for real oracles)");
+  }
+
+  if (integration.interestRouter?.address) {
+    interestRouterAddr = integration.interestRouter.address as Address;
+    console.log(`  Using SnowballInterestRouter: ${interestRouterAddr}`);
+  } else {
+    // Deploy a no-op MockInterestRouter as fallback
+    const mockIR = await deploy("MockInterestRouter");
+    interestRouterAddr = mockIR.address;
+    console.log("  (fallback: MockInterestRouter — run integration deploy first)");
+  }
 
   // ==================== Phase 2: SbUSD Token ====================
   console.log("\n=== Phase 2: SbUSD Token ===");
@@ -226,13 +262,13 @@ async function main() {
   // ==================== Phase 3-4: Branches ====================
   console.log("\n=== Phase 3: Branch 0 (wCTC) — MCR 110%, CCR 150% ===");
   const branch0 = await deployBranch(
-    wCTC.address, pfWCTC.address, sbUSD.address,
+    wCTC.address, pfWCTC.address, interestRouterAddr, sbUSD.address,
     parseEther("1.1"), parseEther("1.5"), "wCTC"
   );
 
   console.log("\n=== Phase 4: Branch 1 (lstCTC) — MCR 120%, CCR 160% ===");
   const branch1 = await deployBranch(
-    lstCTC.address, pfLstCTC.address, sbUSD.address,
+    lstCTC.address, pfLstCTC.address, interestRouterAddr, sbUSD.address,
     parseEther("1.2"), parseEther("1.6"), "lstCTC"
   );
 

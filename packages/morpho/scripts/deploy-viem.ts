@@ -43,6 +43,12 @@ function loadArtifact(contractName: string): { abi: Abi; bytecode: `0x${string}`
   throw new Error(`Foundry artifact not found: ${contractName} (run 'forge build' first)`);
 }
 
+function loadDeployment(name: string): Record<string, any> {
+  const p = path.join(__dirname, `../../../deployments/creditcoin-testnet/${name}.json`);
+  if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, "utf8"));
+  return {};
+}
+
 const PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || process.env.ADMIN_PRIVATE_KEY;
 if (!PRIVATE_KEY) {
   console.error("Set DEPLOYER_PRIVATE_KEY in .env");
@@ -106,10 +112,27 @@ async function main() {
   await send(snowballLend.address, snowballLend.abi, "enableLltv", [LLTV_86]);
   console.log("  IRM + LLTVs enabled");
 
-  console.log("\n=== Phase 4: Mock Oracles ===");
-  const wCTCOracle = await deploy("MockOracle", [parseEther("5")]);
-  const lstCTCOracle = await deploy("MockOracle", [parseEther("5")]);
-  const sbUSDOracle = await deploy("MockOracle", [parseEther("1")]);
+  // Load integration deployment for MorphoOracleAdapters
+  const integration = loadDeployment("integration");
+
+  console.log("\n=== Phase 4: Oracles ===");
+  let wCTCOracle: { address: Address; abi: Abi };
+  let lstCTCOracle: { address: Address; abi: Abi };
+  let sbUSDOracle: { address: Address; abi: Abi };
+
+  if (integration.oracle?.morphoAdapters) {
+    wCTCOracle = { address: integration.oracle.morphoAdapters.wCTC as Address, abi: [] };
+    lstCTCOracle = { address: integration.oracle.morphoAdapters.lstCTC as Address, abi: [] };
+    sbUSDOracle = { address: integration.oracle.morphoAdapters.sbUSD as Address, abi: [] };
+    console.log(`  Using MorphoOracleAdapter (wCTC): ${wCTCOracle.address}`);
+    console.log(`  Using MorphoOracleAdapter (lstCTC): ${lstCTCOracle.address}`);
+    console.log(`  Using MorphoOracleAdapter (sbUSD): ${sbUSDOracle.address}`);
+  } else {
+    wCTCOracle = await deploy("MockOracle", [parseEther("5")]);
+    lstCTCOracle = await deploy("MockOracle", [parseEther("5")]);
+    sbUSDOracle = await deploy("MockOracle", [parseEther("1")]);
+    console.log("  (fallback: MockOracle — run integration deploy first for real oracles)");
+  }
 
   console.log("\n=== Phase 5: MockUSDC ===");
   const mockUSDC = await deploy("MockERC20", ["USD Coin", "USDC", 6]);

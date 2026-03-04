@@ -14,10 +14,13 @@ interface IAddressesRegistry {
     function sortedTroves() external view returns (address);
     function troveNFT() external view returns (address);
     function priceFeed() external view returns (address);
+    function interestRouter() external view returns (address);
     function sbUSDToken() external view returns (address);
     function collToken() external view returns (address);
+    function collateralRegistry() external view returns (address);
     function CCR() external view returns (uint256);
     function MCR() external view returns (uint256);
+    function SCR() external view returns (uint256);
 
     function setAddresses(
         address _borrowerOperations,
@@ -30,7 +33,9 @@ interface IAddressesRegistry {
         address _sortedTroves,
         address _troveNFT,
         address _priceFeed,
+        address _interestRouter,
         address _sbUSDToken,
-        address _collToken
+        address _collToken,
+        address _collateralRegistry
     ) external;
 }
