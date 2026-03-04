@@ -7,13 +7,14 @@ import {SnowballStrategyBase} from "../SnowballStrategyBase.sol";
 import {ISnowballLend} from "../interfaces/ISnowballLend.sol";
 
 /// @title StrategyWCTCMorpho
-/// @notice Supplies wCTC to a SnowballLend (Morpho) market.
+/// @notice Supplies wCTC to a Morpho Blue market.
 ///         Since want == native (wCTC), no extra swap is needed in _claim.
 contract StrategyWCTCMorpho is SnowballStrategyBase {
     using SafeERC20 for IERC20;
 
     ISnowballLend public immutable lend;
     bytes32 public immutable marketId;
+    ISnowballLend.MarketParams public marketParams;
 
     uint256 internal _lastSupplyAssets;
 
@@ -22,18 +23,19 @@ contract StrategyWCTCMorpho is SnowballStrategyBase {
         address _want,          // wCTC (same as native)
         address _native,        // wCTC
         address _swapRouter,
-        address _poolDeployer,
+        uint24 _swapFee,
         address _strategist,
         address _treasury,
         address _lend,
-        bytes32 _marketId
+        ISnowballLend.MarketParams memory _marketParams
     )
         SnowballStrategyBase(
-            _vault, _want, _native, _swapRouter, _poolDeployer, _strategist, _treasury
+            _vault, _want, _native, _swapRouter, _swapFee, _strategist, _treasury
         )
     {
         lend = ISnowballLend(_lend);
-        marketId = _marketId;
+        marketParams = _marketParams;
+        marketId = _computeMarketId(_marketParams);
     }
 
     // ─── Hooks ──────────────────────────────────────────────
@@ -41,13 +43,13 @@ contract StrategyWCTCMorpho is SnowballStrategyBase {
     function _deposit(uint256 _amount) internal override {
         if (_amount > 0) {
             wantToken.forceApprove(address(lend), _amount);
-            lend.supply(marketId, _amount, 0, address(this), "");
+            lend.supply(marketParams, _amount, 0, address(this), "");
             _lastSupplyAssets += _amount;
         }
     }
 
     function _withdraw(uint256 _amount) internal override {
-        lend.withdraw(marketId, _amount, 0, address(this), address(this));
+        lend.withdraw(marketParams, _amount, 0, address(this), address(this));
         if (_lastSupplyAssets > _amount) {
             _lastSupplyAssets -= _amount;
         } else {
@@ -56,22 +58,21 @@ contract StrategyWCTCMorpho is SnowballStrategyBase {
     }
 
     function _emergencyWithdraw() internal override {
-        uint256 shares = lend.supplyShares(marketId, address(this));
+        (uint256 shares,,) = lend.position(marketId, address(this));
         if (shares > 0) {
-            lend.withdraw(marketId, 0, shares, address(this), address(this));
+            lend.withdraw(marketParams, 0, shares, address(this), address(this));
         }
         _lastSupplyAssets = 0;
     }
 
     function _claim() internal override {
-        lend.accrueInterest(marketId);
+        lend.accrueInterest(marketParams);
 
-        uint256 currentAssets = _sharesToAssets(
-            lend.supplyShares(marketId, address(this))
-        );
+        (uint256 shares,,) = lend.position(marketId, address(this));
+        uint256 currentAssets = _sharesToAssets(shares);
         if (currentAssets > _lastSupplyAssets) {
             uint256 profit = currentAssets - _lastSupplyAssets;
-            lend.withdraw(marketId, profit, 0, address(this), address(this));
+            lend.withdraw(marketParams, profit, 0, address(this), address(this));
             _lastSupplyAssets = currentAssets - profit;
             // want == native (wCTC), so profit is already in native — no swap needed.
         }
@@ -82,12 +83,19 @@ contract StrategyWCTCMorpho is SnowballStrategyBase {
     }
 
     function balanceOfPool() public view override returns (uint256) {
-        return _sharesToAssets(lend.supplyShares(marketId, address(this)));
+        (uint256 shares,,) = lend.position(marketId, address(this));
+        return _sharesToAssets(shares);
     }
 
     function _sharesToAssets(uint256 shares) internal view returns (uint256) {
         (uint128 totalSupplyAssets, uint128 totalSupplyShares,,,,) = lend.market(marketId);
         if (totalSupplyShares == 0) return 0;
         return (shares * uint256(totalSupplyAssets)) / uint256(totalSupplyShares);
+    }
+
+    function _computeMarketId(ISnowballLend.MarketParams memory mp) internal pure returns (bytes32 id) {
+        assembly {
+            id := keccak256(mp, 160) // 5 * 32 bytes
+        }
     }
 }

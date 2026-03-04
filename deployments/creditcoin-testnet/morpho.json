@@ -4,43 +4,43 @@
     "chainId": 102031
   },
   "core": {
-    "morpho": "0xd68a8b2a77a23f33072dc61780322be7e6314168",
-    "adaptiveCurveIRM": "0x7f636314430469864df322a47327d8bed418dac1"
+    "morpho": "0x15acf5bc0e83cd097300810b1b3d5ae27520b832",
+    "adaptiveCurveIRM": "0x944c30109b57d5ae79b0f89beb111bece5b925e5"
   },
   "tokens": {
-    "wCTC": "0xfe5cfe04d195d769a71fde671202762f3359ca6e",
-    "lstCTC": "0x76cfc24e19791c4bc0edda3ecf33dc8b3bf37d11",
-    "sbUSD": "0x29eb846b7249b411d89806fcfdcdbf3a58e8f236",
-    "mockUSDC": "0x1f76a2c43f4420b6e61b6b83c7ffd9360cef92d3"
+    "wCTC": "0xdb5c8e9d0827c474342bea03e0e35a60d621afea",
+    "lstCTC": "0x47ad69498520edb2e1e9464fedf5309504e26207",
+    "sbUSD": "0xa3f694307f500fe5cb7b6fb8e758e43f96ffb027",
+    "mockUSDC": "0x3e31b08651644b9e6535f5bf0c7a9e7e6ad92e02"
   },
   "vaults": {
-    "metaMorphoFactory": "0x0000000000000000000000000000000000000000"
+    "metaMorphoFactory": "0xa68762e40c5146cb54492cee1a9a7645243e7bb8"
   },
   "oracles": {
-    "wCTC": "0xdaf918ed52a4050210d47319fa2f1c6a8eb0dc0c",
-    "lstCTC": "0x0c0034aed8da86e5b7d8f8874e6add60abf22acb",
-    "sbUSD": "0xcbe23912139d21f4901f2bda4d921a8b95507e6e"
+    "wCTC": "0x583484b577ab8b121f7231f54d64fd34363f2629",
+    "lstCTC": "0x56c5412a27639db62391d2cc9f26549d4b3c001d",
+    "sbUSD": "0x2983b5292d6b2e5b8c3013ecb74fd21f73e10596"
   },
   "markets": {
     "wCTC/sbUSD": {
       "loanToken": "sbUSD",
       "collateralToken": "wCTC",
-      "oracle": "0xdaf918ed52a4050210d47319fa2f1c6a8eb0dc0c",
-      "irm": "0x7f636314430469864df322a47327d8bed418dac1",
+      "oracle": "0x583484b577ab8b121f7231f54d64fd34363f2629",
+      "irm": "0x944c30109b57d5ae79b0f89beb111bece5b925e5",
       "lltv": "0.77"
     },
     "lstCTC/sbUSD": {
       "loanToken": "sbUSD",
       "collateralToken": "lstCTC",
-      "oracle": "0x0c0034aed8da86e5b7d8f8874e6add60abf22acb",
-      "irm": "0x7f636314430469864df322a47327d8bed418dac1",
+      "oracle": "0x56c5412a27639db62391d2cc9f26549d4b3c001d",
+      "irm": "0x944c30109b57d5ae79b0f89beb111bece5b925e5",
       "lltv": "0.80"
     },
     "sbUSD/USDC": {
       "loanToken": "USDC",
       "collateralToken": "sbUSD",
-      "oracle": "0xcbe23912139d21f4901f2bda4d921a8b95507e6e",
-      "irm": "0x7f636314430469864df322a47327d8bed418dac1",
+      "oracle": "0x2983b5292d6b2e5b8c3013ecb74fd21f73e10596",
+      "irm": "0x944c30109b57d5ae79b0f89beb111bece5b925e5",
       "lltv": "0.86"
     }
   }

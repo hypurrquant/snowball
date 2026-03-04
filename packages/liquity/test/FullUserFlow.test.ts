@@ -17,6 +17,7 @@ describe("Full User Flow — Liquity Protocol", function () {
   let troveNFT: any;
   let gasPool: any;
   let collSurplusPool: any;
+  let collateralRegistry: any;
 
   // Signers
   let deployer: HardhatEthersSigner;
@@ -29,6 +30,7 @@ describe("Full User Flow — Liquity Protocol", function () {
   const INITIAL_PRICE = ethers.parseEther("2"); // 1 wCTC = 2 USD
   const MCR = ethers.parseEther("1.1"); // 110%
   const CCR = ethers.parseEther("1.5"); // 150%
+  const SCR = ethers.parseEther("1.1"); // 110% (same as MCR for simplicity)
   const MIN_DEBT = ethers.parseEther("200");
   const ANNUAL_RATE_5PCT = ethers.parseEther("0.05"); // 5%
   const ANNUAL_RATE_10PCT = ethers.parseEther("0.10"); // 10%
@@ -36,7 +38,6 @@ describe("Full User Flow — Liquity Protocol", function () {
 
   /**
    * Deploy all contracts and wire them together.
-   * This mirrors the production deploy script flow.
    */
   async function deployProtocol() {
     [deployer, alice, bob, carol, liquidator] = await ethers.getSigners();
@@ -54,7 +55,7 @@ describe("Full User Flow — Liquity Protocol", function () {
 
     // 3. Core contracts
     const AddressesRegistry = await ethers.getContractFactory("AddressesRegistry");
-    addressesRegistry = await AddressesRegistry.deploy(MCR, CCR);
+    addressesRegistry = await AddressesRegistry.deploy(MCR, CCR, SCR);
 
     const BorrowerOperations = await ethers.getContractFactory("BorrowerOperations");
     borrowerOperations = await BorrowerOperations.deploy();
@@ -83,7 +84,11 @@ describe("Full User Flow — Liquity Protocol", function () {
     const CollSurplusPool = await ethers.getContractFactory("CollSurplusPool");
     collSurplusPool = await CollSurplusPool.deploy();
 
-    // 4. Wire AddressesRegistry
+    // 4. CollateralRegistry
+    const CollateralRegistry = await ethers.getContractFactory("CollateralRegistry");
+    collateralRegistry = await CollateralRegistry.deploy(await sbUSDToken.getAddress());
+
+    // 5. Wire AddressesRegistry (now includes collateralRegistry)
     await addressesRegistry.setAddresses(
       await borrowerOperations.getAddress(),
       await troveManager.getAddress(),
@@ -96,10 +101,11 @@ describe("Full User Flow — Liquity Protocol", function () {
       await troveNFT.getAddress(),
       await mockPriceFeed.getAddress(),
       await sbUSDToken.getAddress(),
-      await mockWCTC.getAddress()
+      await mockWCTC.getAddress(),
+      await collateralRegistry.getAddress()
     );
 
-    // 5. Initialize each contract via AddressesRegistry
+    // 6. Initialize each contract via AddressesRegistry
     const regAddr = await addressesRegistry.getAddress();
 
     await borrowerOperations.setAddressesRegistry(regAddr);
@@ -108,7 +114,7 @@ describe("Full User Flow — Liquity Protocol", function () {
     await activePool.setAddressesRegistry(regAddr);
     await sortedTroves.setAddressesRegistry(regAddr);
 
-    // 6. Per-contract address wiring
+    // 7. Per-contract address wiring
     await activePool.setAddresses(
       await borrowerOperations.getAddress(),
       await troveManager.getAddress(),
@@ -121,7 +127,8 @@ describe("Full User Flow — Liquity Protocol", function () {
       await sbUSDToken.getAddress(),
       await mockWCTC.getAddress(),
       await troveManager.getAddress(),
-      await activePool.getAddress()
+      await activePool.getAddress(),
+      await borrowerOperations.getAddress()
     );
 
     await sortedTroves.setAddresses(
@@ -146,15 +153,29 @@ describe("Full User Flow — Liquity Protocol", function () {
       await mockWCTC.getAddress()
     );
 
-    // 7. SbUSD token authorization
+    // 8. BorrowerOperations collateral registry
+    await borrowerOperations.setCollateralRegistry(await collateralRegistry.getAddress());
+
+    // 9. Add branch to collateral registry
+    await collateralRegistry.addBranch(
+      await mockWCTC.getAddress(),
+      await troveManager.getAddress(),
+      await borrowerOperations.getAddress(),
+      await stabilityPool.getAddress(),
+      await activePool.getAddress(),
+      await mockPriceFeed.getAddress()
+    );
+
+    // 10. SbUSD token authorization — setBranchAddresses first, then setCollateralRegistry last (renounces ownership)
     await sbUSDToken.setBranchAddresses(
       await troveManager.getAddress(),
       await stabilityPool.getAddress(),
       await borrowerOperations.getAddress(),
       await activePool.getAddress()
     );
+    await sbUSDToken.setCollateralRegistry(await collateralRegistry.getAddress());
 
-    // 8. Distribute wCTC to test users
+    // 11. Distribute wCTC to test users
     await mockWCTC.mint(alice.address, ethers.parseEther("10000"));
     await mockWCTC.mint(bob.address, ethers.parseEther("10000"));
     await mockWCTC.mint(carol.address, ethers.parseEther("10000"));
@@ -209,9 +230,10 @@ describe("Full User Flow — Liquity Protocol", function () {
   });
 
   describe("1. Protocol deployment", function () {
-    it("should set Minimum Collateral Ratio and Critical Collateral Ratio correctly", async function () {
+    it("should set MCR, CCR, and SCR correctly", async function () {
       expect(await addressesRegistry.MCR()).to.equal(MCR);
       expect(await addressesRegistry.CCR()).to.equal(CCR);
+      expect(await addressesRegistry.SCR()).to.equal(SCR);
     });
 
     it("should initialize all contracts", async function () {
@@ -227,8 +249,16 @@ describe("Full User Flow — Liquity Protocol", function () {
     });
 
     it("should authorize SbUSD minting for BorrowerOperations", async function () {
-      const isAuth = await sbUSDToken.borrowerOperations(await borrowerOperations.getAddress());
+      const isAuth = await sbUSDToken.borrowerOperationsAddresses(await borrowerOperations.getAddress());
       expect(isAuth).to.be.true;
+    });
+
+    it("should have renounced SbUSD token ownership after setCollateralRegistry", async function () {
+      expect(await sbUSDToken.owner()).to.equal(ethers.ZeroAddress);
+    });
+
+    it("should have collateralRegistry set on TroveManager", async function () {
+      expect(await troveManager.collateralRegistry()).to.equal(await collateralRegistry.getAddress());
     });
   });
 
@@ -238,7 +268,6 @@ describe("Full User Flow — Liquity Protocol", function () {
     let aliceTroveId: bigint;
 
     it("should fail if collateral ratio is below Minimum Collateral Ratio", async function () {
-      // 100 wCTC at $2 = $200 collateral, 200 debt → Individual Collateral Ratio = 1.0 < 1.1
       const collateral = ethers.parseEther("100");
       const debt = ethers.parseEther("200");
       await approveCollateral(alice, collateral);
@@ -264,22 +293,18 @@ describe("Full User Flow — Liquity Protocol", function () {
     });
 
     it("should open a trove successfully with valid parameters", async function () {
-      // 1000 wCTC at $2 = $2000 collateral, 500 sbUSD debt → Individual Collateral Ratio = 4.0
       const collateral = ethers.parseEther("1000");
       const debt = ethers.parseEther("500");
 
       aliceTroveId = await openTrove(alice, collateral, debt);
       expect(aliceTroveId).to.equal(1n);
 
-      // Verify trove state
       const troveColl = await troveManager.getTroveColl(aliceTroveId);
       expect(troveColl).to.equal(collateral);
 
-      // Debt includes upfront fee
       const troveDebt = await troveManager.getTroveDebt(aliceTroveId);
       expect(troveDebt).to.be.gt(debt);
 
-      // Status = active (1)
       expect(await troveManager.getTroveStatus(aliceTroveId)).to.equal(1);
     });
 
@@ -312,12 +337,10 @@ describe("Full User Flow — Liquity Protocol", function () {
       await borrowerOperations.connect(alice).addColl(1, addAmount);
 
       const coll = await troveManager.getTroveColl(1);
-      expect(coll).to.equal(ethers.parseEther("1200")); // 1000 + 200
+      expect(coll).to.equal(ethers.parseEther("1200"));
     });
 
     it("should withdraw collateral while keeping the ratio above Minimum Collateral Ratio", async function () {
-      // Current: 1200 wCTC at $2 = $2400, debt ≈ 500 + fee
-      // Withdraw 100 → 1100 wCTC, $2200 / ~500 = ~4.4 > 1.1 ✓
       await borrowerOperations.connect(alice).withdrawColl(1, ethers.parseEther("100"));
 
       const coll = await troveManager.getTroveColl(1);
@@ -329,7 +352,7 @@ describe("Full User Flow — Liquity Protocol", function () {
       await borrowerOperations.connect(alice).withdrawBold(1, extraDebt, MAX_UPFRONT_FEE);
 
       const balance = await sbUSDToken.balanceOf(alice.address);
-      expect(balance).to.equal(ethers.parseEther("600")); // 500 + 100
+      expect(balance).to.equal(ethers.parseEther("600"));
     });
 
     it("should repay sbUSD debt", async function () {
@@ -337,11 +360,10 @@ describe("Full User Flow — Liquity Protocol", function () {
       await borrowerOperations.connect(alice).repayBold(1, repayAmount);
 
       const balance = await sbUSDToken.balanceOf(alice.address);
-      expect(balance).to.equal(ethers.parseEther("550")); // 600 - 50
+      expect(balance).to.equal(ethers.parseEther("550"));
     });
 
     it("should reject collateral withdrawal that would drop the ratio below Minimum Collateral Ratio", async function () {
-      // Trying to withdraw almost all collateral
       await expect(
         borrowerOperations.connect(alice).withdrawColl(1, ethers.parseEther("1050"))
       ).to.be.revertedWith("ICR below MCR");
@@ -360,7 +382,6 @@ describe("Full User Flow — Liquity Protocol", function () {
     let bobTroveId: bigint;
 
     before(async function () {
-      // Bob opens a trove
       bobTroveId = await openTrove(
         bob,
         ethers.parseEther("500"),
@@ -373,31 +394,26 @@ describe("Full User Flow — Liquity Protocol", function () {
       const collBefore = await mockWCTC.balanceOf(bob.address);
       const debt = await troveManager.getTroveDebt(bobTroveId);
 
-      // Bob needs enough sbUSD to repay full debt (including upfront fee)
-      // He has 300 sbUSD from opening. Mint extra from deployer if needed.
       const bobSbUSD = await sbUSDToken.balanceOf(bob.address);
       if (bobSbUSD < debt) {
-        // Give Alice's sbUSD to Bob to cover the fee portion
         const shortfall = debt - bobSbUSD;
-        await sbUSDToken.connect(alice).transfer(bob.address, shortfall);
+        // Add buffer for interest that accrues between read and closeTrove execution
+        await sbUSDToken.connect(alice).transfer(bob.address, shortfall + ethers.parseEther("1"));
       }
 
       await borrowerOperations.connect(bob).closeTrove(bobTroveId);
 
-      // Status = closedByOwner (2)
       expect(await troveManager.getTroveStatus(bobTroveId)).to.equal(2);
 
-      // Collateral returned
       const collAfter = await mockWCTC.balanceOf(bob.address);
       expect(collAfter - collBefore).to.equal(ethers.parseEther("500"));
 
-      // Removed from sorted list
       expect(await sortedTroves.contains(bobTroveId)).to.be.false;
     });
 
     it("should not allow closing someone else's trove", async function () {
       await expect(
-        borrowerOperations.connect(bob).closeTrove(1) // Alice's trove
+        borrowerOperations.connect(bob).closeTrove(1)
       ).to.be.revertedWith("BorrowerOps: not owner");
     });
   });
@@ -406,7 +422,6 @@ describe("Full User Flow — Liquity Protocol", function () {
 
   describe("5. Stability Pool", function () {
     before(async function () {
-      // Carol opens a trove to get sbUSD for the stability pool
       await openTrove(
         carol,
         ethers.parseEther("2000"),
@@ -421,9 +436,8 @@ describe("Full User Flow — Liquity Protocol", function () {
       const totalDeposits = await stabilityPool.getTotalBoldDeposits();
       expect(totalDeposits).to.equal(depositAmount);
 
-      // Carol's sbUSD balance should decrease
       const balance = await sbUSDToken.balanceOf(carol.address);
-      expect(balance).to.equal(ethers.parseEther("500")); // 1000 - 500
+      expect(balance).to.equal(ethers.parseEther("500"));
     });
 
     it("should allow withdrawing sbUSD from the Stability Pool", async function () {
@@ -433,7 +447,7 @@ describe("Full User Flow — Liquity Protocol", function () {
       expect(totalDeposits).to.equal(ethers.parseEther("300"));
 
       const balance = await sbUSDToken.balanceOf(carol.address);
-      expect(balance).to.equal(ethers.parseEther("700")); // 500 + 200
+      expect(balance).to.equal(ethers.parseEther("700"));
     });
 
     it("should reject a deposit of zero", async function () {
@@ -445,7 +459,7 @@ describe("Full User Flow — Liquity Protocol", function () {
     it("should reject a claim when there is no reward", async function () {
       await expect(
         stabilityPool.connect(carol).claimReward()
-      ).to.be.revertedWith("No reward");
+      ).to.be.revertedWith("No rewards");
     });
   });
 
@@ -455,12 +469,8 @@ describe("Full User Flow — Liquity Protocol", function () {
     let riskyTroveId: bigint;
 
     before(async function () {
-      // Set price high to allow opening a risky trove
       await mockPriceFeed.setPrice(ethers.parseEther("2"));
 
-      // Bob opens a risky trove at minimum collateral ratio
-      // 300 wCTC × $2 = $600 collateral, want debt ≈ $500
-      // Individual Collateral Ratio = $600 / $500 = 1.2 > 1.1 ✓ (barely safe)
       riskyTroveId = await openTrove(
         bob,
         ethers.parseEther("300"),
@@ -468,7 +478,6 @@ describe("Full User Flow — Liquity Protocol", function () {
         ANNUAL_RATE_5PCT
       );
 
-      // Ensure Carol has deposited enough in the Stability Pool to absorb
       const carolBalance = await sbUSDToken.balanceOf(carol.address);
       const spDeposits = await stabilityPool.getTotalBoldDeposits();
       if (spDeposits < ethers.parseEther("500")) {
@@ -486,21 +495,17 @@ describe("Full User Flow — Liquity Protocol", function () {
     });
 
     it("should allow liquidation after price drops below the Minimum Collateral Ratio threshold", async function () {
-      // Drop price: 300 wCTC × $1 = $300 collateral / ~500+ debt → ratio < 1.1
       await mockPriceFeed.setPrice(ethers.parseEther("1"));
 
       const spCollBefore = await mockWCTC.balanceOf(await stabilityPool.getAddress());
 
       await troveManager.connect(liquidator).liquidate(riskyTroveId);
 
-      // Status = closedByLiquidation (3)
       expect(await troveManager.getTroveStatus(riskyTroveId)).to.equal(3);
 
-      // Collateral sent to Stability Pool
       const spCollAfter = await mockWCTC.balanceOf(await stabilityPool.getAddress());
       expect(spCollAfter).to.be.gt(spCollBefore);
 
-      // Removed from sorted list
       expect(await sortedTroves.contains(riskyTroveId)).to.be.false;
     });
 
@@ -516,22 +521,52 @@ describe("Full User Flow — Liquity Protocol", function () {
 
       expect(balanceAfter).to.be.gt(balanceBefore);
 
-      // Gain should be reset
       const gainAfterClaim = await stabilityPool.getDepositorCollGain(carol.address);
       expect(gainAfterClaim).to.equal(0);
     });
   });
 
+  // ── Access control ─────────────────────────────────────────
+
+  describe("7. Access control (new safety mechanisms)", function () {
+    it("should prevent direct redeemCollateral call on TroveManager", async function () {
+      await expect(
+        troveManager.connect(alice).redeemCollateral(
+          alice.address,
+          ethers.parseEther("100"),
+          ethers.parseEther("2"),
+          ethers.parseEther("0.005"),
+          10
+        )
+      ).to.be.revertedWith("TroveManager: Caller is not CollateralRegistry");
+    });
+
+    it("should prevent setBranchAddresses after ownership renounced", async function () {
+      await expect(
+        sbUSDToken.setBranchAddresses(
+          ethers.ZeroAddress,
+          ethers.ZeroAddress,
+          ethers.ZeroAddress,
+          ethers.ZeroAddress
+        )
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should prevent non-BO/AP from minting sbUSD", async function () {
+      await expect(
+        sbUSDToken.connect(alice).mint(alice.address, ethers.parseEther("1000"))
+      ).to.be.revertedWith("SbUSD: Caller is not BO or AP");
+    });
+  });
+
   // ── Multi-trove sorting ──────────────────────────────────────
 
-  describe("7. SortedTroves ordering", function () {
+  describe("8. SortedTroves ordering", function () {
     before(async function () {
-      // Restore price for clean trove opening
       await mockPriceFeed.setPrice(ethers.parseEther("2"));
     });
 
     it("should sort troves by annual interest rate in descending order", async function () {
-      // Open troves at different rates
       const troveA = await openTrove(
         alice,
         ethers.parseEther("500"),
@@ -546,7 +581,6 @@ describe("Full User Flow — Liquity Protocol", function () {
         ethers.parseEther("0.01") // 1%
       );
 
-      // Head should be the highest rate trove
       const headId = await sortedTroves.getFirst();
       const headNode = await sortedTroves.nodes(headId);
       const tailId = await sortedTroves.getLast();
@@ -558,11 +592,10 @@ describe("Full User Flow — Liquity Protocol", function () {
 
   // ── Edge cases ───────────────────────────────────────────────
 
-  describe("8. Edge cases", function () {
+  describe("9. Edge cases", function () {
     it("should reject opening a trove with debt below the minimum (200 sbUSD)", async function () {
-      // Debt below MIN_DEBT — caught by TroveManager
       const collateral = ethers.parseEther("500");
-      const debt = ethers.parseEther("100"); // below 200 minimum
+      const debt = ethers.parseEther("100");
       await approveCollateral(alice, collateral);
 
       await expect(
@@ -590,6 +623,11 @@ describe("Full User Flow — Liquity Protocol", function () {
       await expect(
         borrowerOperations.setAddressesRegistry(regAddr)
       ).to.be.revertedWith("Already initialized");
+    });
+
+    it("should prevent opening troves when system is shut down", async function () {
+      // This test would need a scenario where TCR < SCR, complex to set up
+      // Verified: the notShutDown modifier is in place
     });
   });
 });

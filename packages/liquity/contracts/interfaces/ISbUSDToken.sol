@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface ISbUSDToken is IERC20 {
     function mint(address _account, uint256 _amount) external;
     function burn(address _account, uint256 _amount) external;
+    function sendToPool(address _sender, address _poolAddress, uint256 _amount) external;
+    function returnFromPool(address _poolAddress, address _receiver, uint256 _amount) external;
     function setBranchAddresses(
         address _troveManagerAddress,
         address _stabilityPoolAddress,

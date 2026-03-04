@@ -65,9 +65,9 @@ const walletClient = createWalletClient({ account, chain: creditcoinTestnet as a
 
 const ZERO = "0x0000000000000000000000000000000000000000" as Address;
 
-async function deploy(pkg: string, name: string, args: any[] = [], fileName?: string): Promise<{ address: Address; abi: Abi }> {
+async function deploy(pkg: string, name: string, args: any[] = [], fileName?: string, gas = 10_000_000n): Promise<{ address: Address; abi: Abi }> {
   const { abi, bytecode } = loadArtifact(pkg, name, fileName);
-  const hash = await walletClient.deployContract({ abi, bytecode, args, gas: 10_000_000n });
+  const hash = await walletClient.deployContract({ abi, bytecode, args, gas });
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
   if (receipt.status !== "success") throw new Error(`Deploy ${name} failed`);
   console.log(`  ${name}: ${receipt.contractAddress}`);
@@ -172,7 +172,7 @@ async function main() {
 
   let vaultFactory: { address: Address; abi: Abi } | null = null;
   try {
-    vaultFactory = await deploy("morpho", "MetaMorphoFactory", [morpho.address]);
+    vaultFactory = await deploy("morpho", "MetaMorphoFactory", [morpho.address], undefined, 30_000_000n);
   } catch (e: any) {
     console.log(`  MetaMorphoFactory skipped (${e.message?.slice(0, 60)})`);
   }
@@ -422,9 +422,14 @@ async function main() {
   // ═══════════════════════════════════════════════════════════════
   console.log("\n═══ Phase 9: Mint tokens ═══");
   try {
-    await send(wCTC.address, wCTC.abi, "faucet", [parseEther("1000000")]);
-    await send(lstCTC.address, lstCTC.abi, "faucet", [parseEther("1000000")]);
-    console.log("  1M wCTC + 1M lstCTC minted");
+    const FAUCET_AMOUNT = parseEther("100000");
+    const FAUCET_CALLS = 10;
+    for (let i = 0; i < FAUCET_CALLS; i++) {
+      await send(wCTC.address, wCTC.abi, "faucet", [FAUCET_AMOUNT]);
+      await send(lstCTC.address, lstCTC.abi, "faucet", [FAUCET_AMOUNT]);
+      console.log(`  Faucet call ${i + 1}/${FAUCET_CALLS}: 100K wCTC + 100K lstCTC`);
+    }
+    console.log("  1M wCTC + 1M lstCTC minted (100K × 10)");
   } catch (e: any) {
     console.log(`  Token minting skipped (${e.message?.slice(0, 60)})`);
   }

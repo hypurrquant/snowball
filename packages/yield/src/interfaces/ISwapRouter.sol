@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-/// @title ISwapRouter - Minimal interface for Algebra DEX SwapRouter
+/// @title ISwapRouter - Minimal interface for Uniswap V3 SwapRouter
 interface ISwapRouter {
     struct ExactInputSingleParams {
         address tokenIn;
         address tokenOut;
-        address deployer;
+        uint24 fee;
         address recipient;
         uint256 deadline;
         uint256 amountIn;
         uint256 amountOutMinimum;
-        uint160 limitSqrtPrice;
+        uint160 sqrtPriceLimitX96;
     }
 
     function exactInputSingle(

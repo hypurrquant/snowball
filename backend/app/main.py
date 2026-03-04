@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.oracle.service import start_oracle_service
+from app.keeper.service import start_keeper_service
 from app.options.relayer import relayer_flush_loop
 from app.options.settlement import settlement_loop
 from app.price.websocket import price_broadcast_loop, price_ws_handler
@@ -25,7 +26,7 @@ async def lifespan(app: FastAPI):
     tasks: list[asyncio.Task] = []
 
     # Start background services if configured
-    if settings.operator_private_key and settings.oracle_btc_address:
+    if settings.operator_private_key and (settings.oracle_address or settings.oracle_btc_address):
         tasks.append(asyncio.create_task(start_oracle_service()))
         logger.info("Oracle service started")
 
@@ -36,6 +37,10 @@ async def lifespan(app: FastAPI):
     if settings.operator_private_key and settings.options_relayer_address:
         tasks.append(asyncio.create_task(relayer_flush_loop()))
         logger.info("Relayer flush loop started")
+
+    if settings.operator_private_key and settings.keeper_address:
+        tasks.append(asyncio.create_task(start_keeper_service()))
+        logger.info("Keeper service started")
 
     # Always start price broadcast
     tasks.append(asyncio.create_task(price_broadcast_loop()))

@@ -20,13 +20,13 @@ contract StrategySbUSDStabilityPool is SnowballStrategyBase {
         address _want,          // sbUSD
         address _native,        // wCTC
         address _swapRouter,
-        address _poolDeployer,
+        uint24 _swapFee,
         address _strategist,
         address _treasury,
         address _stabilityPool
     )
         SnowballStrategyBase(
-            _vault, _want, _native, _swapRouter, _poolDeployer, _strategist, _treasury
+            _vault, _want, _native, _swapRouter, _swapFee, _strategist, _treasury
         )
     {
         stabilityPool = IStabilityPool(_stabilityPool);
@@ -37,24 +37,24 @@ contract StrategySbUSDStabilityPool is SnowballStrategyBase {
     function _deposit(uint256 _amount) internal override {
         if (_amount > 0) {
             wantToken.forceApprove(address(stabilityPool), _amount);
-            stabilityPool.provideToSP(_amount);
+            stabilityPool.provideToSP(_amount, false);
         }
     }
 
     function _withdraw(uint256 _amount) internal override {
-        stabilityPool.withdrawFromSP(_amount);
+        stabilityPool.withdrawFromSP(_amount, false);
     }
 
     function _emergencyWithdraw() internal override {
         uint256 deposited = stabilityPool.getCompoundedBoldDeposit(address(this));
         if (deposited > 0) {
-            stabilityPool.withdrawFromSP(deposited);
+            stabilityPool.withdrawFromSP(deposited, true);
         }
     }
 
     function _claim() internal override {
         // Trigger yield + collateral claim by doing a zero withdraw.
-        stabilityPool.withdrawFromSP(0);
+        stabilityPool.withdrawFromSP(0, true);
     }
 
     function _verifyRewardToken(address) internal pure override {

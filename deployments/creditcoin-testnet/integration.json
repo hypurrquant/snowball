@@ -4,30 +4,30 @@
     "chainId": 102031
   },
   "oracle": {
-    "snowballOracle": "0x581668e3c2174a60840cdf98517c43e5b526ec53",
+    "snowballOracle": "0x7d491965d4f6db51762e226a438b2a1bd30c289e",
     "operator": "0xf00F6cB5D43f9A38B10FA0B8e1B26cDB34D20d9d",
     "liquityAdapters": {
-      "wCTC": "0x297bffc0cdf7d5c066346ae00d995b8cbad4db07",
-      "lstCTC": "0x549bfe594f0a5fa1eb69d472c66ff0a0763aebf2"
+      "wCTC": "0xa4ab0c8f1536286d8d08b98d9c600c3771b9bbe8",
+      "lstCTC": "0xd04b3b01d4d11d406946859b46fc4dbef9e91e75"
     },
     "morphoAdapters": {
-      "wCTC": "0xdaf918ed52a4050210d47319fa2f1c6a8eb0dc0c",
-      "lstCTC": "0x0c0034aed8da86e5b7d8f8874e6add60abf22acb",
-      "sbUSD": "0xcbe23912139d21f4901f2bda4d921a8b95507e6e"
+      "wCTC": "0x583484b577ab8b121f7231f54d64fd34363f2629",
+      "lstCTC": "0x56c5412a27639db62391d2cc9f26549d4b3c001d",
+      "sbUSD": "0x2983b5292d6b2e5b8c3013ecb74fd21f73e10596"
     }
   },
   "interestRouter": {
-    "address": "0x9525f5deccdd9d4db922a8acba08ac57cdb279a6",
-    "morphoTarget": "0xd68a8b2a77a23f33072dc61780322be7e6314168",
+    "address": "0xee7b6be80864f362c44d0029dacecc94b3600204",
+    "morphoTarget": "0x15acf5bc0e83cd097300810b1b3d5ae27520b832",
     "treasury": "0xf00F6cB5D43f9A38B10FA0B8e1B26cDB34D20d9d",
     "morphoSplitBps": 7000
   },
   "router": {
-    "address": "0x03334ded84b44525601dd2c11a7b4cc6354bad22",
+    "address": "0xd236a628d3cedee4a8e1da6936972ae77750725d",
     "whitelisted": {
-      "borrowerOps_wCTC": "0xf513b271f4a42e8663ebbaf155815a6077cb7fb7",
-      "borrowerOps_lstCTC": "0x2f57d2396fb3f2f0f4bd4fe4a497e10d587ae65f",
-      "morpho": "0xd68a8b2a77a23f33072dc61780322be7e6314168"
+      "borrowerOps_wCTC": "0xa838b2f39ba9948c58c78ccfd0a68dbf47ff3f74",
+      "borrowerOps_lstCTC": "0x74b55804e08bf77dcc01aa1a7267fe3e996d49fd",
+      "morpho": "0x15acf5bc0e83cd097300810b1b3d5ae27520b832"
     }
   }
 }

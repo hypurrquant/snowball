@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-/// @title IStabilityPool - Minimal interface for Liquity StabilityPool
-/// @dev Matches the actually deployed SP bytecode on Creditcoin Testnet.
-///      getDepositorYieldGain / getDepositorYieldGainWithPending do NOT exist
-///      in the deployed contract (different Liquity build), so they are omitted.
+/// @title IStabilityPool - Minimal interface for Liquity V2 StabilityPool
+/// @dev Matches the original Liquity V2 (Bold) StabilityPool interface.
 interface IStabilityPool {
-    function provideToSP(uint256 amount) external;
-    function withdrawFromSP(uint256 amount) external;
+    function provideToSP(uint256 _amount, bool _doClaim) external;
+    function withdrawFromSP(uint256 _amount, bool _doClaim) external;
     function claimAllCollGains() external;
-    function getCompoundedBoldDeposit(address depositor) external view returns (uint256);
-    function getDepositorCollGain(address depositor) external view returns (uint256);
+    function getCompoundedBoldDeposit(address _depositor) external view returns (uint256);
+    function getDepositorCollGain(address _depositor) external view returns (uint256);
 }

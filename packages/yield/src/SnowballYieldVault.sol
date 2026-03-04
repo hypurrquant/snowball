@@ -61,25 +61,34 @@ contract SnowballYieldVault is ERC20, Ownable, ReentrancyGuard {
 
     // ─── Core ───────────────────────────────────────────────
 
+    /// @notice Dead shares burned on first deposit to prevent inflation attack.
+    uint256 public constant DEAD_SHARES = 1e3;
+
     /// @notice Deposit want tokens, receive proportional shares.
     ///         Calls strategy.beforeDeposit() then auto-earns into strategy.
     function deposit(uint256 _amount) public nonReentrant {
-        strategy.beforeDeposit();
+        if (address(strategy) != address(0)) {
+            strategy.beforeDeposit();
+        }
 
         uint256 poolBefore = balance();
         want.safeTransferFrom(msg.sender, address(this), _amount);
-        earn();
         uint256 poolAfter = balance();
         _amount = poolAfter - poolBefore; // handle fee-on-transfer
 
         uint256 shares;
         if (totalSupply() == 0) {
-            shares = _amount;
+            // First deposit: mint dead shares to prevent inflation attack
+            require(_amount > DEAD_SHARES, "!min deposit");
+            shares = _amount - DEAD_SHARES;
+            _mint(address(0xdead), DEAD_SHARES);
         } else {
             shares = (_amount * totalSupply()) / poolBefore;
         }
+        require(shares > 0, "!shares");
 
         _mint(msg.sender, shares);
+        earn();
     }
 
     /// @notice Deposit all want tokens held by the caller.
@@ -113,9 +122,12 @@ contract SnowballYieldVault is ERC20, Ownable, ReentrancyGuard {
 
     /// @notice Push idle want tokens in the vault into the strategy.
     function earn() public {
+        require(address(strategy) != address(0), "!strategy");
         uint256 _bal = available();
-        want.safeTransfer(address(strategy), _bal);
-        strategy.deposit();
+        if (_bal > 0) {
+            want.safeTransfer(address(strategy), _bal);
+            strategy.deposit();
+        }
     }
 
     // ─── Strategy management ────────────────────────────────

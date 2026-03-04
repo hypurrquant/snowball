@@ -43,7 +43,12 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
     IERC20  public immutable wantToken;
     IERC20  public immutable native; // wCTC
     ISwapRouter public immutable swapRouter;
-    address public immutable poolDeployer; // Algebra pool deployer
+    uint24 public immutable swapFee; // Uniswap V3 fee tier (e.g. 3000 = 0.3%)
+
+    // ─── Slippage protection ──────────────────────────────
+    uint256 public maxSlippageBps;
+    uint256 public constant MAX_SLIPPAGE_CAP = 1000;  // 10%
+    uint256 public constant SLIPPAGE_DIVISOR = 10000;
 
     address public depositToken; // optional intermediate token for 2-hop swap
     address public strategist;
@@ -81,7 +86,7 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
         address _want,
         address _native,
         address _swapRouter,
-        address _poolDeployer,
+        uint24 _swapFee,
         address _strategist,
         address _treasury
     ) Ownable(msg.sender) {
@@ -89,13 +94,14 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
         wantToken = IERC20(_want);
         native = IERC20(_native);
         swapRouter = ISwapRouter(_swapRouter);
-        poolDeployer = _poolDeployer;
+        swapFee = _swapFee;
         strategist = _strategist;
         treasury = _treasury;
         keeper = msg.sender;
 
         withdrawalFee = 10; // 0.1 % default
         lockDuration = 1 days;
+        maxSlippageBps = 200; // 2 % default
     }
 
     // ─── ISnowballStrategy views ────────────────────────────
@@ -105,8 +111,11 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
     }
 
     /// @notice Total strategy balance = idle want + pool balance - locked profit.
+    /// @dev Safe subtraction: if lockedProfit exceeds total (e.g., pool loss), returns 0.
     function balanceOf() public view override returns (uint256) {
-        return balanceOfWant() + balanceOfPool() - lockedProfit();
+        uint256 total = balanceOfWant() + balanceOfPool();
+        uint256 locked = lockedProfit();
+        return total > locked ? total - locked : 0;
     }
 
     function balanceOfWant() public view override returns (uint256) {
@@ -143,11 +152,11 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
     function beforeDeposit() external virtual override {
         if (harvestOnDeposit) {
             require(msg.sender == vault, "!vault");
-            _harvest(tx.origin, true);
+            _harvest(msg.sender, true);
         }
     }
 
-    function deposit() external override whenNotPaused {
+    function deposit() external override onlyVault whenNotPaused {
         uint256 wantBal = balanceOfWant();
         if (wantBal > 0) {
             _deposit(wantBal);
@@ -174,7 +183,7 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
 
     /// @notice Harvest rewards, charge fees, compound.
     function harvest() external override {
-        _harvest(tx.origin, false);
+        _harvest(msg.sender, false);
     }
 
     /// @notice Harvest with explicit fee recipient.
@@ -308,15 +317,23 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
                 ISwapRouter.ExactInputSingleParams({
                     tokenIn: _from,
                     tokenOut: _to,
-                    deployer: poolDeployer,
+                    fee: swapFee,
                     recipient: address(this),
                     deadline: block.timestamp,
                     amountIn: _amount,
-                    amountOutMinimum: 0,
-                    limitSqrtPrice: 0
+                    amountOutMinimum: _getMinAmountOut(_amount),
+                    sqrtPriceLimitX96: 0
                 })
             );
         }
+    }
+
+    /// @notice Calculate minimum output for slippage protection.
+    /// @dev Default uses input-based calculation (suitable for pegged pairs).
+    ///      Concrete strategies should override for non-pegged pairs using oracle prices.
+    function _getMinAmountOut(uint256 _amountIn) internal view virtual returns (uint256) {
+        if (maxSlippageBps == 0) return 0;
+        return _amountIn * (SLIPPAGE_DIVISOR - maxSlippageBps) / SLIPPAGE_DIVISOR;
     }
 
     // ─── Admin ──────────────────────────────────────────────
@@ -340,6 +357,7 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
     }
 
     function setLockDuration(uint256 _duration) external onlyManager {
+        require(_duration <= 7 days, "!max duration");
         lockDuration = _duration;
     }
 
@@ -348,17 +366,25 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
         withdrawalFee = _fee;
     }
 
+    function setMaxSlippage(uint256 _bps) external onlyManager {
+        require(_bps <= MAX_SLIPPAGE_CAP, "!slippage cap");
+        maxSlippageBps = _bps;
+    }
+
     function setStrategist(address _strategist) external {
         require(msg.sender == strategist, "!strategist");
+        require(_strategist != address(0), "!zero");
         strategist = _strategist;
         emit SetStrategist(_strategist);
     }
 
     function setTreasury(address _treasury) external onlyOwner {
+        require(_treasury != address(0), "!zero");
         treasury = _treasury;
     }
 
     function setKeeper(address _keeper) external onlyManager {
+        require(_keeper != address(0), "!zero");
         keeper = _keeper;
         emit SetKeeper(_keeper);
     }

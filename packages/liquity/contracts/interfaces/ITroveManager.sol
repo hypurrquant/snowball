@@ -27,8 +27,14 @@ interface ITroveManager {
     function getTroveAnnualInterestRate(uint256 _troveId) external view returns (uint256);
     function getCurrentICR(uint256 _troveId, uint256 _price) external view returns (uint256);
     function getTroveLastDebtUpdateTime(uint256 _troveId) external view returns (uint256);
+    function getTroveLastInterestRateAdjTime(uint256 _troveId) external view returns (uint256);
     function getTroveIdsCount() external view returns (uint256);
     function getTroveFromTroveIdsArray(uint256 _index) external view returns (uint256);
+
+    function shutdownTime() external view returns (uint256);
+    function getEntireBranchColl() external view returns (uint256);
+    function getEntireBranchDebt() external view returns (uint256);
+    function getUnbackedPortionPriceAndRedeemability() external returns (uint256, uint256, bool);
 
     function setAddressesRegistry(address _addressesRegistry) external;
     function openTrove(
@@ -57,10 +63,12 @@ interface ITroveManager {
         address _redeemer,
         uint256 _boldAmount,
         uint256 _price,
+        uint256 _redemptionRate,
         uint256 _maxIterations
     ) external returns (uint256 collDrawn);
 
     function batchLiquidateTroves(uint256[] calldata _troveIds) external;
+    function shutdown() external;
 
     function getLatestTroveData(uint256 _troveId) external view returns (
         uint256 debt,

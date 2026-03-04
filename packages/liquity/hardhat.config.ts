@@ -14,7 +14,8 @@ const config: HardhatUserConfig = {
         enabled: true,
         runs: 200,
       },
-      evmVersion: "shanghai",
+      viaIR: true,
+      evmVersion: "cancun",
     },
   },
   networks: {
@@ -28,7 +29,7 @@ const config: HardhatUserConfig = {
     },
   },
   paths: {
-    sources: "./contracts",
+    sources: "./contracts/core",
     tests: "./test",
     cache: "./cache",
     artifacts: "./artifacts",
