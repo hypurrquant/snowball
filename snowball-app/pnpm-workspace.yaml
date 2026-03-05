@@ -1,6 +1,0 @@
-packages:
-  - "packages/app"
-  - "packages/agent-consumer"
-  - "packages/agent-chatbot"
-  - "packages/agent-provider"
-  - "packages/shared"
