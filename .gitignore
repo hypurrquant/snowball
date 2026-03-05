@@ -35,3 +35,5 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+.codex-discuss-session
