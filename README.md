@@ -82,7 +82,7 @@ pnpm dev:consumer
 pnpm dev:chatbot
 
 # Terminal 4 — Frontend
-pnpm --filter @snowball/frontend dev
+pnpm --filter @snowball/web dev
 ```
 
 Open `http://localhost:5173`
@@ -123,7 +123,7 @@ Open `http://localhost:5173`
 ## Smart Contracts
 
 Deployed on **Creditcoin Testnet** (Chain ID: 102031).
-All addresses: [`deployments/addresses.json`](./deployments/addresses.json) and [`/SSOT.md`](../SSOT.md)
+All addresses: [`deployments/addresses.json`](./deployments/addresses.json) and [`docs/ssot/`](./docs/ssot/)
 
 ### Key Functions
 
@@ -192,7 +192,7 @@ npx tsx scripts/deploy-viem.ts
 
 Addresses are auto-saved to:
 - `deployments/addresses.json` (used by all backends)
-- `packages/frontend/src/config/addresses.json` (update manually or copy)
+- `apps/web/src/config/addresses.json` (update manually or copy)
 
 ---
 
@@ -214,8 +214,8 @@ Addresses are auto-saved to:
 
 | File | Description |
 |------|-------------|
-| [`/SSOT.md`](../SSOT.md) | All deployed contract addresses & agent architecture |
-| [`docs/PROJECT_OVERVIEW.md`](./docs/PROJECT_OVERVIEW.md) | Detailed protocol design |
-| [`DEMO_SCENARIO.md`](./DEMO_SCENARIO.md) | 5-7 min demo walkthrough |
-| [`OP.md`](./OP.md) | Operations & maintenance guide |
-| [`audit_report_v2.md`](./audit_report_v2.md) | Security audit |
+| [`docs/ssot/`](./docs/ssot/) | All deployed contract addresses (SSOT per protocol) |
+| [`docs/guide/PROJECT_OVERVIEW.md`](./docs/guide/PROJECT_OVERVIEW.md) | Detailed protocol design |
+| [`docs/guide/DEMO_SCENARIO.md`](./docs/guide/DEMO_SCENARIO.md) | 5-7 min demo walkthrough |
+| [`docs/guide/OP.md`](./docs/guide/OP.md) | Operations & maintenance guide |
+| [`docs/security/audit_report_v2.md`](./docs/security/audit_report_v2.md) | Security audit |

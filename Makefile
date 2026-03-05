@@ -41,13 +41,13 @@ backend-install:
 # ─── Frontend ───
 
 frontend-dev:
-	cd packages/frontend && pnpm dev
+	cd apps/web && pnpm dev
 
 frontend-build:
-	cd packages/frontend && pnpm build
+	cd apps/web && pnpm build
 
 frontend-install:
-	cd packages/frontend && pnpm install
+	cd apps/web && pnpm install
 
 # ─── Docker ───
 
