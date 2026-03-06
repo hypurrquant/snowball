@@ -10,6 +10,7 @@ import type { Address } from "viem";
 export function useMorphoPosition(
   marketId: `0x${string}`,
   user?: Address,
+  oraclePrice?: bigint,
 ) {
   const { data: marketData } = useReadContract({
     address: LEND.snowballLend,
@@ -37,12 +38,15 @@ export function useMorphoPosition(
     const supplyAssets = toAssetsDown(supplyShares, totalSupplyAssets, totalSupplyShares);
     const borrowAssets = toAssetsDown(borrowShares, totalBorrowAssets, totalBorrowShares);
 
-    // Find the market config to get lltv + oracle price
     const marketConfig = LEND.markets.find((m) => m.id === marketId);
     const lltv = marketConfig?.lltv ?? 0n;
 
-    // Approximate collateral value = collateral (assuming 1:1 for simplicity in non-oracle cases)
-    const healthFactor = calculateHealthFactor(collateral, borrowAssets, lltv);
+    // Convert collateral amount to value using oracle price (18 decimals, MockOracle)
+    const ORACLE_SCALE = 10n ** 18n;
+    const collateralValue = oraclePrice && oraclePrice > 0n
+      ? (collateral * oraclePrice) / ORACLE_SCALE
+      : collateral;
+    const healthFactor = calculateHealthFactor(collateralValue, borrowAssets, lltv);
     const liquidationPrice = calculateLiquidationPrice(collateral, borrowAssets, lltv);
 
     position = {

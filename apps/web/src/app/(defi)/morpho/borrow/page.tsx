@@ -12,6 +12,7 @@ import { Input } from "@/shared/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/shared/components/ui/dialog";
+import { StatCard } from "@/shared/components/common/StatCard";
 import { useMorphoMarkets } from "@/domains/defi/morpho/hooks/useMorphoMarkets";
 import { useMorphoPosition } from "@/domains/defi/morpho/hooks/useMorphoPosition";
 import { useMorphoActions } from "@/domains/defi/morpho/hooks/useMorphoActions";
@@ -20,7 +21,7 @@ import { DEMO_POSITIONS } from "@/domains/defi/morpho/data/fixtures";
 import type { MorphoMarket } from "@/domains/defi/morpho/types";
 import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
 import { calculateHealthFactor } from "@/domains/defi/morpho/lib/morphoMath";
-import { Landmark, Loader2 } from "lucide-react";
+import { Landmark, TrendingUp, Percent, Loader2 } from "lucide-react";
 
 const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
 
@@ -32,7 +33,7 @@ function MarketBorrowCard({
   index: number;
 }) {
   const { address, isConnected } = useConnection();
-  const { position, refetch: refetchPosition } = useMorphoPosition(market.id, address);
+  const { position, refetch: refetchPosition } = useMorphoPosition(market.id, address, market.oraclePrice);
   const { data: collBalance, refetch: refetchCollBalance } = useTokenBalance({ address, token: market.collateralToken });
   const { refetch: refetchLoanBalance } = useTokenBalance({ address, token: market.loanToken });
   const actions = useMorphoActions(market, () => { refetchPosition(); refetchCollBalance(); refetchLoanBalance(); });
@@ -216,11 +217,32 @@ function MarketBorrowCard({
 export default function MorphoBorrowPage() {
   const { markets, isLoading } = useMorphoMarkets();
 
+  const totalAvailable = markets.reduce((acc, m) => acc + (m.totalSupply - m.totalBorrow), 0n);
+  const avgBorrowAPR = markets.length > 0
+    ? markets.reduce((acc, m) => acc + m.borrowAPR, 0) / markets.length
+    : 0;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-2">
-        <Landmark className="w-5 h-5 text-ice-400" />
-        <h2 className="text-xl font-bold text-white">Borrow Markets</h2>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <StatCard
+          label="Available to Borrow"
+          value={formatTokenAmount(totalAvailable, 18, 2)}
+          icon={<TrendingUp className="w-5 h-5 text-ice-400" />}
+          loading={isLoading}
+        />
+        <StatCard
+          label="Avg. Borrow APR"
+          value={`${formatNumber(avgBorrowAPR)}%`}
+          icon={<Percent className="w-5 h-5 text-ice-500" />}
+          loading={isLoading}
+        />
+        <StatCard
+          label="Markets"
+          value={String(markets.length)}
+          icon={<Landmark className="w-5 h-5 text-ice-300" />}
+          loading={isLoading}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

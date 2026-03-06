@@ -32,7 +32,7 @@ function MarketSupplyCard({
   index: number;
 }) {
   const { address, isConnected } = useConnection();
-  const { position, refetch: refetchPosition } = useMorphoPosition(market.id, address);
+  const { position, refetch: refetchPosition } = useMorphoPosition(market.id, address, market.oraclePrice);
   const { data: tokenBalance, refetch: refetchBalance } = useTokenBalance({ address, token: market.loanToken });
   const actions = useMorphoActions(market, () => { refetchPosition(); refetchBalance(); });
 

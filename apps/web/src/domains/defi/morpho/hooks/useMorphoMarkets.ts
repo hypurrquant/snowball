@@ -1,9 +1,10 @@
 "use client";
 
 import { useReadContracts } from "wagmi";
-import { SnowballLendABI, MockOracleABI } from "@/core/abis";
+import { SnowballLendABI, MockOracleABI, AdaptiveCurveIRMABI } from "@/core/abis";
 import { LEND } from "@/core/config/addresses";
-import { utilization, supplyAPY } from "../lib/morphoMath";
+import { utilization, supplyAPY, borrowRateToAPR } from "../lib/morphoMath";
+import { getMarketParams } from "../lib/marketParams";
 import type { MorphoMarket } from "../types";
 
 export function useMorphoMarkets() {
@@ -26,30 +27,61 @@ export function useMorphoMarkets() {
     functionName: "price" as const,
   }));
 
-  const { data, isLoading, refetch } = useReadContracts({
+  // Phase 1: market data + oracle prices
+  const { data: phase1Data, isLoading: phase1Loading, refetch } = useReadContracts({
     contracts: [...marketCalls, ...oracleCalls],
     query: { refetchInterval: 10_000 },
   });
 
+  // Phase 2: IRM borrowRateView (depends on phase 1 market data)
+  type MarketTuple = readonly [bigint, bigint, bigint, bigint, bigint, bigint];
+  const marketCount = LEND.markets.length;
+
+  const irmCalls = phase1Data
+    ? LEND.markets.map((m, i) => {
+        const raw = phase1Data[i];
+        if (raw?.status !== "success") return null;
+        const [tsa, tss, tba, tbs, lastUpdate, fee] = raw.result as MarketTuple;
+        return {
+          address: LEND.adaptiveCurveIRM,
+          abi: AdaptiveCurveIRMABI,
+          functionName: "borrowRateView" as const,
+          args: [
+            getMarketParams(m),
+            { totalSupplyAssets: tsa, totalSupplyShares: tss, totalBorrowAssets: tba, totalBorrowShares: tbs, lastUpdate, fee },
+          ] as const,
+        };
+      }).filter((c): c is NonNullable<typeof c> => c !== null)
+    : [];
+
+  const { data: irmData } = useReadContracts({
+    contracts: irmCalls,
+    query: { enabled: irmCalls.length > 0, refetchInterval: 10_000 },
+  });
+
   const markets: MorphoMarket[] = [];
 
-  if (data) {
-    const marketCount = LEND.markets.length;
+  if (phase1Data) {
     for (let i = 0; i < marketCount; i++) {
-      const marketResult = data[i];
+      const marketResult = phase1Data[i];
       if (marketResult?.status !== "success") continue;
 
-      const [totalSupplyAssets, , totalBorrowAssets] = marketResult.result as [
-        bigint, bigint, bigint, bigint, bigint, bigint,
-      ];
+      const [totalSupplyAssets, , totalBorrowAssets] = marketResult.result as MarketTuple;
 
       const m = LEND.markets[i];
       const util = utilization(totalBorrowAssets, totalSupplyAssets);
-      const approxBorrowAPR = util * 0.08;
-      const approxSupplyAPY = supplyAPY(approxBorrowAPR, util);
+
+      // Use real IRM rate if available, fallback to approximation
+      let borrowAPR: number;
+      const irmResult = irmData?.[i];
+      if (irmResult?.status === "success") {
+        borrowAPR = borrowRateToAPR(irmResult.result as bigint);
+      } else {
+        borrowAPR = util * 0.08;
+      }
 
       const oracleIdx = i < oracleAddresses.length ? marketCount + i : 0;
-      const oracleResult = data[oracleIdx];
+      const oracleResult = phase1Data[oracleIdx];
       const oraclePrice =
         oracleResult?.status === "success"
           ? (oracleResult.result as bigint)
@@ -65,13 +97,14 @@ export function useMorphoMarkets() {
         totalSupply: totalSupplyAssets,
         totalBorrow: totalBorrowAssets,
         utilization: util,
-        borrowAPR: approxBorrowAPR,
-        supplyAPY: approxSupplyAPY,
+        borrowAPR,
+        supplyAPY: supplyAPY(borrowAPR, util),
         oraclePrice,
         lltv: m.lltv,
       });
     }
   }
 
+  const isLoading = phase1Loading;
   return { markets, isLoading, refetch };
 }
