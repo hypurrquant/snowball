@@ -1,10 +1,75 @@
 "use client";
 
 import { useMemo } from "react";
+import { useReadContracts } from "wagmi";
 import { usePool } from "./usePool";
 import { sqrtPriceX96ToPrice, tickToPrice, alignTickToSpacing } from "@/core/dex/calculators";
 import type { TickDisplayData } from "@/core/dex/types";
 import type { Address } from "viem";
+
+// --- ABI fragments for tick bitmap + ticks ---
+
+const TICK_BITMAP_ABI = [
+  {
+    name: "tickBitmap",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "wordPos", type: "int16" }],
+    outputs: [{ name: "bitmap", type: "uint256" }],
+  },
+] as const;
+
+const TICKS_ABI = [
+  {
+    name: "ticks",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "tick", type: "int24" }],
+    outputs: [
+      { name: "liquidityGross", type: "uint128" },
+      { name: "liquidityNet", type: "int128" },
+      { name: "feeGrowthOutside0X128", type: "uint256" },
+      { name: "feeGrowthOutside1X128", type: "uint256" },
+      { name: "tickCumulativeOutside", type: "int56" },
+      { name: "secondsPerLiquidityOutsideX128", type: "uint160" },
+      { name: "secondsOutside", type: "uint32" },
+      { name: "initialized", type: "bool" },
+    ],
+  },
+] as const;
+
+// --- Bitmap word position helpers (UniswapV3 pattern) ---
+
+function computeWordPositions(minTick: number, maxTick: number, tickSpacing: number): number[] {
+  const divisor = tickSpacing * 256;
+  const minWord = Math.floor(minTick / divisor);
+  const maxWord = Math.floor(maxTick / divisor);
+  const positions: number[] = [];
+  for (let word = minWord; word <= maxWord; word++) {
+    positions.push(word);
+  }
+  return positions;
+}
+
+function extractInitializedTicks(
+  bitmap: bigint,
+  wordPos: number,
+  tickSpacing: number,
+  minTick: number,
+  maxTick: number,
+): number[] {
+  const ticks: number[] = [];
+  for (let bit = 0; bit < 256; bit++) {
+    if (((bitmap >> BigInt(bit)) & 1n) === 0n) continue;
+    const tick = (wordPos * 256 + bit) * tickSpacing;
+    if (tick >= minTick && tick <= maxTick) {
+      ticks.push(tick);
+    }
+  }
+  return ticks;
+}
+
+// --- Hook ---
 
 interface UsePoolTicksReturn {
   ticks: TickDisplayData[];
@@ -14,13 +79,8 @@ interface UsePoolTicksReturn {
   isLoading: boolean;
 }
 
-/**
- * Pool ticks hook: real pool state from chain + mock tick liquidity distribution.
- *
- * slot0 (sqrtPriceX96, tick) and liquidity come from on-chain.
- * Tick-level liquidity distribution is mocked with a realistic bell-curve shape
- * centered around the current tick.
- */
+const TICK_RANGE = 1200; // tickSpacing steps on each side (±72,000 ticks)
+
 export function usePoolTicks(
   token0?: Address,
   token1?: Address,
@@ -29,127 +89,181 @@ export function usePoolTicks(
 ): UsePoolTicksReturn {
   const pool = usePool(token0, token1);
 
+  console.log("[usePoolTicks] pool state:", {
+    poolAddress: pool.poolAddress,
+    slot0: pool.slot0 ? "exists" : "null",
+    liquidity: pool.liquidity?.toString(),
+    isLoading: pool.isLoading,
+  });
+
   const { currentTick, currentPrice, tickSpacing } = useMemo(() => {
     if (!pool.slot0) {
-      // Fallback: use tick 0 so mock ticks still render
+      console.log("[usePoolTicks] no slot0, using fallback tick=0");
       const fallbackTick = 0;
       const fallbackPrice = tickToPrice(fallbackTick, token0Decimals, token1Decimals);
       return { currentTick: fallbackTick, currentPrice: fallbackPrice, tickSpacing: 60 };
     }
-    // slot0 returns [sqrtPriceX96, tick, ...]
     const slot0Array = pool.slot0 as readonly [bigint, number, ...unknown[]];
     const sqrtPriceX96 = slot0Array[0];
     const tick = Number(slot0Array[1]);
     const price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
     const spacing = pool.tickSpacing ? Number(pool.tickSpacing) : 60;
+    console.log("[usePoolTicks] slot0 parsed:", { tick, price, spacing, sqrtPriceX96: sqrtPriceX96.toString() });
     return { currentTick: tick, currentPrice: price, tickSpacing: spacing };
   }, [pool.slot0, pool.tickSpacing, token0Decimals, token1Decimals]);
 
-  // Use token addresses as seed for unique per-pool distribution
-  const pairSeed = useMemo(() => {
-    if (!token0 || !token1) return 0;
-    let h = 0;
-    const s = (token0 + token1).toLowerCase();
-    for (let i = 0; i < s.length; i++) {
-      h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-    }
-    return Math.abs(h);
-  }, [token0, token1]);
+  // Phase 1: Compute word positions and build bitmap multicall
+  const { wordPositions, minTick, maxTick } = useMemo(() => {
+    const baseTick = alignTickToSpacing(currentTick, tickSpacing, true);
+    const min = baseTick - TICK_RANGE * tickSpacing;
+    const max = baseTick + TICK_RANGE * tickSpacing;
+    const words = computeWordPositions(min, max, tickSpacing);
+    return { wordPositions: words, minTick: min, maxTick: max };
+  }, [currentTick, tickSpacing]);
 
+  const bitmapContracts = useMemo(() => {
+    if (!pool.poolAddress) return [];
+    const contracts = wordPositions.map((wordPos) => ({
+      address: pool.poolAddress!,
+      abi: TICK_BITMAP_ABI,
+      functionName: "tickBitmap" as const,
+      args: [wordPos] as const,
+    }));
+    console.log("[usePoolTicks] Phase 1: bitmap contracts:", contracts.length, "words:", wordPositions);
+    return contracts;
+  }, [pool.poolAddress, wordPositions]);
+
+  const { data: bitmapResults, isLoading: isBitmapLoading } = useReadContracts({
+    contracts: bitmapContracts,
+    query: { enabled: bitmapContracts.length > 0, refetchInterval: 30_000 },
+  });
+
+  console.log("[usePoolTicks] Phase 1 results:", {
+    bitmapCount: bitmapResults?.length ?? 0,
+    isBitmapLoading,
+    statuses: bitmapResults?.map(r => r?.status),
+  });
+
+  // Extract initialized tick indices from bitmaps
+  const initializedTickIndices = useMemo(() => {
+    if (!bitmapResults) return [];
+    const indices: number[] = [];
+    let nonZeroBitmaps = 0;
+    for (let i = 0; i < wordPositions.length; i++) {
+      const result = bitmapResults[i];
+      if (result?.status !== "success") continue;
+      const bitmap = result.result as bigint;
+      if (bitmap !== 0n) nonZeroBitmaps++;
+      const ticks = extractInitializedTicks(bitmap, wordPositions[i], tickSpacing, minTick, maxTick);
+      indices.push(...ticks);
+    }
+    const sorted = indices.sort((a, b) => a - b);
+    console.log("[usePoolTicks] Phase 1 extracted:", {
+      nonZeroBitmaps,
+      initializedTicks: sorted.length,
+      ticks: sorted,
+    });
+    return sorted;
+  }, [bitmapResults, wordPositions, tickSpacing, minTick, maxTick]);
+
+  // Phase 2: Fetch liquidityNet for each initialized tick
+  const tickContracts = useMemo(() => {
+    if (!pool.poolAddress || initializedTickIndices.length === 0) return [];
+    return initializedTickIndices.map((tickIdx) => ({
+      address: pool.poolAddress!,
+      abi: TICKS_ABI,
+      functionName: "ticks" as const,
+      args: [tickIdx] as const,
+    }));
+  }, [pool.poolAddress, initializedTickIndices]);
+
+  const { data: tickResults, isLoading: isTickLoading } = useReadContracts({
+    contracts: tickContracts,
+    query: { enabled: tickContracts.length > 0, refetchInterval: 30_000 },
+  });
+
+  console.log("[usePoolTicks] Phase 2 results:", {
+    tickContractsCount: tickContracts.length,
+    tickResultsCount: tickResults?.length ?? 0,
+    isTickLoading,
+    statuses: tickResults?.map(r => r?.status),
+  });
+
+  // Build TickDisplayData[] from on-chain tick data
   const ticks = useMemo(() => {
-    return generateMockTicks(currentTick, tickSpacing, token0Decimals, token1Decimals, pairSeed);
-  }, [currentTick, tickSpacing, token0Decimals, token1Decimals, pairSeed]);
+    if (!tickResults || initializedTickIndices.length === 0) {
+      console.log("[usePoolTicks] No tick data, returning empty ticks");
+      return buildEmptyTicks(currentTick, tickSpacing, token0Decimals, token1Decimals);
+    }
+
+    // Collect initialized ticks with liquidityNet
+    const tickMap = new Map<number, bigint>();
+    for (let i = 0; i < initializedTickIndices.length; i++) {
+      const res = tickResults[i];
+      if (res?.status !== "success") continue;
+      const resultArray = res.result as readonly [bigint, bigint, ...unknown[]];
+      const liquidityNet = resultArray[1];
+      tickMap.set(initializedTickIndices[i], liquidityNet);
+    }
+
+    // Reconstruct liquidity distribution by walking through ticks
+    const baseTick = alignTickToSpacing(currentTick, tickSpacing, true);
+    const displayTicks: TickDisplayData[] = [];
+    let cumulativeLiquidity = 0n;
+
+    // Find starting liquidity by summing liquidityNet below minTick
+    // (simplified: assume 0 at the range boundary)
+    const allSortedTicks = Array.from(tickMap.keys()).sort((a, b) => a - b);
+
+    // Walk from minTick to maxTick, accumulating liquidity
+    for (let t = minTick; t < maxTick; t += tickSpacing) {
+      if (tickMap.has(t)) {
+        cumulativeLiquidity += tickMap.get(t)!;
+      }
+
+      const tickNext = t + tickSpacing;
+      const absLiq = cumulativeLiquidity < 0n ? -cumulativeLiquidity : cumulativeLiquidity;
+
+      displayTicks.push({
+        priceLower: tickToPrice(t, token0Decimals, token1Decimals),
+        priceUpper: tickToPrice(tickNext, token0Decimals, token1Decimals),
+        liquidityUsd: Number(absLiq) / 1e18,
+        liquidityRaw: absLiq.toString(),
+        isCurrentTick: currentTick >= t && currentTick < tickNext,
+      });
+    }
+
+    return displayTicks;
+  }, [tickResults, initializedTickIndices, currentTick, tickSpacing, token0Decimals, token1Decimals, minTick, maxTick]);
 
   return {
     ticks,
     currentPrice,
     currentTick,
     tickSpacing,
-    isLoading: false, // ticks are always mock-generated, never truly "loading"
+    isLoading: pool.isLoading || isBitmapLoading || isTickLoading,
   };
 }
 
-/**
- * Generate mock tick liquidity data with a realistic distribution.
- * Creates a bell curve centered on currentTick with some random variation
- * to mimic real liquidity distribution patterns.
- */
-/**
- * Distribution shape profiles for variety across pools.
- * Each profile defines how liquidity is distributed around the current tick.
- */
-type DistProfile = {
-  shape: "bell" | "bimodal" | "skewLeft" | "skewRight" | "flat";
-  peakLiquidity: number;
-  noiseRange: [number, number]; // [min, max] multiplier
-};
-
-const DIST_PROFILES: DistProfile[] = [
-  { shape: "bell", peakLiquidity: 50000, noiseRange: [0.6, 1.0] },
-  { shape: "bimodal", peakLiquidity: 40000, noiseRange: [0.5, 1.0] },
-  { shape: "skewLeft", peakLiquidity: 45000, noiseRange: [0.7, 1.0] },
-  { shape: "skewRight", peakLiquidity: 55000, noiseRange: [0.5, 0.9] },
-  { shape: "flat", peakLiquidity: 30000, noiseRange: [0.4, 1.0] },
-];
-
-function shapeValue(shape: DistProfile["shape"], i: number, range: number): number {
-  const d = i / range; // -1 to +1
-  const abs = Math.abs(d);
-  switch (shape) {
-    case "bell":
-      return Math.exp(-4 * abs * abs);
-    case "bimodal": {
-      const left = Math.exp(-12 * (d + 0.4) * (d + 0.4));
-      const right = Math.exp(-12 * (d - 0.4) * (d - 0.4));
-      return Math.max(left, right);
-    }
-    case "skewLeft":
-      return Math.exp(-3 * (d + 0.2) * (d + 0.2));
-    case "skewRight":
-      return Math.exp(-3 * (d - 0.2) * (d - 0.2));
-    case "flat":
-      return 0.5 + 0.5 * Math.exp(-1.5 * abs * abs);
-  }
-}
-
-function generateMockTicks(
+/** Empty ticks when no on-chain data exists */
+function buildEmptyTicks(
   currentTick: number,
   tickSpacing: number,
   decimals0: number,
   decimals1: number,
-  pairSeed: number,
 ): TickDisplayData[] {
   const baseTick = alignTickToSpacing(currentTick, tickSpacing, true);
-  const range = 40; // ticks on each side
   const ticks: TickDisplayData[] = [];
-
-  // Pick distribution profile based on pair seed
-  const profile = DIST_PROFILES[pairSeed % DIST_PROFILES.length];
-
-  // Seeded pseudo-random for consistency across renders
-  let rng = (pairSeed || 1) + 1;
-  const random = () => {
-    rng = (rng * 16807 + 0) % 2147483647;
-    return rng / 2147483647;
-  };
-
-  for (let i = -range; i < range; i++) {
+  for (let i = -40; i < 40; i++) {
     const tick = baseTick + i * tickSpacing;
     const tickNext = tick + tickSpacing;
-
-    const curve = shapeValue(profile.shape, i, range);
-    const [noiseMin, noiseMax] = profile.noiseRange;
-    const noise = noiseMin + random() * (noiseMax - noiseMin);
-    const liquidityUsd = profile.peakLiquidity * curve * noise;
-
     ticks.push({
       priceLower: tickToPrice(tick, decimals0, decimals1),
       priceUpper: tickToPrice(tickNext, decimals0, decimals1),
-      liquidityUsd: Math.max(100, liquidityUsd),
-      liquidityRaw: Math.floor(liquidityUsd * 1e18).toString(),
+      liquidityUsd: 0,
+      liquidityRaw: "0",
       isCurrentTick: currentTick >= tick && currentTick < tickNext,
     });
   }
-
   return ticks;
 }

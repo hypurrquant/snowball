@@ -50,10 +50,8 @@ const PRESET_MINI_BARS: Record<string, number[]> = {
   Custom: [2, 3, 5, 2, 4],
 };
 
-// Zoom: 1 = all bars visible, higher = zoomed in (fewer bars visible)
-const DEFAULT_ZOOM = 1;
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 4;
+// Viewport: inactive ticks guaranteed on each side
+const MIN_SIDE_TICKS = 5;
 
 // ────────────────────────────────────────────
 // Main Component
@@ -76,8 +74,58 @@ export function PriceRangeSelector({
   const minPrice = tickToPrice(tickLower, token0Decimals, token1Decimals);
   const maxPrice = tickToPrice(tickUpper, token0Decimals, token1Decimals);
 
-  // Zoom state
-  const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
+  // Frozen ticks during drag (prevents bar reflow)
+  const [frozenTicks, setFrozenTicks] = useState<TickDisplayData[] | null>(null);
+
+  // Viewport filtering — show active range + proportional margin + min side ticks
+  const viewportTicks = useMemo(() => {
+    if (frozenTicks !== null) return frozenTicks;
+    if (!ticks.length) return ticks;
+
+    // Find active range tick indices
+    let firstActiveIdx = -1;
+    let lastActiveIdx = -1;
+    for (let i = 0; i < ticks.length; i++) {
+      const mid = (ticks[i].priceLower + ticks[i].priceUpper) / 2;
+      if (mid >= minPrice && mid <= maxPrice) {
+        if (firstActiveIdx === -1) firstActiveIdx = i;
+        lastActiveIdx = i;
+      }
+    }
+
+    // Proportional margin (50% of price span on each side)
+    const priceSpan = maxPrice - minPrice;
+    const proportionalMargin = priceSpan * 0.5;
+
+    // Min tick guarantee on each side
+    let tickMarginLeft = 0;
+    let tickMarginRight = 0;
+    if (firstActiveIdx >= 0) {
+      const leftIdx = Math.max(0, firstActiveIdx - MIN_SIDE_TICKS);
+      const rightIdx = Math.min(ticks.length - 1, lastActiveIdx + MIN_SIDE_TICKS);
+      tickMarginLeft = minPrice - ticks[leftIdx].priceLower;
+      tickMarginRight = ticks[rightIdx].priceUpper - maxPrice;
+      const maxMargin = priceSpan * 4;
+      tickMarginLeft = Math.min(tickMarginLeft, maxMargin);
+      tickMarginRight = Math.min(tickMarginRight, maxMargin);
+    }
+
+    const finalViewMin = minPrice - Math.max(proportionalMargin, tickMarginLeft);
+    const finalViewMax = maxPrice + Math.max(proportionalMargin, tickMarginRight);
+
+    return ticks.filter((t) => t.priceUpper >= finalViewMin && t.priceLower <= finalViewMax);
+  }, [frozenTicks, ticks, minPrice, maxPrice]);
+
+  const ticksRef = useRef(viewportTicks);
+  ticksRef.current = viewportTicks;
+
+  const handleDragStateChange = useCallback((isDragging: boolean) => {
+    if (isDragging) {
+      setFrozenTicks(ticksRef.current);
+    } else {
+      setFrozenTicks(null);
+    }
+  }, []);
 
   // % diff from current price
   const minPctDiff = currentPrice > 0 ? ((minPrice - currentPrice) / currentPrice) * 100 : 0;
@@ -104,6 +152,7 @@ export function PriceRangeSelector({
   // Preset handler
   const handlePreset = (preset: typeof RANGE_PRESETS[number]) => {
     if (preset.label === "Custom") return;
+    setFrozenTicks(null);
     if (preset.percent === -1) {
       onTickRangeChange(
         alignTickToSpacing(-887272, tickSpacing, true),
@@ -143,11 +192,6 @@ export function PriceRangeSelector({
     if (tick > tickLower) onTickRangeChange(tickLower, tick);
   };
 
-  // Zoom handlers
-  const handleZoomIn = () => setZoomLevel((z) => Math.min(MAX_ZOOM, z + 1));
-  const handleZoomOut = () => setZoomLevel((z) => Math.max(MIN_ZOOM, z - 1));
-  const handleZoomReset = () => setZoomLevel(DEFAULT_ZOOM);
-
   const tokenPair = `${token0Symbol}/${token1Symbol}`;
 
   return (
@@ -181,47 +225,21 @@ export function PriceRangeSelector({
         ))}
       </div>
 
-      {/* Liquidity histogram + zoom controls */}
-      <div className="relative">
-        <LiquidityHistogram
-          ticks={ticks}
-          currentPrice={currentPrice}
-          minPrice={minPrice}
-          maxPrice={maxPrice}
-          isLoading={ticksLoading}
-          tickSpacing={tickSpacing}
-          tickLower={tickLower}
-          tickUpper={tickUpper}
-          token0Decimals={token0Decimals}
-          token1Decimals={token1Decimals}
-          onTickRangeChange={onTickRangeChange}
-          zoomLevel={zoomLevel}
-        />
-        {/* Zoom controls */}
-        <div className="absolute top-1.5 right-1.5 flex gap-0.5 z-30">
-          <button
-            onClick={handleZoomIn}
-            className="w-5 h-5 flex items-center justify-center rounded bg-bg-secondary/80 text-text-secondary hover:text-text-primary text-[10px] font-bold backdrop-blur-sm"
-            title="Zoom in"
-          >
-            +
-          </button>
-          <button
-            onClick={handleZoomOut}
-            className="w-5 h-5 flex items-center justify-center rounded bg-bg-secondary/80 text-text-secondary hover:text-text-primary text-[10px] font-bold backdrop-blur-sm"
-            title="Zoom out"
-          >
-            -
-          </button>
-          <button
-            onClick={handleZoomReset}
-            className="w-5 h-5 flex items-center justify-center rounded bg-bg-secondary/80 text-text-secondary hover:text-text-primary text-[10px] backdrop-blur-sm"
-            title="Reset zoom"
-          >
-            ↻
-          </button>
-        </div>
-      </div>
+      {/* Liquidity histogram */}
+      <LiquidityHistogram
+        ticks={viewportTicks}
+        currentPrice={currentPrice}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        isLoading={ticksLoading}
+        tickSpacing={tickSpacing}
+        tickLower={tickLower}
+        tickUpper={tickUpper}
+        token0Decimals={token0Decimals}
+        token1Decimals={token1Decimals}
+        onTickRangeChange={onTickRangeChange}
+        onDragStateChange={handleDragStateChange}
+      />
 
       {/* MIN / MAX price inputs */}
       <div className="grid grid-cols-2 gap-3">
@@ -332,7 +350,7 @@ interface LiquidityHistogramProps {
   token0Decimals: number;
   token1Decimals: number;
   onTickRangeChange: (tickLower: number, tickUpper: number) => void;
-  zoomLevel: number;
+  onDragStateChange: (isDragging: boolean) => void;
 }
 
 function LiquidityHistogram(props: LiquidityHistogramProps) {
@@ -348,7 +366,7 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     token0Decimals,
     token1Decimals,
     onTickRangeChange,
-    zoomLevel,
+    onDragStateChange,
   } = props;
 
   // Bar area width measurement with ResizeObserver (on inner zoomable container)
@@ -403,28 +421,7 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     };
   }, []);
 
-  // Zoom: CSS-based overflow clipping
-  // zoomLevel 1 = all bars visible, 2 = half visible (2x wider inner), etc.
-  const currentTickIdx = useMemo(
-    () => ticks.findIndex((t) => t.isCurrentTick),
-    [ticks],
-  );
-  const centerFrac = currentTickIdx >= 0 ? (currentTickIdx + 0.5) / ticks.length : 0.5;
-  const visibleFrac = 1 / zoomLevel;
-  let leftFrac = centerFrac - visibleFrac / 2;
-  leftFrac = Math.max(0, Math.min(1 - visibleFrac, leftFrac));
-  const rightFrac = leftFrac + visibleFrac;
-
-  const innerWidthPct = zoomLevel * 100;
-  const marginLeftPct = -(leftFrac * innerWidthPct);
-
-  // Price axis labels for visible edges
-  const leftIdx = Math.max(0, Math.floor(leftFrac * ticks.length));
-  const rightIdx = Math.min(ticks.length - 1, Math.ceil(rightFrac * ticks.length) - 1);
-  const axisLeftPrice = ticks[leftIdx]?.priceLower ?? 0;
-  const axisRightPrice = ticks[rightIdx]?.priceUpper ?? 0;
-
-  // Handle + overlay positions (tick-index coordinate system, relative to inner container)
+  // Handle + overlay positions (tick-index coordinate system)
   const minHandlePx = priceToPx(minPrice, ticks, barAreaWidth);
   const maxHandlePx = priceToPx(maxPrice, ticks, barAreaWidth);
   const currentPricePx = priceToPx(currentPrice, ticks, barAreaWidth);
@@ -440,6 +437,7 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     token0Decimals,
     token1Decimals,
     onTickRangeChange,
+    onDragStateChange,
   });
   dragPropsRef.current = {
     tickLower,
@@ -448,6 +446,7 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     token0Decimals,
     token1Decimals,
     onTickRangeChange,
+    onDragStateChange,
   };
 
   const handlePointerDown = (handle: "min" | "max", e: React.PointerEvent) => {
@@ -455,6 +454,7 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     if (!rect) return;
     e.preventDefault();
     dragRef.current = { handle, containerRect: rect, ticks };
+    onDragStateChange(true);
 
     const onMove = (me: PointerEvent) => {
       if (!dragRef.current) return;
@@ -489,6 +489,7 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
         rafRef.current = null;
       }
       dragRef.current = null;
+      dragPropsRef.current.onDragStateChange(false);
     };
 
     window.addEventListener("pointermove", onMove);
@@ -514,19 +515,9 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
 
   return (
     <div className="h-[160px] bg-bg-input rounded-xl p-2 relative">
-      {/* Clipping container for zoom */}
-      <div className="h-full overflow-hidden relative">
-        {/* Zoomable inner container */}
-        <div
-          ref={barAreaCallbackRef}
-          className="h-full relative"
-          style={{
-            width: `${innerWidthPct}%`,
-            marginLeft: `${marginLeftPct}%`,
-          }}
-        >
-          {/* Bar chart — always renders all ticks (80 bars) */}
-          <div className="h-full flex items-end gap-px">
+      <div ref={barAreaCallbackRef} className="h-full relative">
+        {/* Bar chart */}
+        <div className="h-full flex items-end gap-px">
             {ticks.map((tick, i) => {
               const rawPct = maxLiquidity > 0 ? Math.sqrt(tick.liquidityUsd / maxLiquidity) * 100 : 0;
               const heightPct = Number.isFinite(rawPct) ? rawPct : 0;
@@ -585,14 +576,13 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
             </>
           )}
         </div>
-      </div>
 
-      {/* Price axis labels (fixed, not zoomed) */}
+      {/* Price axis labels */}
       <div className="absolute bottom-1 left-2 right-2">
         <div className="flex justify-between text-[8px] text-text-tertiary">
-          <span>{formatPriceCompact(axisLeftPrice)}</span>
+          <span>{formatPriceCompact(ticks[0]?.priceLower ?? 0)}</span>
           <span className="text-yellow-400">{formatPriceCompact(currentPrice)}</span>
-          <span>{formatPriceCompact(axisRightPrice)}</span>
+          <span>{formatPriceCompact(ticks[ticks.length - 1]?.priceUpper ?? 0)}</span>
         </div>
       </div>
     </div>
