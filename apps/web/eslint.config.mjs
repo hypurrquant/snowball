@@ -1,12 +1,21 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
 import nextPlugin from "@next/eslint-plugin-next";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import tsParser from "@typescript-eslint/parser";
 
 export default [
-    ...nextPlugin.flatConfig,
     {
-        // custom rules
+        files: ["**/*.{ts,tsx}"],
+        languageOptions: {
+            parser: tsParser,
+        },
+        plugins: nextPlugin.configs.recommended.plugins,
+        rules: nextPlugin.configs.recommended.rules,
+    },
+    {
+        files: ["**/*.{js,jsx}"],
+        plugins: nextPlugin.configs.recommended.plugins,
+        rules: nextPlugin.configs.recommended.rules,
+    },
+    {
+        ignores: [".next/**"],
     },
 ];
