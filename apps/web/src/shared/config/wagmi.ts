@@ -1,9 +1,10 @@
-import { http, createConfig, createStorage, cookieStorage, mock } from "wagmi";
+import { http, createConfig, createStorage, cookieStorage, mock, injected } from "wagmi";
 import { creditcoinTestnet } from "@/core/config/chain";
 import { privateKeyToAccount } from "viem/accounts";
 
 export const wagmiConfig = createConfig({
   chains: [creditcoinTestnet],
+  connectors: [injected()],
   transports: {
     [creditcoinTestnet.id]: http(),
   },

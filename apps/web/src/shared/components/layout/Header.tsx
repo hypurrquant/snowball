@@ -1,6 +1,5 @@
 "use client";
 
-import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useConnection, useConnect, useDisconnect } from "wagmi";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { shortenAddress, formatTokenAmount } from "@/shared/lib/utils";
@@ -14,26 +13,19 @@ import {
 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { MobileNav } from "./MobileNav";
-import { useIsTestMode } from "@/shared/providers";
 
-function HeaderInner({
-  authenticated,
-  login,
-  logout,
-  displayName,
-  privyAddress,
-}: {
-  authenticated: boolean;
-  login: () => void;
-  logout: () => void;
-  displayName: string | null;
-  privyAddress?: string;
-}) {
-  const { address: wagmiAddress, isConnected } = useConnection();
-  const address = wagmiAddress ?? (privyAddress as `0x${string}` | undefined);
+export function Header() {
+  const { address, isConnected } = useConnection();
+  const { connectors, connect } = useConnect();
+  const { disconnect } = useDisconnect();
   const { data: balance } = useTokenBalance({ address });
   const [copied, setCopied] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleConnect = () => {
+    const connector = connectors[0];
+    if (connector) connect({ connector });
+  };
 
   const copyAddress = useCallback(() => {
     if (address) {
@@ -42,9 +34,6 @@ function HeaderInner({
       setTimeout(() => setCopied(false), 2000);
     }
   }, [address]);
-
-  const resolvedDisplayName =
-    displayName ?? (address ? shortenAddress(address) : null);
 
   return (
     <>
@@ -73,7 +62,7 @@ function HeaderInner({
             Testnet
           </div>
 
-          {authenticated ? (
+          {isConnected && address ? (
             <div className="flex items-center gap-2">
               {/* Balance */}
               {balance && (
@@ -88,7 +77,7 @@ function HeaderInner({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-card border border-border hover:border-ice-400/30 transition-colors text-sm"
               >
                 <Wallet className="w-3.5 h-3.5 text-ice-400" />
-                <span className="font-mono text-xs">{resolvedDisplayName}</span>
+                <span className="font-mono text-xs">{shortenAddress(address)}</span>
                 {copied ? (
                   <Check className="w-3 h-3 text-success" />
                 ) : (
@@ -96,16 +85,16 @@ function HeaderInner({
                 )}
               </button>
 
-              {/* Logout */}
+              {/* Disconnect */}
               <button
-                onClick={logout}
+                onClick={() => disconnect()}
                 className="p-1.5 rounded-lg hover:bg-bg-hover transition-colors text-text-tertiary hover:text-danger"
               >
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
           ) : (
-            <button onClick={login} className="btn-primary text-sm px-4 py-1.5">
+            <button onClick={handleConnect} className="btn-primary text-sm px-4 py-1.5">
               Connect
             </button>
           )}
@@ -116,45 +105,4 @@ function HeaderInner({
       <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
     </>
   );
-}
-
-function PrivyHeader() {
-  const { login, logout, authenticated, user } = usePrivy();
-  const { wallets } = useWallets();
-  const displayName = user?.email?.address ?? user?.google?.email ?? null;
-  const privyAddress = wallets[0]?.address;
-  return (
-    <HeaderInner
-      authenticated={authenticated}
-      login={login}
-      logout={logout}
-      displayName={displayName}
-      privyAddress={privyAddress}
-    />
-  );
-}
-
-function TestHeader() {
-  const { isConnected } = useConnection();
-  const { connectors, connect } = useConnect();
-  const { disconnect } = useDisconnect();
-
-  const login = () => {
-    const connector = connectors[0];
-    if (connector) connect({ connector });
-  };
-
-  return (
-    <HeaderInner
-      authenticated={isConnected}
-      login={login}
-      logout={() => disconnect()}
-      displayName={null}
-    />
-  );
-}
-
-export function Header() {
-  const isTestMode = useIsTestMode();
-  return isTestMode ? <TestHeader /> : <PrivyHeader />;
 }
