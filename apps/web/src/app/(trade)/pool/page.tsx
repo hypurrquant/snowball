@@ -1,40 +1,62 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import Image from "next/image";
+import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
-import { TOKENS, TOKEN_INFO } from "@/core/config/addresses";
-import { usePool } from "@/domains/trade/hooks/usePool";
-import { formatTokenAmount } from "@/shared/lib/utils";
-import { Plus, Droplets } from "lucide-react";
-import type { Address } from "viem";
+import { StatCard } from "@/shared/components/common/StatCard";
+import { useProtocolStats } from "@/domains/trade/hooks/useProtocolStats";
+import { usePoolList, type PoolListItem } from "@/domains/trade/hooks/usePoolList";
+import { Plus, Droplets, DollarSign, BarChart3, TrendingUp, Flame, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
-import Image from "next/image";
-
-interface PoolDef {
-  name: string;
-  token0: Address;
-  token1: Address;
-  category: string;
-  icon0: string;
-  icon1: string;
-}
-
-const INITIAL_POOLS: PoolDef[] = [
-  { name: "wCTC / USDC", token0: TOKENS.wCTC, token1: TOKENS.USDC, category: "Major", icon0: "wCTC", icon1: "USDC" },
-  { name: "wCTC / sbUSD", token0: TOKENS.wCTC, token1: TOKENS.sbUSD, category: "Major", icon0: "wCTC", icon1: "sbUSD" },
-  { name: "sbUSD / USDC", token0: TOKENS.sbUSD, token1: TOKENS.USDC, category: "Stablecoin", icon0: "sbUSD", icon1: "USDC" },
-  { name: "lstCTC / wCTC", token0: TOKENS.lstCTC, token1: TOKENS.wCTC, category: "Correlated", icon0: "lstCTC", icon1: "wCTC" },
-];
-
-function PoolRow({ pool }: { pool: PoolDef }) {
-  const { fee, liquidity, isLoading } = usePool(pool.token0, pool.token1);
+/* ── Trending Pool Card ── */
+function TrendingPoolCard({ pool }: { pool: PoolListItem }) {
+  const isPositive = pool.change24h >= 0;
 
   return (
     <Link
       href={`/pool/${pool.token0}-${pool.token1}`}
-      className="grid grid-cols-2 lg:grid-cols-[1fr_120px_100px_120px_100px] items-center gap-4 px-4 py-4 rounded-xl hover:bg-bg-hover transition-all duration-300 group mt-2"
+      className="min-w-[260px] flex-shrink-0 snap-start card card-hover group"
+    >
+      <div className="flex items-center gap-3 mb-3">
+        <div className="flex -space-x-2">
+          <Image src={`/tokens/${pool.icon0}.svg`} alt={pool.icon0} width={28} height={28} className="rounded-full ring-2 ring-bg-primary z-10 bg-bg-card" />
+          <Image src={`/tokens/${pool.icon1}.svg`} alt={pool.icon1} width={28} height={28} className="rounded-full ring-2 ring-bg-primary bg-bg-card" />
+        </div>
+        <span className="font-semibold text-white group-hover:text-ice-400 transition-colors">{pool.name}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <span className="text-text-tertiary text-xs">TVL</span>
+          <div className="font-mono text-white">{pool.tvl}</div>
+        </div>
+        <div>
+          <span className="text-text-tertiary text-xs">APR</span>
+          <div className="font-mono text-success">{pool.feesAPR}</div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center gap-1 text-xs">
+        {isPositive ? (
+          <ArrowUpRight className="w-3 h-3 text-success" />
+        ) : (
+          <ArrowDownRight className="w-3 h-3 text-danger" />
+        )}
+        <span className={isPositive ? "text-success" : "text-danger"}>
+          {isPositive ? "+" : ""}{pool.change24h}%
+        </span>
+        <span className="text-text-tertiary ml-1">24h</span>
+      </div>
+    </Link>
+  );
+}
+
+/* ── Pool Table Row ── */
+function PoolRow({ pool }: { pool: PoolListItem }) {
+  return (
+    <Link
+      href={`/pool/${pool.token0}-${pool.token1}`}
+      className="grid grid-cols-2 lg:grid-cols-[1fr_100px_80px_100px_100px_80px_100px] items-center gap-4 px-4 py-4 rounded-xl hover:bg-bg-hover transition-all duration-300 group mt-2"
     >
       {/* Pair */}
       <div className="flex items-center gap-3">
@@ -52,16 +74,22 @@ function PoolRow({ pool }: { pool: PoolDef }) {
 
       {/* Fee */}
       <span className="text-sm font-mono text-success lg:text-right">
-        {isLoading ? "—" : fee !== undefined ? `${Number(fee) / 10000}%` : "—"}
+        {pool.fee}
       </span>
 
-      {/* Liquidity */}
+      {/* TVL */}
       <span className="text-sm font-mono text-white lg:text-right hidden lg:block">
-        {isLoading
-          ? "—"
-          : liquidity !== undefined
-            ? `$${formatTokenAmount(liquidity as bigint, 18, 2)}`
-            : "—"}
+        {pool.tvl}
+      </span>
+
+      {/* 24h Volume */}
+      <span className="text-sm font-mono text-white lg:text-right hidden lg:block">
+        {pool.volume24h}
+      </span>
+
+      {/* Fees APR */}
+      <span className="text-sm font-mono text-success lg:text-right hidden lg:block">
+        {pool.feesAPR}
       </span>
 
       {/* Action */}
@@ -74,12 +102,17 @@ function PoolRow({ pool }: { pool: PoolDef }) {
   );
 }
 
+/* ── Page ── */
 export default function PoolPage() {
+  const { data: stats, isLoading: statsLoading } = useProtocolStats();
+  const { pools, trending, isLoading: poolsLoading } = usePoolList();
+
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 relative">
+    <div className="max-w-5xl mx-auto px-4 py-8 relative space-y-6">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-[300px] bg-ice-400/5 rounded-[100%] blur-[100px] pointer-events-none -z-10" />
 
-      <div className="flex items-center justify-between mb-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2 text-white">
           <Droplets className="w-6 h-6 text-ice-400" />
           Liquidity Pools
@@ -92,20 +125,67 @@ export default function PoolPage() {
         </Button>
       </div>
 
+      {/* Protocol Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Total Value Locked"
+          value={stats.tvl}
+          icon={<DollarSign className="w-4 h-4" />}
+          sub={<span className="text-success">+{stats.tvlChange24h}% 24h</span>}
+          loading={statsLoading}
+        />
+        <StatCard
+          label="24h Volume"
+          value={stats.volume24h}
+          icon={<BarChart3 className="w-4 h-4" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          label="24h Fees"
+          value={stats.fees24h}
+          icon={<TrendingUp className="w-4 h-4" />}
+          loading={statsLoading}
+        />
+        <StatCard
+          label="Total Pools"
+          value={String(stats.totalPools)}
+          icon={<Droplets className="w-4 h-4" />}
+          loading={statsLoading}
+        />
+      </div>
+
+      {/* Trending Pools */}
+      {trending.length > 0 && (
+        <div>
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-text-secondary uppercase tracking-wider mb-3">
+            <Flame className="w-4 h-4 text-warning" />
+            Trending Pools
+          </h2>
+          <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-thin">
+            {trending.map((pool) => (
+              <TrendingPoolCard key={pool.name} pool={pool} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pool Table */}
       <Card className="bg-bg-card/60 backdrop-blur-xl border-border shadow-xl overflow-hidden">
         <CardContent className="p-0">
           {/* Header row */}
-          <div className="hidden lg:grid grid-cols-[1fr_120px_100px_120px_100px] gap-4 px-8 py-4 bg-bg-input/50 text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-border">
+          <div className="hidden lg:grid grid-cols-[1fr_100px_80px_100px_100px_80px_100px] gap-4 px-8 py-4 bg-bg-input/50 text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-border">
             <span>Pool Pair</span>
             <span>Category</span>
-            <span className="text-right">Fee Tier</span>
+            <span className="text-right">Fee</span>
             <span className="text-right">TVL</span>
+            <span className="text-right">24h Volume</span>
+            <span className="text-right">APR</span>
             <span />
           </div>
 
           {/* Rows */}
           <div className="p-4 flex flex-col gap-1">
-            {INITIAL_POOLS.map((pool) => (
+            {pools.map((pool) => (
               <PoolRow key={pool.name} pool={pool} />
             ))}
           </div>
