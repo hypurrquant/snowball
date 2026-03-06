@@ -12,6 +12,7 @@ import { useSwap } from "@/domains/trade/hooks/useSwap";
 import { formatTokenAmount } from "@/shared/lib/utils";
 import { ArrowDownUp, Settings, Loader2 } from "lucide-react";
 import { TokenSelector } from "@/shared/components/common/TokenSelector";
+import { PriceChart } from "@/domains/trade/components/PriceChart";
 
 const TOKEN_LIST = Object.entries(TOKENS) as [string, Address][];
 
@@ -71,8 +72,10 @@ export default function SwapPage() {
   };
 
   return (
-    <div className="flex justify-center px-4 py-8 lg:py-12">
-      <Card className="w-full max-w-[480px]">
+    <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-[480px_1fr] gap-6">
+        <div className="order-2 lg:order-1">
+      <Card>
         <CardHeader className="flex-row items-center justify-between pb-3">
           <CardTitle>Swap</CardTitle>
           <Button variant="ghost" size="icon">
@@ -104,7 +107,7 @@ export default function SwapPage() {
                 placeholder="0.0"
                 value={amountInStr}
                 onChange={(e) => setAmountInStr(e.target.value)}
-                className="flex-1 bg-transparent text-2xl font-mono text-text-primary outline-none placeholder:text-text-tertiary"
+                className="flex-1 min-w-0 bg-transparent text-2xl font-mono text-text-primary outline-none placeholder:text-text-tertiary"
               />
               <TokenSelector
                 selectedToken={tokenIn}
@@ -171,7 +174,7 @@ export default function SwapPage() {
               <Button
                 className="w-full"
                 variant="warning"
-                onClick={approve}
+                onClick={() => approve()}
                 disabled={isApprovePending}
               >
                 {isApprovePending ? (
@@ -194,6 +197,11 @@ export default function SwapPage() {
           </div>
         </CardContent>
       </Card>
+        </div>
+        <div className="order-1 lg:order-2 min-w-0">
+          <PriceChart tokenIn={tokenIn} tokenOut={tokenOut} />
+        </div>
+      </div>
     </div>
   );
 }
