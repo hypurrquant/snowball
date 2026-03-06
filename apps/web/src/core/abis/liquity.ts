@@ -33,6 +33,7 @@ export const StabilityPoolABI = [
 
 export const TroveNFTABI = [
   { type: "function", name: "balanceOf", inputs: [{ name: "owner", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "tokenOfOwnerByIndex", inputs: [{ name: "owner", type: "address" }, { name: "index", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
 ] as const;
 
 export const MockPriceFeedABI = [
@@ -43,4 +44,12 @@ export const MockPriceFeedABI = [
 export const ActivePoolABI = [
   { type: "function", name: "getCollBalance", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "getBoldDebt", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
+] as const;
+
+export const HintHelpersABI = [
+  { type: "function", name: "getApproxHint", inputs: [{ name: "branchIdx", type: "uint256" }, { name: "interestRate", type: "uint256" }, { name: "numTrials", type: "uint256" }, { name: "inputRandomSeed", type: "uint256" }], outputs: [{ name: "hintAddress", type: "uint256" }, { name: "diff", type: "uint256" }, { name: "latestRandomSeed", type: "uint256" }], stateMutability: "view" },
+] as const;
+
+export const SortedTrovesABI = [
+  { type: "function", name: "findInsertPosition", inputs: [{ name: "annualInterestRate", type: "uint256" }, { name: "prevId", type: "uint256" }, { name: "nextId", type: "uint256" }], outputs: [{ name: "upperHint", type: "uint256" }, { name: "lowerHint", type: "uint256" }], stateMutability: "view" },
 ] as const;

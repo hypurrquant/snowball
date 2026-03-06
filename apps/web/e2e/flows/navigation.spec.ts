@@ -3,9 +3,8 @@ import { test, expect } from "../fixtures";
 const SIDEBAR_LINKS = [
   { name: "Swap", href: "/swap" },
   { name: "Pool", href: "/pool" },
-  { name: "Lend", href: "/lend" },
-  { name: "Borrow", href: "/borrow" },
-  { name: "Earn", href: "/earn" },
+  { name: "Liquity", href: "/liquity" },
+  { name: "Morpho", href: "/morpho" },
   { name: "Dashboard", href: "/dashboard" },
   { name: "Analytics", href: "/analytics" },
   { name: "Chat", href: "/chat" },
@@ -68,7 +67,7 @@ test.describe("Navigation", () => {
     const mobileNav = page.locator(".fixed.inset-0");
     await expect(mobileNav).toBeVisible();
     await expect(mobileNav.getByText("Swap")).toBeVisible();
-    await expect(mobileNav.getByText("Lend")).toBeVisible();
+    await expect(mobileNav.getByText("Liquity")).toBeVisible();
     await expect(mobileNav.getByText("Dashboard")).toBeVisible();
   });
 
@@ -82,7 +81,7 @@ test.describe("Navigation", () => {
 
     // Click a nav link in mobile nav
     const mobileNav = page.locator(".fixed.inset-0");
-    await mobileNav.getByText("Lend").click();
-    await expect(page).toHaveURL("/lend");
+    await mobileNav.getByText("Liquity").click();
+    await expect(page).toHaveURL(/\/liquity/);
   });
 });

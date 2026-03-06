@@ -3,9 +3,8 @@ import {
   Droplets,
   Landmark,
   HandCoins,
-  Percent,
-  ChartCandlestick,
-  History,
+  // ChartCandlestick,  // Options 비활성화
+  // History,           // Options 비활성화
   LayoutDashboard,
   BarChart3,
   Bot,
@@ -35,19 +34,19 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "DeFi",
     items: [
-      { href: "/lend", label: "Lend", icon: (cls) => <Landmark className={cls} /> },
-      { href: "/borrow", label: "Borrow", icon: (cls) => <HandCoins className={cls} /> },
-      { href: "/earn", label: "Earn", icon: (cls) => <Percent className={cls} /> },
+      { href: "/liquity", label: "Liquity", icon: (cls) => <HandCoins className={cls} /> },
+      { href: "/morpho", label: "Morpho", icon: (cls) => <Landmark className={cls} /> },
       { href: "/yield", label: "Yield", icon: (cls) => <Vault className={cls} /> },
     ],
   },
-  {
-    title: "Options",
-    items: [
-      { href: "/options", label: "Trade", icon: (cls) => <ChartCandlestick className={cls} /> },
-      { href: "/options/history", label: "History", icon: (cls) => <History className={cls} /> },
-    ],
-  },
+  // Options: 비활성화 — EIP-712 미구현 + API 스키마 불일치 + 출금 불가 (options-fe-analysis.md 참조)
+  // {
+  //   title: "Options",
+  //   items: [
+  //     { href: "/options", label: "Trade", icon: (cls) => <ChartCandlestick className={cls} /> },
+  //     { href: "/options/history", label: "History", icon: (cls) => <History className={cls} /> },
+  //   ],
+  // },
   {
     title: "More",
     items: [

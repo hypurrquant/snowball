@@ -2,37 +2,17 @@
 
 import { useReadContracts } from "wagmi";
 import { SnowballLendABI, MockOracleABI } from "@/core/abis";
-import { LEND, TOKENS } from "@/core/config/addresses";
-import {
-  toAssetsDown,
-  utilization,
-  borrowRateToAPR,
-  supplyAPY,
-} from "@/domains/defi/lend/lib/lendMath";
+import { LEND } from "@/core/config/addresses";
+import { utilization, supplyAPY } from "../lib/morphoMath";
+import type { MorphoMarket } from "../types";
 
-export interface LendMarket {
-  id: `0x${string}`;
-  name: string;
-  loanSymbol: string;
-  collSymbol: string;
-  totalSupply: bigint;
-  totalBorrow: bigint;
-  utilization: number;
-  borrowAPR: number;
-  supplyAPY: number;
-  oraclePrice: bigint;
-  lltv: bigint;
-}
-
-export function useLendMarkets() {
-  const marketCalls = LEND.markets.flatMap((m) => [
-    {
-      address: LEND.snowballLend,
-      abi: SnowballLendABI,
-      functionName: "market" as const,
-      args: [m.id] as const,
-    },
-  ]);
+export function useMorphoMarkets() {
+  const marketCalls = LEND.markets.map((m) => ({
+    address: LEND.snowballLend,
+    abi: SnowballLendABI,
+    functionName: "market" as const,
+    args: [m.id] as const,
+  }));
 
   const oracleAddresses = [
     LEND.oracles.wCTC,
@@ -51,7 +31,7 @@ export function useLendMarkets() {
     query: { refetchInterval: 10_000 },
   });
 
-  const markets: LendMarket[] = [];
+  const markets: MorphoMarket[] = [];
 
   if (data) {
     const marketCount = LEND.markets.length;
@@ -59,15 +39,12 @@ export function useLendMarkets() {
       const marketResult = data[i];
       if (marketResult?.status !== "success") continue;
 
-      const [
-        totalSupplyAssets,
-        ,
-        totalBorrowAssets,
-      ] = marketResult.result as [bigint, bigint, bigint, bigint, bigint, bigint];
+      const [totalSupplyAssets, , totalBorrowAssets] = marketResult.result as [
+        bigint, bigint, bigint, bigint, bigint, bigint,
+      ];
 
       const m = LEND.markets[i];
       const util = utilization(totalBorrowAssets, totalSupplyAssets);
-      // TODO: 프로덕션 시 AdaptiveCurveIRM.borrowRateView()로 교체 — 현재는 데모용 하드코딩
       const approxBorrowAPR = util * 0.08;
       const approxSupplyAPY = supplyAPY(approxBorrowAPR, util);
 
@@ -83,6 +60,8 @@ export function useLendMarkets() {
         name: m.name,
         loanSymbol: m.loanSymbol,
         collSymbol: m.collSymbol,
+        loanToken: m.loanToken,
+        collateralToken: m.collateralToken,
         totalSupply: totalSupplyAssets,
         totalBorrow: totalBorrowAssets,
         utilization: util,

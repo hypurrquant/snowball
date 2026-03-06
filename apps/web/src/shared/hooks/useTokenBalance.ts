@@ -18,7 +18,7 @@ export function useTokenBalance({ address, token }: { address?: Address; token?:
         query: { enabled: !!token && !!address }
     });
 
-    if (!token) return native;
+    if (!token) return { ...native, refetch: native.refetch };
 
     const info = token ? TOKEN_INFO[token] : undefined;
 
@@ -27,5 +27,6 @@ export function useTokenBalance({ address, token }: { address?: Address; token?:
         data: erc20.data !== undefined
             ? { value: erc20.data as bigint, decimals: info?.decimals ?? 18, symbol: info?.symbol ?? "ERC20" }
             : undefined,
+        refetch: erc20.refetch,
     };
 }

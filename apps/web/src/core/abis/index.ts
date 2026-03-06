@@ -3,3 +3,4 @@ export * from "./options";
 export * from "./lend";
 export * from "./liquity";
 export * from "./yield";
+export * from "./agent";

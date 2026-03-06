@@ -4,7 +4,7 @@ const YEAR_SECONDS = 365n * 24n * 3600n;
 export function toAssetsDown(
   shares: bigint,
   totalAssets: bigint,
-  totalShares: bigint
+  totalShares: bigint,
 ): bigint {
   if (totalShares === 0n) return shares;
   return (shares * totalAssets) / totalShares;
@@ -13,7 +13,7 @@ export function toAssetsDown(
 export function toSharesDown(
   assets: bigint,
   totalAssets: bigint,
-  totalShares: bigint
+  totalShares: bigint,
 ): bigint {
   if (totalAssets === 0n) return assets;
   return (assets * totalShares) / totalAssets;
@@ -31,7 +31,7 @@ export function utilization(totalBorrow: bigint, totalSupply: bigint): number {
 export function supplyAPY(
   borrowAPR: number,
   utilizationPercent: number,
-  feeBps = 0
+  feeBps = 0,
 ): number {
   const feeMultiplier = 1 - feeBps / 10000;
   return borrowAPR * (utilizationPercent / 100) * feeMultiplier;
@@ -40,7 +40,7 @@ export function supplyAPY(
 export function calculateHealthFactor(
   collateralValue: bigint,
   borrowedValue: bigint,
-  lltv: bigint
+  lltv: bigint,
 ): number {
   if (borrowedValue === 0n) return Infinity;
   const maxBorrow = (collateralValue * lltv) / WAD;
@@ -50,9 +50,8 @@ export function calculateHealthFactor(
 export function calculateLiquidationPrice(
   collateralAmount: bigint,
   borrowedAmount: bigint,
-  lltv: bigint
+  lltv: bigint,
 ): bigint {
   if (collateralAmount === 0n) return 0n;
-  // liquidationPrice = borrowed * WAD / (collateral * lltv / WAD)
   return (borrowedAmount * WAD * WAD) / (collateralAmount * lltv);
 }
