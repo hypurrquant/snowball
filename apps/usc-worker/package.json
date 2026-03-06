@@ -1,0 +1,13 @@
+{
+  "name": "usc-worker",
+  "version": "0.11.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node src/index.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "ethers": "^6.15.0"
+  }
+}
