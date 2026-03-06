@@ -1,6 +1,8 @@
 import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { TOKENS } from "@/core/config/addresses";
 import type { Address } from "viem";
+import type { PoolStatsResponse } from "@snowball/core/src/volume/types";
 
 export interface PoolListItem {
   name: string;
@@ -82,16 +84,70 @@ const MOCK_POOLS: PoolListItem[] = [
   },
 ];
 
-// TODO: BE API 연동 시 useSWR/useQuery로 교체
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+function formatUsd(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
+  return `$${value.toFixed(0)}`;
+}
+
+function formatPercent(value: number | null): string {
+  if (value === null) return "0%";
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function getTokenIcon(address: string): string {
+  const addr = address.toLowerCase();
+  if (addr === TOKENS.wCTC.toLowerCase()) return "wCTC";
+  if (addr === TOKENS.lstCTC.toLowerCase()) return "lstCTC";
+  if (addr === TOKENS.sbUSD.toLowerCase()) return "sbUSD";
+  if (addr === TOKENS.USDC.toLowerCase()) return "USDC";
+  return "?";
+}
+
+function apiToPoolListItem(pool: PoolStatsResponse["data"][number]): PoolListItem {
+  return {
+    name: pool.name,
+    token0: pool.token0 as Address,
+    token1: pool.token1 as Address,
+    icon0: getTokenIcon(pool.token0),
+    icon1: getTokenIcon(pool.token1),
+    category: pool.name.includes("sbUSD") && pool.name.includes("USDC") ? "Stablecoin" : "Major",
+    fee: `${(pool.fee / 10_000).toFixed(pool.fee % 10_000 === 0 ? 1 : 2)}%`,
+    tvl: formatUsd(pool.tvlUsd),
+    volume24h: formatUsd(pool.volume24hUsd),
+    feesAPR: formatPercent(pool.feeApr),
+    change24h: 0,
+    isTrending: pool.volume24hUsd > 0,
+  };
+}
+
+async function fetchPools(): Promise<PoolListItem[]> {
+  const res = await fetch(`${API_URL}/api/pools`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const data: PoolStatsResponse = await res.json();
+  return data.data.map(apiToPoolListItem);
+}
+
 export function usePoolList(): UsePoolListReturn {
+  const { data: pools, isLoading } = useQuery({
+    queryKey: ["poolList"],
+    queryFn: fetchPools,
+    enabled: !!API_URL,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const finalPools = API_URL && pools ? pools : MOCK_POOLS;
   const trending = useMemo(
-    () => MOCK_POOLS.filter((p) => p.isTrending),
-    [],
+    () => finalPools.filter((p) => p.isTrending),
+    [finalPools],
   );
 
   return {
-    pools: MOCK_POOLS,
+    pools: finalPools,
     trending,
-    isLoading: false,
+    isLoading: API_URL ? isLoading : false,
   };
 }

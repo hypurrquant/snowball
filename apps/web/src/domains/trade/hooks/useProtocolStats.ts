@@ -1,3 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
+import type { ProtocolStatsResponse } from "@snowball/core/src/volume/types";
+
 interface ProtocolStats {
   tvl: string;
   volume24h: string;
@@ -11,16 +14,46 @@ interface UseProtocolStatsReturn {
   isLoading: boolean;
 }
 
-// TODO: BE API 연동 시 useSWR/useQuery로 교체
-export function useProtocolStats(): UseProtocolStatsReturn {
+const MOCK_DATA: ProtocolStats = {
+  tvl: "$2.45M",
+  volume24h: "$384.2K",
+  fees24h: "$1,152",
+  totalPools: 4,
+  tvlChange24h: 2.3,
+};
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+function formatUsd(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
+  return `$${value.toFixed(0)}`;
+}
+
+async function fetchStats(): Promise<ProtocolStats> {
+  const res = await fetch(`${API_URL}/api/protocol/stats`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const json: ProtocolStatsResponse = await res.json();
   return {
-    data: {
-      tvl: "$2.45M",
-      volume24h: "$384.2K",
-      fees24h: "$1,152",
-      totalPools: 4,
-      tvlChange24h: 2.3,
-    },
-    isLoading: false,
+    tvl: formatUsd(json.data.tvlUsd),
+    volume24h: formatUsd(json.data.volume24hUsd),
+    fees24h: formatUsd(json.data.fees24hUsd),
+    totalPools: json.data.totalPools,
+    tvlChange24h: 0,
+  };
+}
+
+export function useProtocolStats(): UseProtocolStatsReturn {
+  const { data, isLoading } = useQuery({
+    queryKey: ["protocolStats"],
+    queryFn: fetchStats,
+    enabled: !!API_URL,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  return {
+    data: API_URL && data ? data : MOCK_DATA,
+    isLoading: API_URL ? isLoading : false,
   };
 }

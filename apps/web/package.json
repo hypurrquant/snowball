@@ -11,6 +11,7 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@snowball/core": "workspace:*",
     "@privy-io/react-auth": "^3.14.1",
     "@privy-io/wagmi": "^4.0.2",
     "@radix-ui/react-dialog": "^1.1.0",
