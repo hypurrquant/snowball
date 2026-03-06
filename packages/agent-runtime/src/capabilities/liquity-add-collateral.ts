@@ -1,0 +1,68 @@
+import { encodeFunctionData } from "viem";
+import { AgentVaultABI, BorrowerOperationsABI } from "../abis.js";
+import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, PermissionSpec } from "../types.js";
+
+function check(ok: boolean, message: string): CheckResult {
+  return { ok, message };
+}
+
+export const liquityAddCollateral: Capability<{ troveId: string; amount: string; reason: string }> = {
+  id: "liquity.addCollateral",
+  description: "Liquity trove에 담보(wCTC)를 추가한다. vault에서 wCTC를 approve 후 addColl 실행.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      troveId: { type: "string", description: "Trove ID" },
+      amount: { type: "string", description: "추가 담보량 (wei 단위)" },
+      reason: { type: "string", description: "담보 추가 이유" },
+    },
+    required: ["troveId", "amount", "reason"],
+  },
+
+  requiredPermissions(config: AgentConfig): PermissionSpec[] {
+    return [{ target: config.liquity.borrowerOperations, selectors: ["adjustTroveInterestRate", "addColl"] }];
+  },
+
+  preconditions(ctx: ExecutionContext, input: { troveId: string; amount: string; reason: string }): CheckResult[] {
+    const amt = BigInt(input.amount);
+    const collBalance = ctx.snapshot.vault.balances[ctx.config.liquity.collToken.toLowerCase()] ?? 0n;
+    return [
+      check(ctx.snapshot.liquity.hasTrove, "user has no active trove"),
+      check(ctx.snapshot.liquity.isAddManager, "AgentVault is not set as addManager"),
+      check(amt > 0n, "amount must be > 0"),
+      check(collBalance >= amt, `insufficient vault wCTC balance: have ${collBalance}, need ${amt}`),
+    ];
+  },
+
+  buildCalls(ctx: ExecutionContext, input: { troveId: string; amount: string; reason: string }): PreparedCall[] {
+    const troveId = BigInt(input.troveId);
+    const amt = BigInt(input.amount);
+
+    const addCollData = encodeFunctionData({
+      abi: BorrowerOperationsABI,
+      functionName: "addColl",
+      args: [troveId, amt],
+    });
+
+    return [
+      {
+        to: ctx.config.agentVault,
+        abi: AgentVaultABI,
+        functionName: "approveFromVault",
+        args: [ctx.user, ctx.config.liquity.collToken, ctx.config.liquity.borrowerOperations, amt],
+      },
+      {
+        to: ctx.config.agentVault,
+        abi: AgentVaultABI,
+        functionName: "executeOnBehalf",
+        args: [ctx.user, ctx.config.liquity.borrowerOperations, addCollData],
+      },
+      {
+        to: ctx.config.agentVault,
+        abi: AgentVaultABI,
+        functionName: "approveFromVault",
+        args: [ctx.user, ctx.config.liquity.collToken, ctx.config.liquity.borrowerOperations, 0n],
+      },
+    ];
+  },
+};

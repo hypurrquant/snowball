@@ -1,0 +1,27 @@
+{
+  "id": "snowball-demo-defi-manager",
+  "version": "0.11.0",
+  "name": "Snowball Demo DeFi Manager",
+  "network": { "chainId": 102031 },
+  "llm": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-20250514",
+    "systemPromptFile": "../prompts/demo-agent-system.md"
+  },
+  "scope": {
+    "singleUser": true,
+    "morphoMarket": "wCTC/sbUSD",
+    "liquityBranch": "wCTC",
+    "maxSteps": 1
+  },
+  "allowedCapabilities": [
+    "morpho.supply",
+    "morpho.withdraw",
+    "liquity.adjustInterestRate",
+    "liquity.addCollateral"
+  ],
+  "riskPolicy": {
+    "abortOnFailedPrecondition": true,
+    "cleanupAllowanceAfterUse": true
+  }
+}
