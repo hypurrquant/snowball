@@ -390,68 +390,53 @@ Vault 기능 (deposit, withdraw, redeem, totalAssets 등)을 사용하려면 별
 
 ---
 
-## 5. dex.ts — Algebra V4 DEX
+## 5. dex.ts — Uniswap V3 DEX
 
-소스: `packages/algebra/` 없음 (외부 포크). Algebra V4 Integral 인터페이스 기준 대조.
+소스: `@uniswap/v3-core@1.0.1`, `@uniswap/v3-periphery@1.4.4` canonical ABI 기준. v0.4.0에서 전면 리라이트 완료.
 
-### 5-1. SnowballFactoryABI
+### 5-1. UniswapV3FactoryABI
 
-| ABI 함수 | Algebra V4 존재 | 매치 |
+| ABI 함수 | Uniswap V3 존재 | 매치 |
 |----------|:---:|:---:|
-| `poolByPair(address,address)` | O | O |
-| `createPool(address,address,bytes)` | O | O |
+| `getPool(address,address,uint24)` | O | O |
+| `createPool(address,address,uint24)` | O | O |
 
 **정상.**
 
-### 5-2. SnowballPoolABI
+### 5-2. UniswapV3PoolABI
 
-| ABI 함수 | Algebra V4 존재 | 매치 |
+| ABI 함수 | Uniswap V3 존재 | 매치 |
 |----------|:---:|:---:|
-| `globalState()` | O | O |
+| `slot0()` | O | O |
 | `liquidity()` | O | O |
 | `token0()` | O | O |
 | `token1()` | O | O |
+| `fee()` | O | O |
+| `tickSpacing()` | O | O |
 
-**누락 (MEDIUM)**:
+**정상.** (v0.3.0에서 누락이었던 `tickSpacing` 포함)
 
-| 함수 | 용도 |
-|------|------|
-| `tickSpacing()` | LP UI에서 유효 tick 범위 계산 필수 |
-| `ticks(int24)` | 틱별 유동성 시각화 |
+### 5-3. SwapRouterABI
 
-### 5-3. SnowballRouterABI (DEX SwapRouter)
-
-> 주의: `dex.ts`의 `SnowballRouterABI`는 Algebra V4 SwapRouter. `packages/integration/src/router/SnowballRouter.sol`과 별개.
-
-| ABI 함수 | Algebra V4 존재 | 매치 |
+| ABI 함수 | Uniswap V3 존재 | 매치 |
 |----------|:---:|:---:|
 | `exactInputSingle(...)` | O | O |
+| `exactInput(...)` | O | O |
+| `multicall(bytes[])` | O | O |
 
-**누락 (HIGH)**:
-
-| 함수 | 용도 |
-|------|------|
-| **`exactInput(params)`** | 멀티홉 스왑 (wCTC → sbUSD → USDC 등) |
-| `exactOutputSingle(params)` | 정확한 출력 스왑 |
-| `exactOutput(params)` | 멀티홉 정확 출력 |
-| **`multicall(bytes[])`** | 스왑 + unwrap 배치 처리 |
+**정상.** (v0.3.0에서 누락이었던 `exactInput`, `multicall` 포함)
 
 ### 5-4. QuoterV2ABI
 
-| ABI 함수 | Algebra V4 존재 | 매치 |
+| ABI 함수 | Uniswap V3 존재 | 매치 |
 |----------|:---:|:---:|
 | `quoteExactInputSingle(...)` | O | O |
 
-**누락 (MEDIUM)**:
-
-| 함수 | 용도 |
-|------|------|
-| `quoteExactInput(bytes,uint256)` | 멀티홉 견적 |
-| `quoteExactOutputSingle(...)` | 정확 출력 견적 |
+**정상.**
 
 ### 5-5. NonfungiblePositionManagerABI
 
-| ABI 함수 | Algebra V4 존재 | 매치 |
+| ABI 함수 | Uniswap V3 존재 | 매치 |
 |----------|:---:|:---:|
 | `positions(uint256)` | O | O |
 | `mint(...)` | O | O |
@@ -459,14 +444,11 @@ Vault 기능 (deposit, withdraw, redeem, totalAssets 등)을 사용하려면 별
 | `decreaseLiquidity(...)` | O | O |
 | `balanceOf(address)` | O | O |
 | `tokenOfOwnerByIndex(address,uint256)` | O | O |
+| `increaseLiquidity(...)` | O | O |
+| `burn(uint256)` | O | O |
+| `multicall(bytes[])` | O | O |
 
-**누락 (HIGH)**:
-
-| 함수 | 용도 |
-|------|------|
-| **`increaseLiquidity(params)`** | 기존 포지션에 유동성 추가 — 없으면 새 포지션만 생성 가능 |
-| **`multicall(bytes[])`** | decrease + collect + burn 원자적 배치 — LP 관리 필수 |
-| `burn(uint256)` | 빈 포지션 NFT 삭제 |
+**정상.** (v0.3.0에서 누락이었던 `increaseLiquidity`, `multicall`, `burn` 포함)
 
 ### 5-6. DynamicFeePluginABI
 

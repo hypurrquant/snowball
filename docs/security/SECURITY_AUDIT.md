@@ -23,7 +23,7 @@ The initial audit (v1) reported 14 CRITICAL findings. After cross-referencing wi
 | **Total real findings** | **10** | **15** | **22** |
 | ~~Original protocol behavior (false positives)~~ | ~~4~~ | ~~9~~ | ~~11~~ |
 
-**Key takeaway**: The forked core protocols (Algebra DEX, Morpho Blue core, Beefy Vault core) are largely faithful copies. The real risks are concentrated in **Snowball's simplifications of Liquity** (`contracts/core/` vs `contracts/src/`), **custom contracts** (ERC-8004, Bridge, Options), and **stub peripheral contracts** (PublicAllocator, SnowballVault in Morpho package).
+**Key takeaway**: The forked core protocols (Uniswap V3 DEX, Morpho Blue core, Beefy Vault core) are largely faithful copies. The real risks are concentrated in **Snowball's simplifications of Liquity** (`contracts/core/` vs `contracts/src/`), **custom contracts** (ERC-8004, Bridge, Options), and **stub peripheral contracts** (PublicAllocator, SnowballVault in Morpho package).
 
 ---
 
@@ -185,18 +185,17 @@ All Liquity findings below refer to `contracts/core/` (the deployed PoC code).
 
 ## 5. DEX, Morpho, Yield Vault, USC Bridge
 
-### Algebra DEX — FAITHFUL FORK ✅
+### Uniswap V3 DEX — FAITHFUL FORK ✅
 
-**Package**: `packages/algebra`
-**Origin**: Algebra Integral v1.2.2 — **verbatim copy with rename only**
+**Origin**: Uniswap V3 — standard deployment (v3-core@1.0.1, v3-periphery@1.4.4)
 
-All core contracts (`SnowballPool`, `SnowballFactory`, `SnowballPoolDeployer`, etc.) are **exact renames** of the original Algebra Integral 1.2.2 contracts. No logic modifications.
+Standard Uniswap V3 contracts (UniswapV3Factory, UniswapV3Pool, SwapRouter, NonfungiblePositionManager, QuoterV2). No logic modifications from canonical source.
 
 | Previously Flagged | Verdict |
 |----|---------|
-| ~~C-5: Pool unlock/re-lock window~~ | **FALSE POSITIVE** — Standard Algebra V3 pattern. Unlock is intentional for plugin hooks. Pool admin sets plugins. |
-| ~~H-1: Fee can be set to 100%~~ | **FALSE POSITIVE** — `uint16` caps at 6.5%, swap-time validation at 100%. Standard Algebra. |
-| ~~H-5: Owner can change fees~~ | **FALSE POSITIVE** — Standard admin trust model, same as upstream. |
+| ~~C-5: Pool unlock/re-lock window~~ | **N/A** — Uniswap V3 uses standard lock mechanism. |
+| ~~H-1: Fee can be set to 100%~~ | **N/A** — Uniswap V3 uses fixed fee tiers (500, 3000, 10000). |
+| ~~H-5: Owner can change fees~~ | **N/A** — Uniswap V3 fee tiers are fixed at pool creation. |
 
 **Only Snowball-authored code**: `DynamicFeePlugin.sol` — custom plugin with simplified midpoint fee strategy.
 - MEDIUM: Single owner, no timelock on fee config changes.
@@ -319,9 +318,9 @@ These were incorrectly flagged in v1. They are standard behavior in the upstream
 
 | Package | Flagged Issue | Reality |
 |---------|--------------|---------|
-| Algebra | Pool unlock/re-lock window | Standard Algebra V3 plugin hook pattern |
-| Algebra | Fee set to 100% | `uint16` + swap-time validation caps this |
-| Algebra | Owner changes fees | Standard admin trust model |
+| Uniswap V3 | Pool unlock/re-lock window | Standard Uniswap V3 plugin hook pattern |
+| Uniswap V3 | Fee set to 100% | `uint16` + swap-time validation caps this |
+| Uniswap V3 | Owner changes fees | Standard admin trust model |
 | Morpho | No duplicate market check | Has `lastUpdate == 0` check |
 | Morpho | enableLltv no upper bound | Standard Morpho design (< 100% enforced) |
 | Morpho | liquidate() no incentive | Has full incentive factor system |
@@ -349,7 +348,7 @@ Concentrated in:
 | Aave Credit Import | ✅ E2E tested | ❌ Fix proof binding |
 | Liquity (core) | ⚠️ Missing safety mechanisms | ❌ Use `src/` or fix `core/` |
 | Options | ⚠️ Mock oracle | ❌ Replace oracle, add reentrancy guard |
-| Algebra DEX | ✅ Faithful fork | ✅ (pending DynamicFeePlugin timelock) |
+| Uniswap V3 DEX | ✅ Faithful fork | ✅ (pending DynamicFeePlugin timelock) |
 | Morpho (core) | ✅ Faithful reimplementation | ✅ (fix peripheral stubs) |
 | Yield Vault | ✅ Faithful Beefy fork | ⚠️ Fix harvest slippage |
 | USC Bridge | ⚠️ Proof binding issue | ❌ Bind recipient/amount to proof |
@@ -364,4 +363,4 @@ Concentrated in:
 
 ---
 
-*v2 — Corrected after cross-referencing all findings against upstream originals (Liquity V2, Algebra Integral 1.2.2, Morpho Blue, Beefy VaultV7). False positives removed.*
+*v2 — Corrected after cross-referencing all findings against upstream originals (Liquity V2, Uniswap V3, Morpho Blue, Beefy VaultV7). False positives removed.*

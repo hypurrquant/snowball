@@ -1,4 +1,4 @@
-# Step 04: dex.ts ABI 추가
+# Step 04: dex.ts ABI 추가 (deprecated → v0.4.0에서 Uniswap V3로 전환)
 
 ## 메타데이터
 - **난이도**: 🟢 쉬움

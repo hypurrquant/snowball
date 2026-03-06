@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-03-06 — v0.4.0
+
+### DEX ABI: Algebra V4 → Uniswap V3 전면 마이그레이션
+
+- **dex.ts 전면 리라이트**: SnowballFactory/Pool/Router/DynamicFeePlugin → UniswapV3Factory/Pool, SwapRouter, QuoterV2, NonfungiblePositionManager
+- **addresses.ts 정리**: snowballFactory→factory, snowballRouter→swapRouter, 불필요 필드(snowballPoolDeployer, dynamicFeePlugin) 삭제
+- **hooks/trade/ 마이그레이션**: usePool(globalState→slot0, poolByPair→getPool+fee), useSwap(deployer/limitSqrtPrice→fee/sqrtPriceLimitX96), useAddLiquidity(deployer→fee)
+- **UI 수정**: dynamicFee→fee, fee/10000 표시, "Dynamic Fee"→"Fee Tier"
+- **문서 업데이트**: 8개 문서에서 Algebra 참조 제거, SSOT_ALGEBRA.md deprecated 처리
+- 📝 [Phase 문서](archive/v0.4.0-dex-uniswap-v3/README.md)
+
+---
+
 ## 2026-02-25 — v0.2.0
 
 ### 폴더 버전화
@@ -81,7 +94,7 @@
 | 문서 | 버전 | 설명 |
 |------|------|------|
 | SSOT_MORPHO.md | v1.0.0 | Morpho Blue 포크 SSOT — 주소, 마켓, 오라클 |
-| SSOT_ALGEBRA.md | v1.0.0 | Algebra V4 DEX SSOT — 주소, 풀, 토큰 |
+| SSOT_ALGEBRA.md | v1.0.0 | DEX SSOT (deprecated → v0.4.0에서 Uniswap V3로 전환) |
 | PROJECT_OVERVIEW.md | v1.0.0 | 프로젝트 전체 개요 |
 | FRONTEND_HANDOFF.md | v1.0.0 | Gemini 핸드오프용 프론트엔드 스펙 |
 | FRONTEND_PROMPT.md | v1.0.0 | 프론트엔드 구현 프롬프트 |

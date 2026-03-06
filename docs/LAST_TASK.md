@@ -51,9 +51,9 @@ Sepolia에서 DN 토큰 burn → USC 증명 → Creditcoin USC Testnet에서 min
 
 ---
 
-### 2. DN Token DEX 풀 — Algebra V4
+### 2. DN Token DEX 풀 — Uniswap V3
 
-Creditcoin Testnet에 DN 토큰을 배포하고 Snowball DEX(Algebra)에서 wCTC와 거래 가능하도록 풀 생성.
+Creditcoin Testnet에 DN 토큰을 배포하고 Snowball DEX(Uniswap V3)에서 wCTC와 거래 가능하도록 풀 생성.
 
 | 항목 | 값 |
 |------|-----|

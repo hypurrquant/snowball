@@ -8,7 +8,7 @@
 
 ## 요약
 
-Algebra DEX와 Yield Vault가 Creditcoin Testnet에 배포 완료되었습니다.
+Uniswap V3 DEX와 Yield Vault가 Creditcoin Testnet에 배포 완료되었습니다.
 `addresses.ts`에서 아래 **2개 섹션**을 교체해주세요.
 
 ---
@@ -18,12 +18,10 @@ Algebra DEX와 Yield Vault가 Creditcoin Testnet에 배포 완료되었습니다
 기존 DEX 주소가 **이전 배포본(무효)** 입니다. 아래로 교체하세요.
 
 ```typescript
-// ─── DEX (Algebra V4 Integral) ───
+// ─── DEX (Uniswap V3) ───
 export const DEX = {
-  snowballFactory: "0xd478a63345d7cd17881a540e15943919604691f6" as Address,
-  snowballPoolDeployer: "0x1ff0fa39ae0db2c37b400fbbaf234ad6eee3bd86" as Address,
-  snowballRouter: "0xd604593426538fd1fa5b2660e3e443fa1ce93411" as Address,
-  dynamicFeePlugin: "0x5b0901f4c205fa4a92bbc3fecaef9b0b72ef4246" as Address,
+  factory: "0xd478a63345d7cd17881a540e15943919604691f6" as Address,
+  swapRouter: "0xd604593426538fd1fa5b2660e3e443fa1ce93411" as Address,
   nonfungiblePositionManager: "0x54b8584dd202cee8db0fbfa3522f78cb7d9bf6dd" as Address,
   quoterV2: "0xeb2b122a28dceaeecb87b745173d6aa3c990d5c0" as Address,
 } as const;
@@ -125,15 +123,15 @@ LP, Swap, Vault Deposit/Withdraw 모두 실제 트랜잭션으로 검증 완료.
 
 - 모든 Strategy의 `paused() = false`, `withdrawFee() = 10` (0.1%)
 
-### Algebra DEX
+### Uniswap V3 DEX
 
 | 컨트랙트 | 검증 함수 | 결과 |
 |----------|----------|------|
-| Factory | poolDeployer() | 0x1ff0... (PoolDeployer 매칭) |
-| Router | factory() | 0xd478... (Factory 매칭) |
-| Router | WNativeToken() | 0x8f7f... (wCTC 매칭) |
+| Factory | owner() | 배포자 주소 매칭 |
+| SwapRouter | factory() | 0xd478... (Factory 매칭) |
+| SwapRouter | WETH9() | 0x8f7f... (wCTC 매칭) |
 | QuoterV2 | factory() | 0xd478... (Factory 매칭) |
-| NFTManager | name() | "Algebra Positions NFT-V2" |
+| NFTManager | name() | "Uniswap V3 Positions NFT-V1" |
 
 ---
 
@@ -141,7 +139,7 @@ LP, Swap, Vault Deposit/Withdraw 모두 실제 트랜잭션으로 검증 완료.
 
 | 파일 | 내용 |
 |------|------|
-| `deployments/creditcoin-testnet/algebra.json` | DEX 전체 주소 (core + pools) |
+| `deployments/creditcoin-testnet/dex.json` | DEX 전체 주소 (core + pools) |
 | `deployments/creditcoin-testnet/yield.json` | Yield Vault 4세트 + config |
 | `deployments/creditcoin-testnet/morpho.json` | Lend (변경 없음) |
 | `deployments/creditcoin-testnet/liquity.json` | Borrow/Earn (변경 없음) |

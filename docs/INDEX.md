@@ -1,7 +1,7 @@
 # Snowball Documentation Index
 
 > 모든 문서의 버전 및 상태를 추적하는 인덱스
-> Last updated: 2026-03-05
+> Last updated: 2026-03-06
 
 ---
 
@@ -21,7 +21,7 @@
 |------|------|------|------|
 | [SSOT_LIQUITY.md](ssot/SSOT_LIQUITY.md) | v1.0.0 | Active | Liquity V2 포크 — 주소, 토큰, 브랜치 |
 | [SSOT_MORPHO.md](ssot/SSOT_MORPHO.md) | v1.0.0 | Active | Morpho Blue 포크 — 주소, 마켓, 오라클 |
-| [SSOT_ALGEBRA.md](ssot/SSOT_ALGEBRA.md) | v1.0.0 | Active | Algebra V4 DEX — 주소, 풀, 토큰 |
+| [SSOT_ALGEBRA_deprecated.md](ssot/SSOT_ALGEBRA_deprecated.md) | v1.0.0 | **Deprecated** | DEX SSOT — v0.4.0에서 Uniswap V3로 전환됨 |
 | [SSOT_ERC8004.md](ssot/SSOT_ERC8004.md) | v1.0.0 | Active | ERC-8004 에이전트 시스템 — ID, 레퓨테이션 |
 | [SSOT_USC.md](ssot/SSOT_USC.md) | v1.0.0 | Active | Creditcoin USC — 크로스체인 오라클, 증명 검증 |
 | [DEPLOY_ADDRESSES_UPDATE.md](ssot/DEPLOY_ADDRESSES_UPDATE.md) | v1.0.0 | Active | 최신 배포 주소 및 온체인 테스트 결과 |

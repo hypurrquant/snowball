@@ -44,8 +44,8 @@
 │    Creditcoin Testnet (102031)      │   │   Backend (FastAPI, Python)     │
 │                                     │   │   Port 8000                     │
 │  ┌─────────┐ ┌─────────┐           │   │                                 │
-│  │ Algebra  │ │ Liquity │           │   │  ┌──────────────┐ ┌──────────┐ │
-│  │ V4 DEX   │ │ V2 Fork │           │   │  │ Oracle Svc   │ │ Price WS │ │
+│  │Uniswap V3│ │ Liquity │           │   │  ┌──────────────┐ ┌──────────┐ │
+│  │   DEX    │ │ V2 Fork │           │   │  │ Oracle Svc   │ │ Price WS │ │
 │  │ (Swap,   │ │ (Borrow,│           │   │  │ (Binance WS) │ │ /ws/price│ │
 │  │  Pool)   │ │  Earn)  │           │   │  └──────────────┘ └──────────┘ │
 │  └─────────┘ └─────────┘           │   │  ┌──────────────┐ ┌──────────┐ │
@@ -172,7 +172,7 @@
 
 | 프로토콜 | 패키지 | 컨트랙트 수 | 패턴 | 빌드 |
 |----------|--------|-------------|------|------|
-| Algebra V4 DEX | `packages/algebra` | ~80 | AccessControlEnumerable | Foundry |
+| Uniswap V3 DEX | `@uniswap/v3-core`, `v3-periphery` | ~80 | Standard Uniswap V3 | Foundry |
 | Liquity V2 | `packages/liquity` | ~50 (x2 브랜치) | Ownable, ERC721 | Hardhat + Foundry |
 | Morpho Blue | `packages/morpho` | ~9 | ERC4626 | Foundry |
 | BTC Oracle | `packages/oracle` | 2 | AccessControl | Foundry |
@@ -196,7 +196,7 @@
 
 ### 3.1 Swap (토큰 스왑)
 
-**프로토콜:** Algebra V4 Integral Fork (집중 유동성 AMM)
+**프로토콜:** Uniswap V3 (집중 유동성 AMM)
 **라우트:** `/swap` (apps/web), `/` (snowball-dex)
 **앱:** apps/web, snowball-dex
 
@@ -774,7 +774,7 @@ Step 3: Options 배포
 Step 4: 기타 프로토콜 배포
   $ pnpm deploy:liquity     # Liquity V2 (wCTC + lstCTC 브랜치)
   $ pnpm deploy:morpho      # Morpho Blue (SnowballLend)
-  $ pnpm deploy:algebra     # Algebra V4 DEX
+  $ pnpm deploy:dex         # Uniswap V3 DEX
   $ pnpm deploy:erc-8004    # ERC-8004 Agent Registry
 
 Step 5: 환경변수 설정
@@ -853,7 +853,7 @@ Step 6: 시작
 | sbUSD | `0x5772f9415b75ecca00e7667e0c7d730db3b29fbd` |
 | USDC (Mock) | `0xbcaa46ef7a399fcdb64adf4520cdcc6d62fcaaed` |
 
-### DEX (Algebra V4)
+### DEX (Uniswap V3)
 
 | 컨트랙트 | 주소 |
 |----------|------|
@@ -1168,4 +1168,4 @@ docker compose ps
 | 날짜 | 버전 | 변경 내용 |
 |------|------|----------|
 | 2026-02-25 | v0.2.0 | 최초 작성 — 전체 운영 플로우, 기능 상세, 유저 플로우 |
-| 2026-02-25 | v0.3.0 | 현재 코드베이스 기준 전면 업데이트 — 멀티 프론트엔드 아키텍처 (apps/web Next.js 16 + snowball-app Vite/React + snowball-dex Next.js 14), Yield Vault 패키지 추가, Agent 서비스 (Consumer/Provider/Chatbot) 구체화, Morpho LLTV 수정 (lstCTC 80%, sbUSD/USDC 86%), Liquity/Morpho/Options 전체 배포 주소 정확한 값으로 갱신, Algebra DEX 미배포 상태 반영, Options Implementation 주소 추가, EIP-712 도메인 명세 추가, Relayer flush 3초 주기 반영, 백엔드 설정값 상세화, 개발/빌드 명령어 확장 |
+| 2026-02-25 | v0.3.0 | 현재 코드베이스 기준 전면 업데이트 — 멀티 프론트엔드 아키텍처 (apps/web Next.js 16 + snowball-app Vite/React + snowball-dex Next.js 14), Yield Vault 패키지 추가, Agent 서비스 (Consumer/Provider/Chatbot) 구체화, Morpho LLTV 수정 (lstCTC 80%, sbUSD/USDC 86%), Liquity/Morpho/Options 전체 배포 주소 정확한 값으로 갱신, Uniswap V3 DEX 미배포 상태 반영, Options Implementation 주소 추가, EIP-712 도메인 명세 추가, Relayer flush 3초 주기 반영, 백엔드 설정값 상세화, 개발/빌드 명령어 확장 |

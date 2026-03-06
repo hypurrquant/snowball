@@ -104,7 +104,7 @@ Year 5:  ~700M
 
 | 프로토콜 | 수수료 유형 | 현재 수수료율 | 현재 수취 방식 | 변경 |
 |----------|------------|-------------|--------------|------|
-| **Algebra DEX** | 스왑 수수료 | 0.05~5% (동적) | CommunityVault → EOA | → Assistance Fund |
+| **Uniswap V3 DEX** | 스왑 수수료 | 0.05~1% (고정 fee tier) | Protocol Fee → EOA | → Assistance Fund |
 | **Morpho** | 이자 스프레드 | 마켓별 0~25% | feeRecipient EOA | → Assistance Fund |
 | **Yield Vault** | 수확 수수료 | 4.5% | treasury EOA | → Assistance Fund |
 | **Yield Vault** | 출금 수수료 | 0.1% | Strategy 잔류 | 변경 없음 (LP 환원) |
@@ -295,7 +295,7 @@ Lock 없음. 잔고 스냅샷 기반 투표.
 
 ## 8. 프로토콜별 수수료 상세
 
-### 8-1. DEX (Algebra V4)
+### 8-1. DEX (Uniswap V3)
 
 ```
 스왑 수수료 (0.05~5%, DynamicFeePlugin)
