@@ -5,6 +5,38 @@
 
 ---
 
+## 2026-03-07 — v0.11.0
+
+### Agent Delegation Demo — 확장 가능한 DeFi AI 에이전트 런타임
+
+- **`packages/agent-runtime` 신규**: Observer→Planner→Executor 파이프라인, CapabilityRegistry, AgentManifest 기반 확장 가능 런타임
+- **5개 Capability**: morpho.supply, morpho.withdraw, liquity.adjustInterestRate, liquity.addCollateral, vault.rebalance
+- **Claude API 기반 Planner**: tool_use로 capability를 도구로 노출, LLM이 실행 계획 생성
+- **`apps/agent-server` 신규**: NestJS REST API + Cron 스케줄러, ApiKeyGuard 인증
+- **Next.js BFF 프록시**: `/api/agent/run`, `/api/agent/runs` — 서버 사이드 API_KEY 주입
+- **Delegation Setup UI**: 3-step 위저드 (Vault Deposit → Permission Grant → Protocol Delegation)
+- **DelegationStatus**: Vault/Permission/Morpho/Liquity 4개 상태 실시간 조회
+- **RunAgentButton**: Trove ID 입력 지원, 에이전트 1회 실행 + 결과 표시
+- **ActivityLog**: 서버 실행 기록 + 온체인 ExecutedOnBehalf 이벤트 병합
+- **listExecutable() 강화**: vault permission + 프로토콜 인증(Morpho isAuthorized, Liquity isInterestDelegate/isAddManager) 이중 체크
+- **buildCallsAsync**: Liquity hint 비동기 계산 지원
+- 📝 [Phase 문서](archive/v0.11.0-agent-delegation-demo/README.md)
+
+---
+
+## 2026-03-06 — v0.11.1
+
+### USC Bridge Worker (오프체인 자동 브릿지 서버)
+
+- **`apps/usc-worker` 신규 패키지**: Sepolia DN Token BridgeBurn 이벤트 감지 → USC 자동 mint 파이프라인
+- **6개 모듈**: index(메인 루프), poller(이벤트 감지+교차검증), attestation(USC 증명 대기), proof(Proof API), bridge(mint 실행), config(설정)
+- **블록 단위 처리**: 이벤트를 블록별로 그룹핑, 블록 내 모든 이벤트 성공 시에만 포인터 전진 (F10 불변식)
+- **BridgeBurn + Transfer 교차 검증**: from/amount/to==address(1) 3중 매칭
+- **안전 장치**: MAX_RETRY(10) 초과 시 스킵+복구 안내, 온체인 processedTxKeys 중복 방지
+- 📝 [Phase 문서](archive/v0.11.1-usc-worker/README.md)
+
+---
+
 ## 2026-03-06 — v0.4.0
 
 ### DEX ABI: Algebra V4 → Uniswap V3 전면 마이그레이션

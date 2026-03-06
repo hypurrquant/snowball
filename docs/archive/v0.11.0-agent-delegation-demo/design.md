@@ -75,7 +75,7 @@
 - **Agent Runtime**: 프레임워크-agnostic 순수 TS 모듈 (NestJS/CLI 양쪽에서 호출)
 - **블록체인**: viem (기존 deploy-viem.ts 패턴 재사용)
 - **AI**: `@anthropic-ai/sdk` (Claude API, tool use) — planner 모듈에만 의존
-- **실행**: `npm run start:server` (NestJS) 또는 `npx tsx scripts/agent-bot.ts` (CLI)
+- **실행**: `npm run start:server` (NestJS) 또는 `npx tsx packages/integration/scripts/agent-bot.ts` (CLI)
 
 #### 모듈 구조
 
@@ -188,7 +188,7 @@ packages/integration/
 #### 2-3. CLI (디버깅/테스트용)
 
 ```
-npx tsx scripts/agent-bot.ts --user 0x... --manifest manifests/demo-agent.json
+npx tsx packages/integration/scripts/agent-bot.ts --user 0x... --manifest manifests/demo-agent.json
 → agent-runtime 직접 호출 (NestJS 미경유)
 → 결과를 터미널에 출력
 ```
