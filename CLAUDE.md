@@ -7,9 +7,9 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 ## 아키텍처
 
 - **DDD 4계층**: `core/` → `domains/` → `shared/` → `app/`
-- 모노레포: `apps/web/` (프론트엔드), `packages/` (컨트랙트)
-- 주소 설정: `apps/web/src/core/config/addresses.ts`
-- ABI: `apps/web/src/core/abis/`
+- 모노레포: `apps/web/` (프론트엔드), `apps/server/` (NestJS API), `packages/core/` (공유), `packages/` (컨트랙트)
+- 주소 설정: `packages/core/src/config/addresses.ts` (원본), `apps/web/src/core/config/addresses.ts` (re-export)
+- ABI: `packages/core/src/abis/` (원본), `apps/web/src/core/abis/` (re-export)
 
 ## MVP 스코프
 
@@ -46,12 +46,7 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 현재 페이즈
 
-- **버전**: v0.11.0
-- **기능**: Agent Delegation Demo (Morpho + Liquity 위임 실행 데모)
-- **상태**: Step 1 - PRD
-- **문서**: [docs/phases/v0.11.0-agent-delegation-demo/](docs/phases/v0.11.0-agent-delegation-demo/)
-- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.11.0-agent-delegation-demo`
-- **시작일**: 2026-03-06
+- 없음 (v0.11.1 완료, 다음 페이즈 미정)
 
 ## 문서 구조
 

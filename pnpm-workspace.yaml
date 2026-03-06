@@ -1,4 +1,5 @@
 packages:
+  - "packages/core"
   - "packages/liquity"
   - "packages/algebra"
   - "packages/morpho"
@@ -7,4 +8,5 @@ packages:
   - "packages/yield"
   - "packages/oracle"
   - "packages/options"
+  - "packages/agent-runtime"
   - "apps/*"
