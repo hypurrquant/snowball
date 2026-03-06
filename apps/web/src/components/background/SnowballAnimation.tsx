@@ -43,138 +43,135 @@ const ACCUMULATE_DURATION = 10000; // 10s coins drop, then snowball rolls
 const ROLL_SPEED = 135; // 1.5x
 const BALL_BASE_RADIUS = 22;
 const BALL_MAX_RADIUS = 38;
-const COIN_SIZE = 12;
-const COIN_COUNT = 24;
+const COIN_SIZE = 9;
+const COIN_COUNT = 20;
 const ABSORB_SPEED = 0.003;
 
-// ── Coin Colors (ice-tinted but each has character) ──
+// ── Coin Style: frozen asset relics in unified ice-blue palette ──
+// All coins share the same ice-blue base. Only the faintest tint differentiates them.
+// They should feel like "frozen crystallized value" not "logo stickers".
 
-const COIN_COLORS: Record<CoinType, { stroke: string; fill: string; glow: string }> = {
-  btc: {
-    stroke: "rgba(255, 210, 120, ALPHA)", // warm gold tint
-    fill: "rgba(255, 220, 140, ALPHA)",
-    glow: "rgba(255, 200, 100, GLOW)",
-  },
-  eth: {
-    stroke: "rgba(140, 180, 255, ALPHA)", // cool blue-purple
-    fill: "rgba(160, 190, 255, ALPHA)",
-    glow: "rgba(130, 170, 255, GLOW)",
-  },
-  ctc: {
-    stroke: "rgba(180, 240, 220, ALPHA)", // mint/green tint
-    fill: "rgba(190, 250, 230, ALPHA)",
-    glow: "rgba(170, 240, 215, GLOW)",
-  },
+const COIN_TINTS: Record<CoinType, [number, number, number]> = {
+  btc: [180, 200, 235], // ice-blue with barely warm hint
+  eth: [170, 195, 240], // pure ice-blue
+  ctc: [175, 210, 230], // ice-blue with faint teal
 };
 
 function getCoinColor(type: CoinType, pulse: number) {
-  // pulse: 0~1 oscillating value
-  const baseAlpha = 0.6 + pulse * 0.35; // 0.6 ~ 0.95
-  const glowAlpha = 0.1 + pulse * 0.2;  // 0.1 ~ 0.3
-  const c = COIN_COLORS[type];
+  const [r, g, b] = COIN_TINTS[type];
+  // Very subtle pulse: breathing, not blinking
+  const strokeA = 0.18 + pulse * 0.08; // 0.18 ~ 0.26
+  const fillA = 0.06 + pulse * 0.04;   // 0.06 ~ 0.10
+  const glowA = 0.04 + pulse * 0.03;   // 0.04 ~ 0.07
   return {
-    stroke: c.stroke.replace("ALPHA", baseAlpha.toFixed(2)),
-    fill: c.fill.replace("ALPHA", (baseAlpha * 0.8).toFixed(2)),
-    glow: c.glow.replace("GLOW", glowAlpha.toFixed(2)),
+    stroke: `rgba(${r}, ${g}, ${b}, ${strokeA.toFixed(2)})`,
+    fill: `rgba(${r}, ${g}, ${b}, ${fillA.toFixed(2)})`,
+    glow: `rgba(${r}, ${g}, ${b}, ${glowA.toFixed(2)})`,
   };
 }
 
-// ── Coin Drawing Functions ──
+// ── Coin Drawing: filled glyphs, not line icons ──
 
-function drawBTC(ctx: CanvasRenderingContext2D, size: number, colors: ReturnType<typeof getCoinColor>) {
+type CoinColors = ReturnType<typeof getCoinColor>;
+
+function drawBTC(ctx: CanvasRenderingContext2D, size: number, c: CoinColors) {
   const r = size;
-  // Glow
-  const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2);
-  glow.addColorStop(0, colors.glow);
+  // Diffuse glow
+  const glow = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 2.5);
+  glow.addColorStop(0, c.glow);
   glow.addColorStop(1, "transparent");
   ctx.beginPath();
-  ctx.arc(0, 0, r * 2, 0, Math.PI * 2);
+  ctx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
   ctx.fillStyle = glow;
   ctx.fill();
 
-  // Circle
+  // Filled circle
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, Math.PI * 2);
-  ctx.strokeStyle = colors.stroke;
-  ctx.lineWidth = 1.5;
+  ctx.fillStyle = c.fill;
+  ctx.fill();
+  ctx.strokeStyle = c.stroke;
+  ctx.lineWidth = 1;
   ctx.stroke();
 
   // B symbol
-  ctx.font = `bold ${r * 1.3}px "Inter", sans-serif`;
+  ctx.font = `bold ${r * 1.1}px "Inter", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = colors.fill;
+  ctx.fillStyle = c.stroke;
   ctx.fillText("₿", 0, 0.5);
 }
 
-function drawETH(ctx: CanvasRenderingContext2D, size: number, colors: ReturnType<typeof getCoinColor>) {
+function drawETH(ctx: CanvasRenderingContext2D, size: number, c: CoinColors) {
   const r = size;
-  // Glow
-  const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2);
-  glow.addColorStop(0, colors.glow);
+  // Diffuse glow
+  const glow = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 2.5);
+  glow.addColorStop(0, c.glow);
   glow.addColorStop(1, "transparent");
   ctx.beginPath();
-  ctx.arc(0, 0, r * 2, 0, Math.PI * 2);
+  ctx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
   ctx.fillStyle = glow;
   ctx.fill();
 
-  // Diamond
+  // Filled diamond
   ctx.beginPath();
   ctx.moveTo(0, -r);
   ctx.lineTo(r * 0.6, 0);
   ctx.lineTo(0, r);
   ctx.lineTo(-r * 0.6, 0);
   ctx.closePath();
-  ctx.strokeStyle = colors.stroke;
-  ctx.lineWidth = 1.5;
+  ctx.fillStyle = c.fill;
+  ctx.fill();
+  ctx.strokeStyle = c.stroke;
+  ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Middle line
+  // Faint middle line
   ctx.beginPath();
-  ctx.moveTo(-r * 0.6, 0);
-  ctx.lineTo(r * 0.6, 0);
-  ctx.strokeStyle = colors.fill;
-  ctx.lineWidth = 0.8;
+  ctx.moveTo(-r * 0.55, 0);
+  ctx.lineTo(r * 0.55, 0);
+  ctx.strokeStyle = c.stroke;
+  ctx.lineWidth = 0.6;
   ctx.stroke();
 }
 
-function drawCTC(ctx: CanvasRenderingContext2D, size: number, colors: ReturnType<typeof getCoinColor>) {
+function drawCTC(ctx: CanvasRenderingContext2D, size: number, c: CoinColors) {
   const r = size;
   const arcR = r * 0.75;
-  // Glow
-  const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, r * 2);
-  glow.addColorStop(0, colors.glow);
+  // Diffuse glow
+  const glow = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 2.5);
+  glow.addColorStop(0, c.glow);
   glow.addColorStop(1, "transparent");
   ctx.beginPath();
-  ctx.arc(0, 0, r * 2, 0, Math.PI * 2);
+  ctx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
   ctx.fillStyle = glow;
   ctx.fill();
 
-  // C arc
+  // C arc with fill-like thickness
   ctx.beginPath();
   ctx.arc(0, 0, arcR, 0.55, Math.PI * 2 - 0.55);
-  ctx.strokeStyle = colors.stroke;
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = c.stroke;
+  ctx.lineWidth = 2.5;
   ctx.lineCap = "round";
   ctx.stroke();
 
-  // Line from center to outer edge through opening
+  // Center line through opening
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.lineTo(arcR, 0);
-  ctx.strokeStyle = colors.stroke;
+  ctx.strokeStyle = c.stroke;
   ctx.lineWidth = 2;
   ctx.lineCap = "round";
   ctx.stroke();
 
   // Center dot
   ctx.beginPath();
-  ctx.arc(0, 0, 2.2, 0, Math.PI * 2);
-  ctx.fillStyle = colors.fill;
+  ctx.arc(0, 0, 2, 0, Math.PI * 2);
+  ctx.fillStyle = c.stroke;
   ctx.fill();
 }
 
-type CoinDrawFn = (ctx: CanvasRenderingContext2D, size: number, colors: ReturnType<typeof getCoinColor>) => void;
+type CoinDrawFn = (ctx: CanvasRenderingContext2D, size: number, c: CoinColors) => void;
 
 const COIN_DRAWERS: Record<CoinType, CoinDrawFn> = {
   btc: drawBTC,
