@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { useConnection } from "wagmi";
-import { parseEther } from "viem";
+import { parseEther, formatEther } from "viem";
 import { toast } from "sonner";
 import {
   Card, CardHeader, CardTitle, CardContent, CardDescription,
@@ -13,19 +13,24 @@ import { Input } from "@/shared/components/ui/input";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/shared/components/ui/dialog";
+import { Slider } from "@/shared/components/ui/slider";
 import { StatCard } from "@/shared/components/common/StatCard";
 import { useLiquityBranch } from "@/domains/defi/liquity/hooks/useLiquityBranch";
 import { useTroves } from "@/domains/defi/liquity/hooks/useTroves";
 import { useTroveActions } from "@/domains/defi/liquity/hooks/useTroveActions";
 import { useAllTroves } from "@/domains/defi/liquity/hooks/useAllTroves";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
+import { usePositionPreview } from "@/domains/defi/liquity/hooks/usePositionPreview";
+import { useMarketRateStats } from "@/domains/defi/liquity/hooks/useMarketRateStats";
 import { TOKENS } from "@/core/config/addresses";
 import { DEMO_TROVES } from "@/domains/defi/liquity/data/fixtures";
 import type { TroveData } from "@/domains/defi/liquity/types";
 import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
-import { Shield, TrendingDown, DollarSign, HandCoins, Loader2, Users } from "lucide-react";
+import { Shield, TrendingDown, DollarSign, HandCoins, Loader2, Users, AlertTriangle, Info } from "lucide-react";
 
 const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
+const MIN_DEBT = 200;
+const EST_GAS_TCTC = 0.0005;
 
 export default function LiquityBorrowPage() {
   const searchParams = useSearchParams();
@@ -39,11 +44,12 @@ export default function LiquityBorrowPage() {
     useTroveActions(branch, address);
   const collToken = branch === "wCTC" ? TOKENS.wCTC : TOKENS.lstCTC;
   const { data: collBalance, refetch: refetchBalance } = useTokenBalance({ address, token: collToken });
+  const marketStats = useMarketRateStats(branch);
 
   // Open Trove form
   const [collAmount, setCollAmount] = useState("");
   const [debtAmount, setDebtAmount] = useState("");
-  const [rateAmount, setRateAmount] = useState("5");
+  const [ratePercent, setRatePercent] = useState(5);
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
 
   // Adjust Trove form
@@ -59,25 +65,78 @@ export default function LiquityBorrowPage() {
 
   const collBalanceValue = collBalance?.value ?? 0n;
   const parsedColl = collAmount ? parseEther(collAmount) : 0n;
+  const parsedDebt = debtAmount ? parseEther(debtAmount) : 0n;
+  const parsedRate = parseEther(String(ratePercent / 100));
   const insufficientBalance = parsedColl > 0n && parsedColl > collBalanceValue;
+
+  // Position preview
+  const preview = usePositionPreview({
+    coll: parsedColl,
+    debt: parsedDebt,
+    rate: parsedRate,
+    price: stats.price,
+    mcr: stats.mcr,
+    ccr: stats.ccr,
+  });
+
+  // Derived values
+  const collPrice = stats.price > 0n ? Number(formatEther(stats.price)) : 0;
+  const collNum = parseFloat(collAmount) || 0;
+  const debtNum = parseFloat(debtAmount) || 0;
+  const collValueUSD = collNum * collPrice;
+  const mcrPct = stats.mcr > 0n ? Number(stats.mcr) / 1e16 : 110;
+  const ccrPct = stats.ccr > 0n ? Number(stats.ccr) / 1e16 : 150;
+
+  // Validation
+  const errors: string[] = [];
+  if (debtNum > 0 && debtNum < MIN_DEBT) errors.push(`Minimum debt is ${MIN_DEBT} sbUSD.`);
+  if (preview.cr > 0 && !preview.isAboveMCR) errors.push(`CR (${preview.cr.toFixed(0)}%) is below MCR (${mcrPct.toFixed(0)}%). Increase collateral or reduce debt.`);
+  const canOpen = !!collAmount && !!debtAmount && debtNum >= MIN_DEBT && preview.isAboveMCR && !insufficientBalance;
+
+  // Market average marker position on slider (0.5% ~ 25%)
+  const marketAvgPosition = marketStats
+    ? ((marketStats.median - 0.5) / (25 - 0.5)) * 100
+    : null;
 
   const displayTroves: (TroveData & { isDemo?: boolean })[] = [
     ...troves.map((t) => ({ ...t, isDemo: false })),
     ...(IS_TEST_MODE ? DEMO_TROVES.map((t) => ({ ...t, isDemo: true })) : []),
   ];
 
+  // Quick-fill helpers
+  const handleHalf = () => {
+    if (collBalanceValue > 0n) {
+      const half = collBalanceValue / 2n;
+      setCollAmount(formatEther(half));
+    }
+  };
+  const handleMax = () => {
+    if (collBalanceValue > 0n) {
+      setCollAmount(formatEther(collBalanceValue));
+    }
+  };
+  const handleSafe = () => {
+    if (collNum > 0 && collPrice > 0) {
+      const safeBorrow = (collNum * collPrice) / 2; // 200% CR target
+      if (safeBorrow >= MIN_DEBT) {
+        setDebtAmount(safeBorrow.toFixed(2));
+      }
+    }
+  };
+
   const handleOpenTrove = async () => {
-    if (!collAmount || !debtAmount) return;
+    if (!canOpen) return;
     try {
       await openTrove({
-        coll: parseEther(collAmount),
-        debt: parseEther(debtAmount),
-        rate: parseEther(String(Number(rateAmount) / 100)),
+        coll: parsedColl,
+        debt: parsedDebt,
+        rate: parsedRate,
         maxFee: parseEther("1"),
         ownerIndex: nextOwnerIndex,
       });
       setCollAmount("");
       setDebtAmount("");
+      setRatePercent(5);
       setOpenDialogOpen(false);
       refetchTroves(); refetchBalance();
     } catch (err) {
@@ -126,6 +185,17 @@ export default function LiquityBorrowPage() {
     }
   };
 
+  // Button text
+  const getButtonText = () => {
+    if (isPending) return null; // spinner shown separately
+    if (!collAmount) return "Enter deposit amount";
+    if (!debtAmount) return "Enter borrow amount";
+    if (debtNum > 0 && debtNum < MIN_DEBT) return `Min debt: ${MIN_DEBT} sbUSD`;
+    if (insufficientBalance) return "Insufficient Balance";
+    if (preview.cr > 0 && !preview.isAboveMCR) return `CR too low (min ${mcrPct.toFixed(0)}%)`;
+    return "Open Trove";
+  };
+
   return (
     <div className="space-y-6">
       {/* Stats */}
@@ -172,53 +242,169 @@ export default function LiquityBorrowPage() {
               <DialogTrigger asChild>
                 <Button>Open Trove</Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
+              <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                   <DialogTitle>Open {branch} Trove</DialogTitle>
                   <DialogDescription>
-                    Deposit {branch} to mint sbUSD. Maintain CR above 110%.
+                    Deposit {branch} to mint sbUSD. Maintain CR above {mcrPct.toFixed(0)}%.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                <div className="space-y-5 py-4">
+                  {/* Collateral Input */}
                   <div className="space-y-2">
-                    <label className="text-sm text-text-secondary">Collateral ({branch})</label>
+                    <div className="flex justify-between text-sm">
+                      <label className="text-text-secondary">Collateral ({branch})</label>
+                      <div className="flex gap-2">
+                        <button onClick={handleHalf} className="text-xs text-text-tertiary hover:text-ice-300 transition-colors">HALF</button>
+                        <button onClick={handleMax} className="text-xs text-ice-400 hover:text-ice-300 transition-colors">
+                          MAX: {formatTokenAmount(collBalanceValue, 18, 4)}
+                        </button>
+                      </div>
+                    </div>
                     <Input
+                      type="number"
                       placeholder="0.00"
                       className="font-mono"
                       value={collAmount}
                       onChange={(e) => setCollAmount(e.target.value)}
                     />
-                    {collBalance && (
+                    {collAmount && collPrice > 0 && (
                       <p className="text-xs text-text-tertiary">
-                        Balance: {formatTokenAmount(collBalanceValue, 18, 4)} {branch}
+                        = ${collValueUSD.toFixed(2)} USD
+                        {preview.maxBorrow > 0n && (
+                          <> · Max borrow: <span className="text-text-secondary">{formatTokenAmount(preview.maxBorrow, 18, 2)} sbUSD</span></>
+                        )}
                       </p>
                     )}
                   </div>
+
+                  {/* Borrow Amount Input */}
                   <div className="space-y-2">
-                    <label className="text-sm text-text-secondary">Borrow Amount (sbUSD)</label>
+                    <div className="flex justify-between text-sm">
+                      <label className="text-text-secondary">Borrow Amount (sbUSD)</label>
+                      <div className="flex gap-2 items-center">
+                        {collNum > 0 && (
+                          <button onClick={handleSafe} className="text-xs text-success/80 hover:text-success transition-colors">SAFE</button>
+                        )}
+                        <span className="text-xs text-text-tertiary">Min: {MIN_DEBT} sbUSD</span>
+                      </div>
+                    </div>
                     <Input
+                      type="number"
                       placeholder="0.00"
                       className="font-mono"
                       value={debtAmount}
                       onChange={(e) => setDebtAmount(e.target.value)}
                     />
                   </div>
+
+                  {/* Interest Rate Slider */}
                   <div className="space-y-2">
-                    <label className="text-sm text-text-secondary">Annual Interest Rate (%)</label>
-                    <Input
-                      placeholder="5"
-                      className="font-mono"
-                      value={rateAmount}
-                      onChange={(e) => setRateAmount(e.target.value)}
-                    />
+                    <div className="flex justify-between text-sm">
+                      <label className="text-text-secondary">Interest Rate</label>
+                      <span className="text-white font-semibold">{ratePercent.toFixed(1)}% APR</span>
+                    </div>
+                    <div className="relative pt-1 pb-6">
+                      {/* Color gradient background */}
+                      <div
+                        className="absolute top-[11px] left-0 right-0 h-1.5 rounded-full pointer-events-none"
+                        style={{ background: "linear-gradient(to right, #ef4444, #f59e0b, #22c55e)" }}
+                      />
+                      <Slider
+                        min={0.5}
+                        max={25}
+                        step={0.1}
+                        value={[ratePercent]}
+                        onValueChange={([v]) => setRatePercent(v)}
+                        className="relative z-10 [&_[data-slot=slider]_span:first-child]:bg-transparent"
+                      />
+                      {/* Market average marker */}
+                      {marketAvgPosition !== null && (
+                        <div
+                          className="absolute top-0 flex flex-col items-center pointer-events-none"
+                          style={{ left: `${marketAvgPosition}%`, transform: "translateX(-50%)" }}
+                        >
+                          <div className="w-0.5 h-3 bg-amber-400/80 rounded-full mt-[5px]" />
+                          <span className="text-[9px] text-amber-400/80 mt-0.5 whitespace-nowrap">
+                            Avg {marketStats!.median.toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                      {/* Risk labels */}
+                      <div className="flex justify-between text-[10px] mt-1">
+                        <span className="flex items-center gap-0.5 text-red-400/70"><Info className="w-2.5 h-2.5" /> Higher redemption risk</span>
+                        <span className="text-green-400/70">Lower redemption risk</span>
+                      </div>
+                    </div>
+                    {/* Annual interest cost */}
+                    {debtNum > 0 && (
+                      <p className="text-xs text-text-tertiary">
+                        Annual interest: <span className="text-text-secondary">~{formatTokenAmount(preview.annualCost, 18, 2)} sbUSD</span>
+                      </p>
+                    )}
                   </div>
+
+                  {/* Position Summary */}
+                  {(collNum > 0 || debtNum > 0) && (
+                    <div className="rounded-xl bg-bg-input p-4 space-y-2.5">
+                      <p className="font-semibold text-white text-sm">Position Summary</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-text-tertiary">Health Factor</span>
+                          <span className={`font-bold ${preview.crColor}`}>
+                            {preview.cr > 0 ? (preview.cr / 100).toFixed(2) : "\u2014"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-text-tertiary">Collateral Ratio</span>
+                          <span className={`font-mono ${preview.crColor}`}>
+                            {preview.cr > 0 ? `${preview.cr.toFixed(1)}%` : "\u2014"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-text-tertiary">Liquidation Price</span>
+                          <span className="text-white font-mono">
+                            {preview.liquidationPrice > 0n ? `$${formatTokenAmount(preview.liquidationPrice, 18, 4)}` : "\u2014"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-text-tertiary">7-day Upfront Fee</span>
+                          <span className="text-white font-mono">
+                            {preview.upfrontFee > 0n ? `${formatTokenAmount(preview.upfrontFee, 18, 4)} sbUSD` : "\u2014"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-text-tertiary">MCR</span>
+                          <span className="text-text-secondary">{mcrPct.toFixed(0)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-text-tertiary">CCR</span>
+                          <span className="text-text-secondary">{ccrPct.toFixed(0)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Errors */}
+                  {errors.length > 0 && (
+                    <div className="space-y-1.5">
+                      {errors.map((err, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-3 py-2">
+                          <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                          {err}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Submit */}
                   <Button
                     className="w-full"
                     onClick={handleOpenTrove}
-                    disabled={!collAmount || !debtAmount || isPending || insufficientBalance}
+                    disabled={!canOpen || isPending}
                   >
                     {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                    {insufficientBalance ? "Insufficient Balance" : "Open Trove"}
+                    {getButtonText()}
                   </Button>
                 </div>
               </DialogContent>

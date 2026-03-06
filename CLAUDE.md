@@ -46,7 +46,11 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 현재 페이즈
 
-- 없음 (v0.11.1 완료, 다음 페이즈 미정)
+- **버전**: v0.13.1
+- **기능**: Liquity Borrow UX 복원 + 온체인 데이터 연동
+- **상태**: 완료
+- **문서**: [docs/phases/v0.13.1-liquity-borrow-ux/](docs/phases/v0.13.1-liquity-borrow-ux/)
+- **시작일**: 2026-03-07
 
 ## 문서 구조
 
