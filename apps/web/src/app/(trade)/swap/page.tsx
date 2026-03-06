@@ -41,7 +41,6 @@ export default function SwapPage() {
 
   const {
     expectedAmountOut,
-    fee,
     isQuoteLoading,
     isApprovalNeeded,
     approve,
@@ -152,13 +151,11 @@ export default function SwapPage() {
             </div>
           </div>
 
-          {/* Fee info */}
-          {fee !== undefined && (
-            <div className="flex items-center justify-between px-1 text-xs text-text-secondary">
-              <span>Dynamic Fee</span>
-              <Badge variant="secondary" className="bg-bg-input text-ice-400 hover:bg-bg-hover">{Number(fee) / 100}%</Badge>
-            </div>
-          )}
+          {/* Fee info — static fee tier */}
+          <div className="flex items-center justify-between px-1 text-xs text-text-secondary">
+            <span>Fee Tier</span>
+            <Badge variant="secondary" className="bg-bg-input text-ice-400 hover:bg-bg-hover">0.3%</Badge>
+          </div>
 
           {/* Action Button */}
           <div className="pt-2">

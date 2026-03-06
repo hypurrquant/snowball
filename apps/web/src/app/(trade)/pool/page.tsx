@@ -29,7 +29,7 @@ const INITIAL_POOLS: PoolDef[] = [
 ];
 
 function PoolRow({ pool }: { pool: PoolDef }) {
-  const { dynamicFee, liquidity, isLoading } = usePool(pool.token0, pool.token1);
+  const { fee, liquidity, isLoading } = usePool(pool.token0, pool.token1);
 
   return (
     <Link
@@ -52,7 +52,7 @@ function PoolRow({ pool }: { pool: PoolDef }) {
 
       {/* Fee */}
       <span className="text-sm font-mono text-success lg:text-right">
-        {isLoading ? "—" : dynamicFee !== undefined ? `${Number(dynamicFee) / 100}%` : "—"}
+        {isLoading ? "—" : fee !== undefined ? `${Number(fee) / 10000}%` : "—"}
       </span>
 
       {/* Liquidity */}
@@ -98,7 +98,7 @@ export default function PoolPage() {
           <div className="hidden lg:grid grid-cols-[1fr_120px_100px_120px_100px] gap-4 px-8 py-4 bg-bg-input/50 text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-border">
             <span>Pool Pair</span>
             <span>Category</span>
-            <span className="text-right">Dynamic Fee</span>
+            <span className="text-right">Fee Tier</span>
             <span className="text-right">TVL</span>
             <span />
           </div>

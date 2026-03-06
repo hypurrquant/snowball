@@ -105,9 +105,9 @@ export default function AddLiquidityPage() {
                   ))}
                 </select>
               </div>
-              {pool.dynamicFee !== undefined && (
+              {pool.fee !== undefined && (
                 <div className="mt-2 text-xs text-text-secondary">
-                  Dynamic Fee: <Badge variant="secondary">{Number(pool.dynamicFee) / 100}%</Badge>
+                  Fee Tier: <Badge variant="secondary">{Number(pool.fee) / 10000}%</Badge>
                 </div>
               )}
             </div>

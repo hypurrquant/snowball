@@ -20,12 +20,10 @@ export const TOKEN_INFO: Record<string, { symbol: string; name: string; decimals
   [TOKENS.USDC]: { symbol: "USDC", name: "Mock USDC", decimals: 18 },
 };
 
-// ─── DEX (Algebra V4 Integral) ───
+// ─── DEX (Uniswap V3) ───
 export const DEX = {
-  snowballFactory: "0xd478a63345d7cd17881a540e15943919604691f6" as Address,
-  snowballPoolDeployer: "0x1ff0fa39ae0db2c37b400fbbaf234ad6eee3bd86" as Address,
-  snowballRouter: "0xd604593426538fd1fa5b2660e3e443fa1ce93411" as Address,
-  dynamicFeePlugin: "0x5b0901f4c205fa4a92bbc3fecaef9b0b72ef4246" as Address,
+  factory: "0xd478a63345d7cd17881a540e15943919604691f6" as Address,
+  swapRouter: "0xd604593426538fd1fa5b2660e3e443fa1ce93411" as Address,
   nonfungiblePositionManager: "0x54b8584dd202cee8db0fbfa3522f78cb7d9bf6dd" as Address,
   quoterV2: "0xeb2b122a28dceaeecb87b745173d6aa3c990d5c0" as Address,
 } as const;

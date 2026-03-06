@@ -26,6 +26,7 @@ export function useAddLiquidity() {
   const mint = async ({
     token0,
     token1,
+    fee = 3000,
     tickLower,
     tickUpper,
     amount0Desired,
@@ -34,6 +35,7 @@ export function useAddLiquidity() {
   }: {
     token0: Address;
     token1: Address;
+    fee?: number;
     tickLower: number;
     tickUpper: number;
     amount0Desired: bigint;
@@ -56,7 +58,7 @@ export function useAddLiquidity() {
         {
           token0,
           token1,
-          deployer: DEX.snowballPoolDeployer,
+          fee,
           tickLower,
           tickUpper,
           amount0Desired,

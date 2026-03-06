@@ -1,14 +1,15 @@
 "use client";
 
 import { useConnection, useReadContract, useWriteContract } from "wagmi";
-import { QuoterV2ABI, SnowballRouterABI, MockERC20ABI } from "@/abis";
+import { QuoterV2ABI, SwapRouterABI, MockERC20ABI } from "@/abis";
 import { DEX } from "@/config/addresses";
 import type { Address } from "viem";
 
 export function useSwap(
   tokenIn?: Address,
   tokenOut?: Address,
-  amountIn?: bigint
+  amountIn?: bigint,
+  fee: number = 3000
 ) {
   const { address } = useConnection();
 
@@ -21,9 +22,9 @@ export function useSwap(
       {
         tokenIn: tokenIn!,
         tokenOut: tokenOut!,
-        deployer: DEX.snowballPoolDeployer,
         amountIn: amountIn!,
-        limitSqrtPrice: 0n,
+        fee,
+        sqrtPriceLimitX96: 0n,
       },
     ],
     query: {
@@ -33,14 +34,13 @@ export function useSwap(
   });
 
   const expectedAmountOut = quoteData?.[0];
-  const fee = quoteData?.[5];
 
   // Allowance check
   const { data: allowance } = useReadContract({
     address: tokenIn,
     abi: MockERC20ABI,
     functionName: "allowance",
-    args: [address!, DEX.snowballRouter],
+    args: [address!, DEX.swapRouter],
     query: { enabled: !!address && !!tokenIn },
   });
 
@@ -59,7 +59,7 @@ export function useSwap(
       address: tokenIn,
       abi: MockERC20ABI,
       functionName: "approve",
-      args: [DEX.snowballRouter, amountIn],
+      args: [DEX.swapRouter, amountIn],
     });
   };
 
@@ -75,19 +75,19 @@ export function useSwap(
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200);
 
     return swapAsync({
-      address: DEX.snowballRouter,
-      abi: SnowballRouterABI,
+      address: DEX.swapRouter,
+      abi: SwapRouterABI,
       functionName: "exactInputSingle",
       args: [
         {
           tokenIn,
           tokenOut,
-          deployer: DEX.snowballPoolDeployer,
+          fee,
           recipient: address,
           deadline,
           amountIn,
           amountOutMinimum: minOut,
-          limitSqrtPrice: 0n,
+          sqrtPriceLimitX96: 0n,
         },
       ],
     });
@@ -95,7 +95,6 @@ export function useSwap(
 
   return {
     expectedAmountOut,
-    fee,
     isQuoteLoading,
     isApprovalNeeded,
     approve,
