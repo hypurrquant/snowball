@@ -17,12 +17,13 @@ import { StatCard } from "@/shared/components/common/StatCard";
 import { useLiquityBranch } from "@/domains/defi/liquity/hooks/useLiquityBranch";
 import { useTroves } from "@/domains/defi/liquity/hooks/useTroves";
 import { useTroveActions } from "@/domains/defi/liquity/hooks/useTroveActions";
+import { useAllTroves } from "@/domains/defi/liquity/hooks/useAllTroves";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { TOKENS } from "@/core/config/addresses";
 import { DEMO_TROVES } from "@/domains/defi/liquity/data/fixtures";
 import type { TroveData } from "@/domains/defi/liquity/types";
 import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
-import { Shield, TrendingDown, DollarSign, HandCoins, Loader2 } from "lucide-react";
+import { Shield, TrendingDown, DollarSign, HandCoins, Loader2, Users } from "lucide-react";
 
 const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
 
@@ -33,6 +34,7 @@ export default function LiquityBorrowPage() {
 
   const { stats, isLoading: statsLoading } = useLiquityBranch(branch);
   const { troves, troveCount, isLoading: trovesLoading, refetch: refetchTroves, nextOwnerIndex } = useTroves(branch, address);
+  const { troves: allTroves, totalCount: systemTroveCount, isLoading: allTrovesLoading } = useAllTroves(branch);
   const { openTrove, adjustTrove, adjustInterestRate, closeTrove, isPending } =
     useTroveActions(branch, address);
   const collToken = branch === "wCTC" ? TOKENS.wCTC : TOKENS.lstCTC;
@@ -334,6 +336,66 @@ export default function LiquityBorrowPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* System Troves */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5 text-ice-400" />
+            <CardTitle>System Troves ({systemTroveCount})</CardTitle>
+          </div>
+          <CardDescription>
+            All active troves in the {branch} branch, sorted by interest rate
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {allTrovesLoading ? (
+            <div className="text-center py-8 text-text-secondary">
+              <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />
+              Loading system troves...
+            </div>
+          ) : allTroves.length === 0 ? (
+            <div className="text-center py-8 text-text-secondary">
+              No active troves in this branch yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-text-tertiary text-left">
+                    <th className="py-2 px-3 font-medium">Trove ID</th>
+                    <th className="py-2 px-3 font-medium text-right">Collateral</th>
+                    <th className="py-2 px-3 font-medium text-right">Debt</th>
+                    <th className="py-2 px-3 font-medium text-right">Rate</th>
+                    <th className="py-2 px-3 font-medium text-right">ICR</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allTroves.map((t) => (
+                    <tr key={String(t.id)} className="border-b border-border/50 hover:bg-bg-input/30 transition-colors">
+                      <td className="py-2.5 px-3 font-mono text-text-secondary text-xs">
+                        {`${String(t.id).slice(0, 8)}...${String(t.id).slice(-4)}`}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-right text-white">
+                        {formatTokenAmount(t.entireColl, 18, 2)} {branch}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-right text-white">
+                        {formatTokenAmount(t.entireDebt, 18, 2)} sbUSD
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-right text-white">
+                        {formatNumber(Number(t.annualInterestRate) / 1e16)}%
+                      </td>
+                      <td className={`py-2.5 px-3 font-mono text-right ${t.icr < 150 ? "text-red-400" : t.icr < 200 ? "text-yellow-400" : "text-success"}`}>
+                        {formatNumber(t.icr)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>

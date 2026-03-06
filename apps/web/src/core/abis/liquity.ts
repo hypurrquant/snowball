@@ -52,4 +52,9 @@ export const HintHelpersABI = [
 
 export const SortedTrovesABI = [
   { type: "function", name: "findInsertPosition", inputs: [{ name: "annualInterestRate", type: "uint256" }, { name: "prevId", type: "uint256" }, { name: "nextId", type: "uint256" }], outputs: [{ name: "upperHint", type: "uint256" }, { name: "lowerHint", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getSize", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
+] as const;
+
+export const MultiTroveGetterABI = [
+  { type: "function", name: "getMultipleSortedTroves", inputs: [{ name: "_collIndex", type: "uint256" }, { name: "_startIdx", type: "int256" }, { name: "_count", type: "uint256" }], outputs: [{ name: "_troves", type: "tuple[]", components: [{ name: "id", type: "uint256" }, { name: "entireDebt", type: "uint256" }, { name: "entireColl", type: "uint256" }, { name: "redistBoldDebtGain", type: "uint256" }, { name: "redistCollGain", type: "uint256" }, { name: "accruedInterest", type: "uint256" }, { name: "recordedDebt", type: "uint256" }, { name: "annualInterestRate", type: "uint256" }, { name: "accruedBatchManagementFee", type: "uint256" }, { name: "lastInterestRateAdjTime", type: "uint256" }, { name: "stake", type: "uint256" }, { name: "lastDebtUpdateTime", type: "uint256" }, { name: "interestBatchManager", type: "address" }, { name: "batchDebtShares", type: "uint256" }, { name: "snapshotETH", type: "uint256" }, { name: "snapshotBoldDebt", type: "uint256" }] }], stateMutability: "view" },
 ] as const;
