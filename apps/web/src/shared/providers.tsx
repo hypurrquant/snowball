@@ -1,7 +1,8 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from "wagmi";
+import { WagmiProvider as WagmiProviderBase } from "wagmi";
+import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { PrivyProvider } from "@privy-io/react-auth";
 import {
   useState,
@@ -37,9 +38,9 @@ function TestProviders({
   return (
     <TestModeContext.Provider value={true}>
       <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={testConfig as typeof wagmiConfig}>
+        <WagmiProviderBase config={testConfig as typeof wagmiConfig}>
           {children}
-        </WagmiProvider>
+        </WagmiProviderBase>
       </QueryClientProvider>
     </TestModeContext.Provider>
   );
@@ -83,7 +84,7 @@ export function Providers({ children }: { children: ReactNode }) {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
+        <PrivyWagmiProvider config={wagmiConfig}>{children}</PrivyWagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { usePrivy } from "@privy-io/react-auth";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { useConnection, useConnect, useDisconnect } from "wagmi";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { shortenAddress, formatTokenAmount } from "@/shared/lib/utils";
@@ -21,13 +21,16 @@ function HeaderInner({
   login,
   logout,
   displayName,
+  privyAddress,
 }: {
   authenticated: boolean;
   login: () => void;
   logout: () => void;
   displayName: string | null;
+  privyAddress?: string;
 }) {
-  const { address, isConnected } = useConnection();
+  const { address: wagmiAddress, isConnected } = useConnection();
+  const address = wagmiAddress ?? (privyAddress as `0x${string}` | undefined);
   const { data: balance } = useTokenBalance({ address });
   const [copied, setCopied] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -70,7 +73,7 @@ function HeaderInner({
             Testnet
           </div>
 
-          {authenticated && isConnected ? (
+          {authenticated ? (
             <div className="flex items-center gap-2">
               {/* Balance */}
               {balance && (
@@ -117,13 +120,16 @@ function HeaderInner({
 
 function PrivyHeader() {
   const { login, logout, authenticated, user } = usePrivy();
+  const { wallets } = useWallets();
   const displayName = user?.email?.address ?? user?.google?.email ?? null;
+  const privyAddress = wallets[0]?.address;
   return (
     <HeaderInner
       authenticated={authenticated}
       login={login}
       logout={logout}
       displayName={displayName}
+      privyAddress={privyAddress}
     />
   );
 }
