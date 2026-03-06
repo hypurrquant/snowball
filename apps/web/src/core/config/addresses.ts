@@ -13,11 +13,11 @@ export const TOKENS = {
   USDC: "0xbcaa46ef7a399fcdb64adf4520cdcc6d62fcaaed" as Address,
 } as const;
 
-export const TOKEN_INFO: Record<string, { symbol: string; name: string; decimals: number }> = {
-  [TOKENS.wCTC]: { symbol: "wCTC", name: "Wrapped CTC", decimals: 18 },
-  [TOKENS.lstCTC]: { symbol: "lstCTC", name: "Liquid Staked CTC", decimals: 18 },
-  [TOKENS.sbUSD]: { symbol: "sbUSD", name: "Snowball USD", decimals: 18 },
-  [TOKENS.USDC]: { symbol: "USDC", name: "Mock USDC", decimals: 6 },
+export const TOKEN_INFO: Record<string, { symbol: string; name: string; decimals: number; mockPriceUsd: number }> = {
+  [TOKENS.wCTC]: { symbol: "wCTC", name: "Wrapped CTC", decimals: 18, mockPriceUsd: 2.50 },
+  [TOKENS.lstCTC]: { symbol: "lstCTC", name: "Liquid Staked CTC", decimals: 18, mockPriceUsd: 2.60 },
+  [TOKENS.sbUSD]: { symbol: "sbUSD", name: "Snowball USD", decimals: 18, mockPriceUsd: 1.00 },
+  [TOKENS.USDC]: { symbol: "USDC", name: "Mock USDC", decimals: 6, mockPriceUsd: 1.00 },
 };
 
 // ─── DEX (Uniswap V3) ───

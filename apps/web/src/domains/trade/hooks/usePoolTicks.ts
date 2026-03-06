@@ -31,7 +31,10 @@ export function usePoolTicks(
 
   const { currentTick, currentPrice, tickSpacing } = useMemo(() => {
     if (!pool.slot0) {
-      return { currentTick: 0, currentPrice: 0, tickSpacing: 60 };
+      // Fallback: use tick 0 so mock ticks still render
+      const fallbackTick = 0;
+      const fallbackPrice = tickToPrice(fallbackTick, token0Decimals, token1Decimals);
+      return { currentTick: fallbackTick, currentPrice: fallbackPrice, tickSpacing: 60 };
     }
     // slot0 returns [sqrtPriceX96, tick, ...]
     const slot0Array = pool.slot0 as readonly [bigint, number, ...unknown[]];
@@ -42,17 +45,27 @@ export function usePoolTicks(
     return { currentTick: tick, currentPrice: price, tickSpacing: spacing };
   }, [pool.slot0, pool.tickSpacing, token0Decimals, token1Decimals]);
 
+  // Use token addresses as seed for unique per-pool distribution
+  const pairSeed = useMemo(() => {
+    if (!token0 || !token1) return 0;
+    let h = 0;
+    const s = (token0 + token1).toLowerCase();
+    for (let i = 0; i < s.length; i++) {
+      h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+    }
+    return Math.abs(h);
+  }, [token0, token1]);
+
   const ticks = useMemo(() => {
-    if (!currentPrice || currentTick === 0) return [];
-    return generateMockTicks(currentTick, tickSpacing, token0Decimals, token1Decimals);
-  }, [currentTick, tickSpacing, token0Decimals, token1Decimals, currentPrice]);
+    return generateMockTicks(currentTick, tickSpacing, token0Decimals, token1Decimals, pairSeed);
+  }, [currentTick, tickSpacing, token0Decimals, token1Decimals, pairSeed]);
 
   return {
     ticks,
     currentPrice,
     currentTick,
     tickSpacing,
-    isLoading: pool.isLoading,
+    isLoading: false, // ticks are always mock-generated, never truly "loading"
   };
 }
 
@@ -61,36 +74,73 @@ export function usePoolTicks(
  * Creates a bell curve centered on currentTick with some random variation
  * to mimic real liquidity distribution patterns.
  */
+/**
+ * Distribution shape profiles for variety across pools.
+ * Each profile defines how liquidity is distributed around the current tick.
+ */
+type DistProfile = {
+  shape: "bell" | "bimodal" | "skewLeft" | "skewRight" | "flat";
+  peakLiquidity: number;
+  noiseRange: [number, number]; // [min, max] multiplier
+};
+
+const DIST_PROFILES: DistProfile[] = [
+  { shape: "bell", peakLiquidity: 50000, noiseRange: [0.6, 1.0] },
+  { shape: "bimodal", peakLiquidity: 40000, noiseRange: [0.5, 1.0] },
+  { shape: "skewLeft", peakLiquidity: 45000, noiseRange: [0.7, 1.0] },
+  { shape: "skewRight", peakLiquidity: 55000, noiseRange: [0.5, 0.9] },
+  { shape: "flat", peakLiquidity: 30000, noiseRange: [0.4, 1.0] },
+];
+
+function shapeValue(shape: DistProfile["shape"], i: number, range: number): number {
+  const d = i / range; // -1 to +1
+  const abs = Math.abs(d);
+  switch (shape) {
+    case "bell":
+      return Math.exp(-4 * abs * abs);
+    case "bimodal": {
+      const left = Math.exp(-12 * (d + 0.4) * (d + 0.4));
+      const right = Math.exp(-12 * (d - 0.4) * (d - 0.4));
+      return Math.max(left, right);
+    }
+    case "skewLeft":
+      return Math.exp(-3 * (d + 0.2) * (d + 0.2));
+    case "skewRight":
+      return Math.exp(-3 * (d - 0.2) * (d - 0.2));
+    case "flat":
+      return 0.5 + 0.5 * Math.exp(-1.5 * abs * abs);
+  }
+}
+
 function generateMockTicks(
   currentTick: number,
   tickSpacing: number,
   decimals0: number,
   decimals1: number,
+  pairSeed: number,
 ): TickDisplayData[] {
   const baseTick = alignTickToSpacing(currentTick, tickSpacing, true);
   const range = 40; // ticks on each side
   const ticks: TickDisplayData[] = [];
 
+  // Pick distribution profile based on pair seed
+  const profile = DIST_PROFILES[pairSeed % DIST_PROFILES.length];
+
   // Seeded pseudo-random for consistency across renders
-  const seed = Math.abs(currentTick) % 1000;
-  let rng = seed + 1;
+  let rng = (pairSeed || 1) + 1;
   const random = () => {
     rng = (rng * 16807 + 0) % 2147483647;
     return rng / 2147483647;
   };
 
-  const peakLiquidity = 50000; // USD
-
   for (let i = -range; i < range; i++) {
     const tick = baseTick + i * tickSpacing;
     const tickNext = tick + tickSpacing;
 
-    // Bell curve: liquidity peaks at current tick, decays with distance
-    const distance = Math.abs(i) / range;
-    const bellCurve = Math.exp(-4 * distance * distance);
-    // Add randomness (20-40% variation)
-    const noise = 0.6 + random() * 0.4;
-    const liquidityUsd = peakLiquidity * bellCurve * noise;
+    const curve = shapeValue(profile.shape, i, range);
+    const [noiseMin, noiseMax] = profile.noiseRange;
+    const noise = noiseMin + random() * (noiseMax - noiseMin);
+    const liquidityUsd = profile.peakLiquidity * curve * noise;
 
     ticks.push({
       priceLower: tickToPrice(tick, decimals0, decimals1),
