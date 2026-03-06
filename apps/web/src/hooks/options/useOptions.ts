@@ -4,7 +4,6 @@ import { useConnection, useReadContract, useReadContracts } from "wagmi";
 import {
   SnowballOptionsABI,
   OptionsClearingHouseABI,
-  OptionsVaultABI,
 } from "@/abis";
 import { OPTIONS, API_BASE } from "@/config/addresses";
 import { useState, useCallback } from "react";
@@ -29,7 +28,7 @@ export function useOptions() {
   const { data: currentRound } = useReadContract({
     address: OPTIONS.engine,
     abi: SnowballOptionsABI,
-    functionName: "currentRound",
+    functionName: "currentRoundId",
     query: { refetchInterval: 5_000 },
   });
 
@@ -37,7 +36,7 @@ export function useOptions() {
   const { data: roundData } = useReadContract({
     address: OPTIONS.engine,
     abi: SnowballOptionsABI,
-    functionName: "rounds",
+    functionName: "getRound",
     args: [currentRound!],
     query: { enabled: currentRound !== undefined, refetchInterval: 5_000 },
   });
@@ -70,15 +69,15 @@ export function useOptions() {
     currentRound !== undefined && roundData
       ? {
         id: Number(currentRound),
-        startPrice: (roundData as any)[0] as bigint,
-        endPrice: (roundData as any)[1] as bigint,
-        startTime: (roundData as any)[2] as bigint,
-        duration: (roundData as any)[3] as bigint,
-        totalOverAmount: (roundData as any)[4] as bigint,
-        totalUnderAmount: (roundData as any)[5] as bigint,
-        status: Number((roundData as any)[6]),
-        totalOrders: (roundData as any)[7] as bigint,
-        settledOrders: (roundData as any)[8] as bigint,
+        startPrice: (roundData as any).lockPrice as bigint,
+        endPrice: (roundData as any).closePrice as bigint,
+        startTime: (roundData as any).lockTimestamp as bigint,
+        duration: (roundData as any).duration as bigint,
+        totalOverAmount: (roundData as any).totalOverAmount as bigint,
+        totalUnderAmount: (roundData as any).totalUnderAmount as bigint,
+        status: Number((roundData as any).status),
+        totalOrders: (roundData as any).orderCount as bigint,
+        settledOrders: 0n,
       }
       : null;
 

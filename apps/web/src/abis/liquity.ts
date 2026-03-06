@@ -5,20 +5,19 @@ export const BorrowerOperationsABI = [
   { type: "function", name: "adjustTrove", inputs: [{ name: "troveId", type: "uint256" }, { name: "collChange", type: "uint256" }, { name: "isCollIncrease", type: "bool" }, { name: "debtChange", type: "uint256" }, { name: "isDebtIncrease", type: "bool" }, { name: "maxUpfrontFee", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "closeTrove", inputs: [{ name: "troveId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "adjustTroveInterestRate", inputs: [{ name: "troveId", type: "uint256" }, { name: "newAnnualInterestRate", type: "uint256" }, { name: "upperHint", type: "uint256" }, { name: "lowerHint", type: "uint256" }, { name: "maxUpfrontFee", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
-  { type: "function", name: "MIN_ANNUAL_INTEREST_RATE", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "MAX_ANNUAL_INTEREST_RATE", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "CCR", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "MCR", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
 ] as const;
 
 export const TroveManagerABI = [
-  { type: "function", name: "getTroveEntireColl", inputs: [{ name: "troveId", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "getTroveEntireDebt", inputs: [{ name: "troveId", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "getTroveAnnualInterestRate", inputs: [{ name: "troveId", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "getTroveStatus", inputs: [{ name: "troveId", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "getEntireSystemColl", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "getEntireSystemDebt", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "getTCR", inputs: [{ name: "price", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getTroveStatus", inputs: [{ name: "troveId", type: "uint256" }], outputs: [{ type: "uint8" }], stateMutability: "view" },
+  { type: "function", name: "getEntireBranchColl", inputs: [], outputs: [{ name: "entireSystemColl", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getEntireBranchDebt", inputs: [], outputs: [{ name: "entireSystemDebt", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getLatestTroveData", inputs: [{ name: "troveId", type: "uint256" }], outputs: [{ name: "trove", type: "tuple", components: [{ name: "entireDebt", type: "uint256" }, { name: "entireColl", type: "uint256" }, { name: "redistBoldDebtGain", type: "uint256" }, { name: "redistCollGain", type: "uint256" }, { name: "accruedInterest", type: "uint256" }, { name: "recordedDebt", type: "uint256" }, { name: "annualInterestRate", type: "uint256" }, { name: "weightedRecordedDebt", type: "uint256" }, { name: "accruedBatchManagementFee", type: "uint256" }, { name: "lastInterestRateAdjTime", type: "uint256" }] }], stateMutability: "view" },
+  { type: "function", name: "getCurrentICR", inputs: [{ name: "troveId", type: "uint256" }, { name: "price", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getTroveIdsCount", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getTroveFromTroveIdsArray", inputs: [{ name: "index", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
 ] as const;
 
 export const StabilityPoolABI = [
@@ -28,16 +27,17 @@ export const StabilityPoolABI = [
   { type: "function", name: "getCompoundedBoldDeposit", inputs: [{ name: "depositor", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "getDepositorCollGain", inputs: [{ name: "depositor", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "getTotalBoldDeposits", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getDepositorYieldGain", inputs: [{ name: "depositor", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getDepositorYieldGainWithPending", inputs: [{ name: "depositor", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
 ] as const;
 
 export const TroveNFTABI = [
   { type: "function", name: "balanceOf", inputs: [{ name: "owner", type: "address" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "tokenOfOwnerByIndex", inputs: [{ name: "owner", type: "address" }, { name: "index", type: "uint256" }], outputs: [{ type: "uint256" }], stateMutability: "view" },
 ] as const;
 
 export const MockPriceFeedABI = [
-  { type: "function", name: "getPrice", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "fetchPrice", inputs: [], outputs: [{ name: "price", type: "uint256" }, { name: "isFresh", type: "bool" }], stateMutability: "view" },
+  { type: "function", name: "lastGoodPrice", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "fetchPrice", inputs: [], outputs: [{ name: "price", type: "uint256" }, { name: "isFresh", type: "bool" }], stateMutability: "nonpayable" },
 ] as const;
 
 export const ActivePoolABI = [

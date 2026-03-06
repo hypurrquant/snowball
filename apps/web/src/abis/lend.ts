@@ -9,6 +9,7 @@ export const SnowballLendABI = [
   { type: "function", name: "repay", inputs: [{ name: "marketParams", type: "tuple", components: [{ name: "loanToken", type: "address" }, { name: "collateralToken", type: "address" }, { name: "oracle", type: "address" }, { name: "irm", type: "address" }, { name: "lltv", type: "uint256" }] }, { name: "assets", type: "uint256" }, { name: "shares", type: "uint256" }, { name: "onBehalf", type: "address" }, { name: "data", type: "bytes" }], outputs: [{ name: "assetsRepaid", type: "uint256" }, { name: "sharesRepaid", type: "uint256" }], stateMutability: "nonpayable" },
   { type: "function", name: "supplyCollateral", inputs: [{ name: "marketParams", type: "tuple", components: [{ name: "loanToken", type: "address" }, { name: "collateralToken", type: "address" }, { name: "oracle", type: "address" }, { name: "irm", type: "address" }, { name: "lltv", type: "uint256" }] }, { name: "assets", type: "uint256" }, { name: "onBehalf", type: "address" }, { name: "data", type: "bytes" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "withdrawCollateral", inputs: [{ name: "marketParams", type: "tuple", components: [{ name: "loanToken", type: "address" }, { name: "collateralToken", type: "address" }, { name: "oracle", type: "address" }, { name: "irm", type: "address" }, { name: "lltv", type: "uint256" }] }, { name: "assets", type: "uint256" }, { name: "onBehalf", type: "address" }, { name: "receiver", type: "address" }], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "idToMarketParams", inputs: [{ name: "id", type: "bytes32" }], outputs: [{ name: "loanToken", type: "address" }, { name: "collateralToken", type: "address" }, { name: "oracle", type: "address" }, { name: "irm", type: "address" }, { name: "lltv", type: "uint256" }], stateMutability: "view" },
 ] as const;
 
 export const AdaptiveCurveIRMABI = [
@@ -16,5 +17,5 @@ export const AdaptiveCurveIRMABI = [
 ] as const;
 
 export const MockOracleABI = [
-  { type: "function", name: "getPrice", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "price", inputs: [], outputs: [{ type: "uint256" }], stateMutability: "view" },
 ] as const;

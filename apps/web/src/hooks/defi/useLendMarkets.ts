@@ -1,7 +1,7 @@
 "use client";
 
 import { useReadContracts } from "wagmi";
-import { SnowballLendABI, MockOracleABI, AdaptiveCurveIRMABI } from "@/abis";
+import { SnowballLendABI, MockOracleABI } from "@/abis";
 import { LEND, TOKENS } from "@/config/addresses";
 import {
   toAssetsDown,
@@ -43,7 +43,7 @@ export function useLendMarkets() {
   const oracleCalls = oracleAddresses.map((addr) => ({
     address: addr,
     abi: MockOracleABI,
-    functionName: "getPrice" as const,
+    functionName: "price" as const,
   }));
 
   const { data, isLoading, refetch } = useReadContracts({
@@ -67,8 +67,8 @@ export function useLendMarkets() {
 
       const m = LEND.markets[i];
       const util = utilization(totalBorrowAssets, totalSupplyAssets);
-      // Approximate APR (real would come from IRM call)
-      const approxBorrowAPR = util * 0.08; // ~8% base rate
+      // TODO: 프로덕션 시 AdaptiveCurveIRM.borrowRateView()로 교체 — 현재는 데모용 하드코딩
+      const approxBorrowAPR = util * 0.08;
       const approxSupplyAPY = supplyAPY(approxBorrowAPR, util);
 
       const oracleIdx = i < oracleAddresses.length ? marketCount + i : 0;

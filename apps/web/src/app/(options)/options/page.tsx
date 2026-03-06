@@ -49,7 +49,6 @@ export default function OptionsPage() {
         address: OPTIONS.clearingHouse,
         abi: OptionsClearingHouseABI,
         functionName: "deposit",
-        args: [parseEther(depositAmount)],
         value: parseEther(depositAmount),
       });
       setDepositAmount("");
@@ -179,9 +178,9 @@ export default function OptionsPage() {
             <CardContent className="space-y-4">
               {/* Round info */}
               {round && round.status === 0 && (
-                <div className="rounded-xl bg-[#1C1D30] p-4 space-y-3">
-                  <div className="flex justify-between items-center bg-[#141525] rounded-lg p-2 px-3 border border-[#1F2037]">
-                    <span className="text-xs text-[#8B8D97] uppercase tracking-wider font-semibold">Start Price</span>
+                <div className="rounded-xl bg-bg-input p-4 space-y-3">
+                  <div className="flex justify-between items-center bg-bg-card rounded-lg p-2 px-3 border border-border">
+                    <span className="text-xs text-text-secondary uppercase tracking-wider font-semibold">Start Price</span>
                     <span className="font-mono text-sm text-white">
                       ${formatTokenAmount(round.startPrice, 18, 2)}
                     </span>
@@ -189,8 +188,8 @@ export default function OptionsPage() {
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs">
-                      <span className="text-[#8B8D97]">Pool Ratio</span>
-                      <span className="font-mono text-[#8B8D97]">
+                      <span className="text-text-secondary">Pool Ratio</span>
+                      <span className="font-mono text-text-secondary">
                         {Number(round.totalOverAmount) === 0 && Number(round.totalUnderAmount) === 0
                           ? '50% / 50%'
                           : `${((Number(round.totalOverAmount) / (Number(round.totalOverAmount) + Number(round.totalUnderAmount))) * 100).toFixed(1)}% / ${((Number(round.totalUnderAmount) / (Number(round.totalOverAmount) + Number(round.totalUnderAmount))) * 100).toFixed(1)}%`}
@@ -199,19 +198,19 @@ export default function OptionsPage() {
                     <div className="h-2 flex rounded-full overflow-hidden">
                       <div
                         style={{ width: Number(round.totalOverAmount) === 0 && Number(round.totalUnderAmount) === 0 ? '50%' : `${(Number(round.totalOverAmount) / (Number(round.totalOverAmount) + Number(round.totalUnderAmount))) * 100}%` }}
-                        className="bg-[#22c55e] transition-all duration-500"
+                        className="bg-success transition-all duration-500"
                       />
                       <div
                         style={{ width: Number(round.totalOverAmount) === 0 && Number(round.totalUnderAmount) === 0 ? '50%' : `${(Number(round.totalUnderAmount) / (Number(round.totalOverAmount) + Number(round.totalUnderAmount))) * 100}%` }}
-                        className="bg-[#ef4444] transition-all duration-500"
+                        className="bg-danger transition-all duration-500"
                       />
                     </div>
 
                     <div className="flex justify-between text-xs pt-1">
-                      <span className="font-mono text-[#22c55e]">
+                      <span className="font-mono text-success">
                         {formatTokenAmount(round.totalOverAmount, 18, 4)} tCTC
                       </span>
-                      <span className="font-mono text-[#ef4444]">
+                      <span className="font-mono text-danger">
                         {formatTokenAmount(round.totalUnderAmount, 18, 4)} tCTC
                       </span>
                     </div>

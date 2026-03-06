@@ -24,7 +24,6 @@ import { LIQUITY, TOKENS } from "@/config/addresses";
 import {
   TroveManagerABI,
   TroveNFTABI,
-  ActivePoolABI,
   MockPriceFeedABI,
 } from "@/abis";
 import { formatTokenAmount, formatNumber } from "@/lib/utils";
@@ -45,21 +44,21 @@ export default function BorrowPage() {
   const { data: systemColl } = useReadContract({
     address: branch.troveManager,
     abi: TroveManagerABI,
-    functionName: "getEntireSystemColl",
+    functionName: "getEntireBranchColl",
     query: { refetchInterval: 10_000 },
   });
 
   const { data: systemDebt } = useReadContract({
     address: branch.troveManager,
     abi: TroveManagerABI,
-    functionName: "getEntireSystemDebt",
+    functionName: "getEntireBranchDebt",
     query: { refetchInterval: 10_000 },
   });
 
   const { data: priceResult } = useReadContract({
     address: branch.priceFeed,
     abi: MockPriceFeedABI,
-    functionName: "getPrice",
+    functionName: "lastGoodPrice",
     query: { refetchInterval: 10_000 },
   });
 
@@ -146,14 +145,14 @@ export default function BorrowPage() {
             </div>
           ) : troveCount === 0n ? (
             <div className="text-center py-8 space-y-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#1C1D30] text-[#60a5fa] mb-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-bg-input text-ice-400 mb-2">
                 <Shield className="w-8 h-8" />
               </div>
-              <p className="text-[#8B8D97]">
+              <p className="text-text-secondary">
                 You don&apos;t have any active {selectedBranch} troves yet
               </p>
-              <div className="inline-block px-4 py-2 rounded-lg bg-[#141525] border border-[#1F2037]">
-                <p className="text-sm text-[#8B8D97]">
+              <div className="inline-block px-4 py-2 rounded-lg bg-bg-card border border-border">
+                <p className="text-sm text-text-secondary">
                   Available Balance: <span className="font-mono text-white">{collBalance ? formatTokenAmount(collBalance.value, 18, 4) : "0"} {selectedBranch}</span>
                 </p>
               </div>
@@ -173,21 +172,21 @@ export default function BorrowPage() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <label className="text-sm text-[#8B8D97]">Collateral Amount ({selectedBranch})</label>
+                        <label className="text-sm text-text-secondary">Collateral Amount ({selectedBranch})</label>
                         <Input placeholder="0.00" className="font-mono" />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm text-[#8B8D97]">Borrow Amount (sbUSD)</label>
+                        <label className="text-sm text-text-secondary">Borrow Amount (sbUSD)</label>
                         <Input placeholder="0.00" className="font-mono" />
                       </div>
 
-                      <div className="rounded-xl bg-[#1C1D30] p-4 space-y-2">
+                      <div className="rounded-xl bg-bg-input p-4 space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#8B8D97]">Collateral Ratio</span>
-                          <span className="font-mono text-[#22c55e]">0.00%</span>
+                          <span className="text-text-secondary">Collateral Ratio</span>
+                          <span className="font-mono text-success">0.00%</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#8B8D97]">Liquidation Price</span>
+                          <span className="text-text-secondary">Liquidation Price</span>
                           <span className="font-mono text-white">$0.00</span>
                         </div>
                       </div>
