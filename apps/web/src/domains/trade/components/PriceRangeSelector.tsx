@@ -38,9 +38,22 @@ const RANGE_PRESETS = [
   { label: "Common", percent: 10 },
   { label: "Wide", percent: 25 },
   { label: "Full", percent: -1 },
+  { label: "Custom", percent: 0 },
 ] as const;
 
-const MIN_SIDE_TICKS = 5;
+// Mini histogram bar patterns for each preset (5 bars, heights out of 5)
+const PRESET_MINI_BARS: Record<string, number[]> = {
+  Narrow: [1, 3, 5, 3, 1],
+  Common: [2, 4, 5, 4, 2],
+  Wide: [3, 4, 5, 4, 3],
+  Full: [4, 4, 5, 4, 4],
+  Custom: [2, 3, 5, 2, 4],
+};
+
+// Zoom: 1 = all bars visible, higher = zoomed in (fewer bars visible)
+const DEFAULT_ZOOM = 1;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
 
 // ────────────────────────────────────────────
 // Main Component
@@ -51,7 +64,7 @@ export function PriceRangeSelector({
   tickLower,
   tickUpper,
   tickSpacing,
-  ticks: allTicks,
+  ticks,
   ticksLoading,
   token0Decimals,
   token1Decimals,
@@ -63,70 +76,41 @@ export function PriceRangeSelector({
   const minPrice = tickToPrice(tickLower, token0Decimals, token1Decimals);
   const maxPrice = tickToPrice(tickUpper, token0Decimals, token1Decimals);
 
-  // Freeze ticks during drag to prevent viewport reflow
-  const [frozenTicks, setFrozenTicks] = useState<TickDisplayData[] | null>(null);
-
-  // Viewport filtering with margin + minimum tick guarantee
-  const ticks = useMemo(() => {
-    if (frozenTicks !== null) return frozenTicks;
-    if (!allTicks.length) return allTicks;
-
-    let firstActiveIdx = -1;
-    let lastActiveIdx = -1;
-    for (let i = 0; i < allTicks.length; i++) {
-      const mid = (allTicks[i].priceLower + allTicks[i].priceUpper) / 2;
-      if (mid >= minPrice && mid <= maxPrice) {
-        if (firstActiveIdx === -1) firstActiveIdx = i;
-        lastActiveIdx = i;
-      }
-    }
-
-    const priceSpan = maxPrice - minPrice;
-    const proportionalMargin = priceSpan * 0.5;
-
-    let tickMarginLeft = 0;
-    let tickMarginRight = 0;
-    if (firstActiveIdx >= 0) {
-      const leftIdx = Math.max(0, firstActiveIdx - MIN_SIDE_TICKS);
-      const rightIdx = Math.min(allTicks.length - 1, lastActiveIdx + MIN_SIDE_TICKS);
-      tickMarginLeft = minPrice - allTicks[leftIdx].priceLower;
-      tickMarginRight = allTicks[rightIdx].priceUpper - maxPrice;
-      const maxMargin = priceSpan * 4;
-      tickMarginLeft = Math.min(tickMarginLeft, maxMargin);
-      tickMarginRight = Math.min(tickMarginRight, maxMargin);
-    }
-
-    const finalViewMin = minPrice - Math.max(proportionalMargin, tickMarginLeft);
-    const finalViewMax = maxPrice + Math.max(proportionalMargin, tickMarginRight);
-
-    return allTicks.filter((t) => t.priceUpper >= finalViewMin && t.priceLower <= finalViewMax);
-  }, [frozenTicks, allTicks, minPrice, maxPrice]);
-
-  const ticksRef = useRef(ticks);
-  ticksRef.current = ticks;
-
-  const handleDragStateChange = useCallback((isDragging: boolean) => {
-    if (isDragging) {
-      setFrozenTicks(ticksRef.current);
-    } else {
-      setFrozenTicks(null);
-    }
-  }, []);
+  // Zoom state
+  const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM);
 
   // % diff from current price
   const minPctDiff = currentPrice > 0 ? ((minPrice - currentPrice) / currentPrice) * 100 : 0;
   const maxPctDiff = currentPrice > 0 ? ((maxPrice - currentPrice) / currentPrice) * 100 : 0;
 
+  // Active preset detection
+  const activePreset = useMemo(() => {
+    for (const preset of RANGE_PRESETS) {
+      if (preset.label === "Custom") continue;
+      if (preset.percent === -1) {
+        const fullLower = alignTickToSpacing(-887272, tickSpacing, true);
+        const fullUpper = alignTickToSpacing(887272, tickSpacing, false);
+        if (tickLower === fullLower && tickUpper === fullUpper) return "Full";
+      } else {
+        const delta = Math.log(1 + preset.percent / 100) / Math.log(1.0001);
+        const expectedLower = Math.floor((currentTick - Math.abs(delta)) / tickSpacing) * tickSpacing;
+        const expectedUpper = Math.ceil((currentTick + Math.abs(delta)) / tickSpacing) * tickSpacing;
+        if (tickLower === expectedLower && tickUpper === expectedUpper) return preset.label;
+      }
+    }
+    return "Custom";
+  }, [tickLower, tickUpper, currentTick, tickSpacing]);
+
   // Preset handler
-  const handlePreset = (percent: number) => {
-    setFrozenTicks(null);
-    if (percent === -1) {
+  const handlePreset = (preset: typeof RANGE_PRESETS[number]) => {
+    if (preset.label === "Custom") return;
+    if (preset.percent === -1) {
       onTickRangeChange(
         alignTickToSpacing(-887272, tickSpacing, true),
         alignTickToSpacing(887272, tickSpacing, false),
       );
     } else {
-      const delta = Math.log(1 + percent / 100) / Math.log(1.0001);
+      const delta = Math.log(1 + preset.percent / 100) / Math.log(1.0001);
       const lower = Math.floor((currentTick - Math.abs(delta)) / tickSpacing) * tickSpacing;
       const upper = Math.ceil((currentTick + Math.abs(delta)) / tickSpacing) * tickSpacing;
       onTickRangeChange(lower, upper);
@@ -136,16 +120,12 @@ export function PriceRangeSelector({
   // +/- step handlers
   const stepMin = (direction: 1 | -1) => {
     const newTickLower = tickLower + direction * tickSpacing;
-    if (newTickLower < tickUpper) {
-      onTickRangeChange(newTickLower, tickUpper);
-    }
+    if (newTickLower < tickUpper) onTickRangeChange(newTickLower, tickUpper);
   };
 
   const stepMax = (direction: 1 | -1) => {
     const newTickUpper = tickUpper + direction * tickSpacing;
-    if (newTickUpper > tickLower) {
-      onTickRangeChange(tickLower, newTickUpper);
-    }
+    if (newTickUpper > tickLower) onTickRangeChange(tickLower, newTickUpper);
   };
 
   // Direct price input
@@ -163,59 +143,85 @@ export function PriceRangeSelector({
     if (tick > tickLower) onTickRangeChange(tickLower, tick);
   };
 
-  // Active preset detection
-  const activePreset = useMemo(() => {
-    for (const preset of RANGE_PRESETS) {
-      if (preset.percent === -1) {
-        const fullLower = alignTickToSpacing(-887272, tickSpacing, true);
-        const fullUpper = alignTickToSpacing(887272, tickSpacing, false);
-        if (tickLower === fullLower && tickUpper === fullUpper) return "Full";
-      } else {
-        const delta = Math.log(1 + preset.percent / 100) / Math.log(1.0001);
-        const expectedLower = Math.floor((currentTick - Math.abs(delta)) / tickSpacing) * tickSpacing;
-        const expectedUpper = Math.ceil((currentTick + Math.abs(delta)) / tickSpacing) * tickSpacing;
-        if (tickLower === expectedLower && tickUpper === expectedUpper) return preset.label;
-      }
-    }
-    return null;
-  }, [tickLower, tickUpper, currentTick, tickSpacing]);
+  // Zoom handlers
+  const handleZoomIn = () => setZoomLevel((z) => Math.min(MAX_ZOOM, z + 1));
+  const handleZoomOut = () => setZoomLevel((z) => Math.max(MIN_ZOOM, z - 1));
+  const handleZoomReset = () => setZoomLevel(DEFAULT_ZOOM);
 
   const tokenPair = `${token0Symbol}/${token1Symbol}`;
 
   return (
     <div className="space-y-3">
-      {/* Preset buttons */}
+      {/* Preset cards */}
       <div className="flex gap-1.5">
         {RANGE_PRESETS.map((preset) => (
           <button
             key={preset.label}
-            onClick={() => handlePreset(preset.percent)}
-            className={`flex-1 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+            onClick={() => handlePreset(preset)}
+            className={`flex-1 py-1.5 px-1 text-xs font-medium rounded-lg border transition-colors flex flex-col items-center gap-1 ${
               activePreset === preset.label
                 ? "border-ice-400 bg-ice-400/15 text-ice-400"
                 : "border-border-primary bg-bg-input text-text-secondary hover:border-border-secondary"
             }`}
           >
+            {/* Mini histogram bars */}
+            <div className="flex items-end gap-[1px] h-[10px]">
+              {(PRESET_MINI_BARS[preset.label] ?? [3, 3, 3, 3, 3]).map((h, i) => (
+                <div
+                  key={i}
+                  className={`w-[3px] rounded-t-[1px] ${
+                    activePreset === preset.label ? "bg-ice-400" : "bg-text-tertiary/40"
+                  }`}
+                  style={{ height: `${(h / 5) * 10}px` }}
+                />
+              ))}
+            </div>
             {preset.label}
           </button>
         ))}
       </div>
 
-      {/* Liquidity histogram */}
-      <LiquidityHistogram
-        ticks={ticks}
-        currentPrice={currentPrice}
-        minPrice={minPrice}
-        maxPrice={maxPrice}
-        isLoading={ticksLoading}
-        tickSpacing={tickSpacing}
-        tickLower={tickLower}
-        tickUpper={tickUpper}
-        token0Decimals={token0Decimals}
-        token1Decimals={token1Decimals}
-        onTickRangeChange={onTickRangeChange}
-        onDragStateChange={handleDragStateChange}
-      />
+      {/* Liquidity histogram + zoom controls */}
+      <div className="relative">
+        <LiquidityHistogram
+          ticks={ticks}
+          currentPrice={currentPrice}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          isLoading={ticksLoading}
+          tickSpacing={tickSpacing}
+          tickLower={tickLower}
+          tickUpper={tickUpper}
+          token0Decimals={token0Decimals}
+          token1Decimals={token1Decimals}
+          onTickRangeChange={onTickRangeChange}
+          zoomLevel={zoomLevel}
+        />
+        {/* Zoom controls */}
+        <div className="absolute top-1.5 right-1.5 flex gap-0.5 z-30">
+          <button
+            onClick={handleZoomIn}
+            className="w-5 h-5 flex items-center justify-center rounded bg-bg-secondary/80 text-text-secondary hover:text-text-primary text-[10px] font-bold backdrop-blur-sm"
+            title="Zoom in"
+          >
+            +
+          </button>
+          <button
+            onClick={handleZoomOut}
+            className="w-5 h-5 flex items-center justify-center rounded bg-bg-secondary/80 text-text-secondary hover:text-text-primary text-[10px] font-bold backdrop-blur-sm"
+            title="Zoom out"
+          >
+            -
+          </button>
+          <button
+            onClick={handleZoomReset}
+            className="w-5 h-5 flex items-center justify-center rounded bg-bg-secondary/80 text-text-secondary hover:text-text-primary text-[10px] backdrop-blur-sm"
+            title="Reset zoom"
+          >
+            ↻
+          </button>
+        </div>
+      </div>
 
       {/* MIN / MAX price inputs */}
       <div className="grid grid-cols-2 gap-3">
@@ -242,8 +248,10 @@ export function PriceRangeSelector({
       {/* Current price */}
       <div className="text-center text-xs text-text-tertiary">
         Current Price:{" "}
-        <span className="text-text-primary font-medium">{formatPriceCompact(currentPrice)}</span>{" "}
-        {tokenPair}
+        <span className="text-text-primary font-medium">
+          {currentPrice > 0 ? formatPriceCompact(currentPrice) : "—"}
+        </span>{" "}
+        {currentPrice > 0 ? tokenPair : ""}
       </div>
     </div>
   );
@@ -324,7 +332,7 @@ interface LiquidityHistogramProps {
   token0Decimals: number;
   token1Decimals: number;
   onTickRangeChange: (tickLower: number, tickUpper: number) => void;
-  onDragStateChange: (isDragging: boolean) => void;
+  zoomLevel: number;
 }
 
 function LiquidityHistogram(props: LiquidityHistogramProps) {
@@ -340,10 +348,10 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     token0Decimals,
     token1Decimals,
     onTickRangeChange,
-    onDragStateChange,
+    zoomLevel,
   } = props;
 
-  // Bar area width measurement with ResizeObserver
+  // Bar area width measurement with ResizeObserver (on inner zoomable container)
   const barAreaRef = useRef<HTMLDivElement | null>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [barAreaWidth, setBarAreaWidth] = useState(0);
@@ -395,7 +403,28 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     };
   }, []);
 
-  // Handle + overlay positions (tick-index coordinate system)
+  // Zoom: CSS-based overflow clipping
+  // zoomLevel 1 = all bars visible, 2 = half visible (2x wider inner), etc.
+  const currentTickIdx = useMemo(
+    () => ticks.findIndex((t) => t.isCurrentTick),
+    [ticks],
+  );
+  const centerFrac = currentTickIdx >= 0 ? (currentTickIdx + 0.5) / ticks.length : 0.5;
+  const visibleFrac = 1 / zoomLevel;
+  let leftFrac = centerFrac - visibleFrac / 2;
+  leftFrac = Math.max(0, Math.min(1 - visibleFrac, leftFrac));
+  const rightFrac = leftFrac + visibleFrac;
+
+  const innerWidthPct = zoomLevel * 100;
+  const marginLeftPct = -(leftFrac * innerWidthPct);
+
+  // Price axis labels for visible edges
+  const leftIdx = Math.max(0, Math.floor(leftFrac * ticks.length));
+  const rightIdx = Math.min(ticks.length - 1, Math.ceil(rightFrac * ticks.length) - 1);
+  const axisLeftPrice = ticks[leftIdx]?.priceLower ?? 0;
+  const axisRightPrice = ticks[rightIdx]?.priceUpper ?? 0;
+
+  // Handle + overlay positions (tick-index coordinate system, relative to inner container)
   const minHandlePx = priceToPx(minPrice, ticks, barAreaWidth);
   const maxHandlePx = priceToPx(maxPrice, ticks, barAreaWidth);
   const currentPricePx = priceToPx(currentPrice, ticks, barAreaWidth);
@@ -411,7 +440,6 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     token0Decimals,
     token1Decimals,
     onTickRangeChange,
-    onDragStateChange,
   });
   dragPropsRef.current = {
     tickLower,
@@ -420,7 +448,6 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     token0Decimals,
     token1Decimals,
     onTickRangeChange,
-    onDragStateChange,
   };
 
   const handlePointerDown = (handle: "min" | "max", e: React.PointerEvent) => {
@@ -428,7 +455,6 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
     if (!rect) return;
     e.preventDefault();
     dragRef.current = { handle, containerRect: rect, ticks };
-    onDragStateChange(true);
 
     const onMove = (me: PointerEvent) => {
       if (!dragRef.current) return;
@@ -463,7 +489,6 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
         rafRef.current = null;
       }
       dragRef.current = null;
-      dragPropsRef.current.onDragStateChange(false);
     };
 
     window.addEventListener("pointermove", onMove);
@@ -489,79 +514,87 @@ function LiquidityHistogram(props: LiquidityHistogramProps) {
 
   return (
     <div className="h-[160px] bg-bg-input rounded-xl p-2 relative">
-      {/* Bar area wrapper */}
-      <div ref={barAreaCallbackRef} className="h-full relative">
-        {/* Bar chart */}
-        <div className="h-full flex items-end gap-px">
-          {ticks.map((tick, i) => {
-            const rawPct = maxLiquidity > 0 ? Math.sqrt(tick.liquidityUsd / maxLiquidity) * 100 : 0;
-            const heightPct = Number.isFinite(rawPct) ? rawPct : 0;
-            const midPrice = (tick.priceLower + tick.priceUpper) / 2;
-            const isInRange = midPrice >= minPrice && midPrice <= maxPrice;
-            const isCurrent = tick.isCurrentTick;
+      {/* Clipping container for zoom */}
+      <div className="h-full overflow-hidden relative">
+        {/* Zoomable inner container */}
+        <div
+          ref={barAreaCallbackRef}
+          className="h-full relative"
+          style={{
+            width: `${innerWidthPct}%`,
+            marginLeft: `${marginLeftPct}%`,
+          }}
+        >
+          {/* Bar chart — always renders all ticks (80 bars) */}
+          <div className="h-full flex items-end gap-px">
+            {ticks.map((tick, i) => {
+              const rawPct = maxLiquidity > 0 ? Math.sqrt(tick.liquidityUsd / maxLiquidity) * 100 : 0;
+              const heightPct = Number.isFinite(rawPct) ? rawPct : 0;
+              const midPrice = (tick.priceLower + tick.priceUpper) / 2;
+              const isInRange = midPrice >= minPrice && midPrice <= maxPrice;
+              const isCurrent = tick.isCurrentTick;
 
-            return (
-              <div key={i} className="flex-1 h-full flex items-end">
-                <div
-                  className={`w-full rounded-t-sm transition-colors ${
-                    isInRange
-                      ? isCurrent
-                        ? "bg-yellow-400"
-                        : "bg-ice-400"
-                      : "bg-bg-tertiary"
-                  }`}
-                  style={{ height: `${Math.max(2, heightPct)}%` }}
-                />
-              </div>
-            );
-          })}
+              return (
+                <div key={i} className="flex-1 h-full flex items-end">
+                  <div
+                    className={`w-full rounded-t-sm transition-colors ${
+                      isInRange
+                        ? isCurrent
+                          ? "bg-yellow-400"
+                          : "bg-ice-400"
+                        : "bg-white/15"
+                    }`}
+                    style={{ height: `${Math.max(2, heightPct)}%` }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Range overlay */}
+          {showHandles && (
+            <div
+              className="absolute inset-y-0 z-10 bg-ice-400/10 pointer-events-none rounded-sm"
+              style={{ left: `${minHandlePx}px`, width: `${maxHandlePx - minHandlePx}px` }}
+            />
+          )}
+
+          {/* Current price vertical line */}
+          {showHandles && (
+            <div
+              className="absolute inset-y-0 z-10 w-[1px] bg-yellow-400/50 pointer-events-none"
+              style={{ left: `${currentPricePx}px` }}
+            />
+          )}
+
+          {/* Drag handles */}
+          {showHandles && (
+            <>
+              <DragHandle
+                side="min"
+                pxOffset={minHandlePx}
+                pctDiff={minPctDiff}
+                onPointerDown={(e) => handlePointerDown("min", e)}
+              />
+              <DragHandle
+                side="max"
+                pxOffset={maxHandlePx}
+                pctDiff={maxPctDiff}
+                onPointerDown={(e) => handlePointerDown("max", e)}
+              />
+            </>
+          )}
         </div>
-
-        {/* Range overlay */}
-        {showHandles && (
-          <div
-            className="absolute inset-y-0 z-10 bg-ice-400/10 pointer-events-none rounded-sm"
-            style={{ left: `${minHandlePx}px`, width: `${maxHandlePx - minHandlePx}px` }}
-          />
-        )}
-
-        {/* Current price vertical line */}
-        {showHandles && (
-          <div
-            className="absolute inset-y-0 z-10 w-[1px] bg-yellow-400/50 pointer-events-none"
-            style={{ left: `${currentPricePx}px` }}
-          />
-        )}
-
-        {/* Drag handles */}
-        {showHandles && (
-          <>
-            <DragHandle
-              side="min"
-              pxOffset={minHandlePx}
-              pctDiff={minPctDiff}
-              onPointerDown={(e) => handlePointerDown("min", e)}
-            />
-            <DragHandle
-              side="max"
-              pxOffset={maxHandlePx}
-              pctDiff={maxPctDiff}
-              onPointerDown={(e) => handlePointerDown("max", e)}
-            />
-          </>
-        )}
       </div>
 
-      {/* Price axis labels */}
-      {ticks.length > 0 && (
-        <div className="absolute bottom-1 left-2 right-2">
-          <div className="flex justify-between text-[8px] text-text-tertiary">
-            <span>{formatPriceCompact(ticks[0]?.priceLower ?? 0)}</span>
-            <span className="text-yellow-400">{formatPriceCompact(currentPrice)}</span>
-            <span>{formatPriceCompact(ticks[ticks.length - 1]?.priceUpper ?? 0)}</span>
-          </div>
+      {/* Price axis labels (fixed, not zoomed) */}
+      <div className="absolute bottom-1 left-2 right-2">
+        <div className="flex justify-between text-[8px] text-text-tertiary">
+          <span>{formatPriceCompact(axisLeftPrice)}</span>
+          <span className="text-yellow-400">{formatPriceCompact(currentPrice)}</span>
+          <span>{formatPriceCompact(axisRightPrice)}</span>
         </div>
-      )}
+      </div>
     </div>
   );
 }
