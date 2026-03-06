@@ -31,7 +31,6 @@ function TestProviders({
 
   useEffect(() => {
     // Expose for Playwright to trigger connect
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).__testWagmiConfig = testConfig;
   }, [testConfig]);
 

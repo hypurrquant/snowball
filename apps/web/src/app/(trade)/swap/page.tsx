@@ -85,13 +85,13 @@ export default function SwapPage() {
           {/* From */}
           <div className="rounded-xl bg-bg-input p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-[#4A4B57] font-semibold uppercase tracking-wider">From</span>
+              <span className="text-xs text-text-tertiary font-semibold uppercase tracking-wider">From</span>
               {balanceIn && (
                 <button
                   onClick={() =>
                     setAmountInStr(formatEther(balanceIn.value))
                   }
-                  className="text-xs text-[#8B8D97] hover:text-[#60a5fa] transition-colors"
+                  className="text-xs text-text-secondary hover:text-ice-400 transition-colors"
                 >
                   Balance:{" "}
                   {formatTokenAmount(balanceIn.value, 18, 4)}
@@ -105,7 +105,7 @@ export default function SwapPage() {
                 placeholder="0.0"
                 value={amountInStr}
                 onChange={(e) => setAmountInStr(e.target.value)}
-                className="flex-1 bg-transparent text-2xl font-mono text-text-primary outline-none placeholder:text-[#4A4B57]"
+                className="flex-1 bg-transparent text-2xl font-mono text-text-primary outline-none placeholder:text-text-tertiary"
               />
               <TokenSelector
                 selectedToken={tokenIn}
@@ -118,31 +118,31 @@ export default function SwapPage() {
           <div className="flex justify-center -my-3 relative z-10">
             <button
               onClick={flipTokens}
-              className="w-10 h-10 rounded-xl bg-[#141525] border border-[#1F2037] hover:border-[#60a5fa]/40 flex items-center justify-center transition-all hover:rotate-180 hover:shadow-[0_0_15px_rgba(96,165,250,0.2)] duration-300"
+              className="w-10 h-10 rounded-xl bg-bg-card border border-border hover:border-ice-400/40 flex items-center justify-center transition-all hover:rotate-180 hover:shadow-[0_0_15px_rgba(96,165,250,0.2)] duration-300"
             >
-              <ArrowDownUp className="w-5 h-5 text-[#60a5fa]" />
+              <ArrowDownUp className="w-5 h-5 text-ice-400" />
             </button>
           </div>
 
           {/* To */}
-          <div className="rounded-xl bg-[#1C1D30] p-4">
+          <div className="rounded-xl bg-bg-input p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-[#4A4B57] font-semibold uppercase tracking-wider">To</span>
+              <span className="text-xs text-text-tertiary font-semibold uppercase tracking-wider">To</span>
               {balanceOut && (
-                <span className="text-xs text-[#8B8D97]">
+                <span className="text-xs text-text-secondary">
                   Balance:{" "}
                   {formatTokenAmount(balanceOut.value, 18, 4)}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 text-2xl font-mono text-[#F5F5F7]">
+              <div className="flex-1 text-2xl font-mono text-text-primary">
                 {isQuoteLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-[#8B8D97]" />
+                  <Loader2 className="w-5 h-5 animate-spin text-text-secondary" />
                 ) : expectedAmountOut ? (
                   formatTokenAmount(expectedAmountOut, 18, 6)
                 ) : (
-                  <span className="text-[#4A4B57]">0.0</span>
+                  <span className="text-text-tertiary">0.0</span>
                 )}
               </div>
               <TokenSelector
@@ -154,9 +154,9 @@ export default function SwapPage() {
 
           {/* Fee info */}
           {fee !== undefined && (
-            <div className="flex items-center justify-between px-1 text-xs text-[#8B8D97]">
+            <div className="flex items-center justify-between px-1 text-xs text-text-secondary">
               <span>Dynamic Fee</span>
-              <Badge variant="secondary" className="bg-[#1C1D30] text-[#60a5fa] hover:bg-[#1a2035]">{Number(fee) / 100}%</Badge>
+              <Badge variant="secondary" className="bg-bg-input text-ice-400 hover:bg-bg-hover">{Number(fee) / 100}%</Badge>
             </div>
           )}
 

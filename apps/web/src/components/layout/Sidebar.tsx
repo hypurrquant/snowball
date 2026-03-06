@@ -3,75 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  ArrowLeftRight,
-  Droplets,
-  Landmark,
-  HandCoins,
-  Percent,
-  ChartCandlestick,
-  History,
-  LayoutDashboard,
-  BarChart3,
-  Bot,
-  MessageSquare,
-  Snowflake,
-  Vault,
-} from "lucide-react";
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-}
-
-interface NavGroup {
-  title: string;
-  items: NavItem[];
-}
-
-const NAV_GROUPS: NavGroup[] = [
-  {
-    title: "Trade",
-    items: [
-      { href: "/swap", label: "Swap", icon: <ArrowLeftRight className="w-4 h-4" /> },
-      { href: "/pool", label: "Pool", icon: <Droplets className="w-4 h-4" /> },
-    ],
-  },
-  {
-    title: "DeFi",
-    items: [
-      { href: "/lend", label: "Lend", icon: <Landmark className="w-4 h-4" /> },
-      { href: "/borrow", label: "Borrow", icon: <HandCoins className="w-4 h-4" /> },
-      { href: "/earn", label: "Earn", icon: <Percent className="w-4 h-4" /> },
-      { href: "/yield", label: "Yield", icon: <Vault className="w-4 h-4" /> },
-    ],
-  },
-  {
-    title: "Options",
-    items: [
-      { href: "/options", label: "Trade", icon: <ChartCandlestick className="w-4 h-4" /> },
-      { href: "/options/history", label: "History", icon: <History className="w-4 h-4" /> },
-    ],
-  },
-  {
-    title: "More",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
-      { href: "/analytics", label: "Analytics", icon: <BarChart3 className="w-4 h-4" /> },
-      { href: "/agent", label: "Agent", icon: <Bot className="w-4 h-4" /> },
-      { href: "/chat", label: "Chat", icon: <MessageSquare className="w-4 h-4" /> },
-    ],
-  },
-];
+import { Snowflake } from "lucide-react";
+import { NAV_GROUPS } from "@/config/nav";
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex flex-col w-60 h-screen bg-bg-secondary border-r border-border sticky top-0">
+    <aside className="hidden lg:flex flex-col w-60 h-screen border-r border-white/[0.06] sticky top-0 backdrop-blur-xl bg-[rgba(10,11,20,0.55)]">
       {/* Logo */}
-      <Link href="/" className="flex items-center gap-2.5 px-5 py-4 border-b border-border">
+      <Link href="/" className="flex items-center gap-2.5 px-5 py-4 border-b border-white/[0.06]">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-ice-400 to-ice-600 flex items-center justify-center">
           <Snowflake className="w-4 h-4 text-white" />
         </div>
@@ -99,7 +40,7 @@ export function Sidebar() {
                           : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
                       )}
                     >
-                      {item.icon}
+                      {item.icon("w-4 h-4")}
                       {item.label}
                     </Link>
                   </li>
@@ -111,7 +52,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-border">
+      <div className="px-4 py-3 border-t border-white/[0.06]">
         <div className="flex items-center gap-2 text-xs text-text-tertiary">
           <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
           Creditcoin Testnet

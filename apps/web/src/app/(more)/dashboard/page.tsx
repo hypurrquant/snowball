@@ -127,38 +127,38 @@ export default function DashboardPage() {
               label="Active Troves"
               value={`${wCTCTroves + lstCTCTroves}`}
               sub={`wCTC: ${wCTCTroves}, lstCTC: ${lstCTCTroves}`}
-              icon={<HandCoins className="w-5 h-5 text-[#60a5fa]" />}
+              icon={<HandCoins className="w-5 h-5 text-ice-400" />}
             />
             <StatCard
               label="SP Deposit"
               value={formatTokenAmount(spDeposit, 18, 4)}
               sub="sbUSD"
-              icon={<Percent className="w-5 h-5 text-[#60a5fa]" />}
+              icon={<Percent className="w-5 h-5 text-ice-400" />}
             />
             <StatCard
               label="Lend Positions"
               value="—"
               sub="View in Lend"
-              icon={<Landmark className="w-5 h-5 text-[#60a5fa]" />}
+              icon={<Landmark className="w-5 h-5 text-ice-400" />}
             />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-[#141525]/60 backdrop-blur-xl border-white/5">
+            <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
               <CardHeader>
                 <CardTitle className="text-base text-white">Portfolio Asset Distribution</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center min-h-[200px]">
                 {/* Placeholder for Recharts Donut */}
-                <div className="text-[#8B8D97] text-sm flex flex-col items-center gap-2">
-                  <div className="w-32 h-32 rounded-full border-4 border-[#1F2037] border-t-[#60a5fa] border-r-[#8B5CF6] border-b-[#34D399] animate-[spin_10s_linear_infinite]" />
+                <div className="text-text-secondary text-sm flex flex-col items-center gap-2">
+                  <div className="w-32 h-32 rounded-full border-4 border-border border-t-ice-400 border-r-violet-500 border-b-emerald-400 animate-[spin_10s_linear_infinite]" />
                   <span className="mt-4">Loading Chart Data...</span>
                 </div>
               </CardContent>
             </Card>
 
             {/* Quick Links */}
-            <Card className="bg-[#141525]/60 backdrop-blur-xl border-white/5">
+            <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
               <CardHeader>
                 <CardTitle className="text-base text-white">Quick Actions</CardTitle>
               </CardHeader>
@@ -168,9 +168,9 @@ export default function DashboardPage() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="group flex items-center gap-3 p-4 rounded-xl bg-[#1C1D30]/50 border border-transparent hover:border-[#60a5fa]/30 hover:bg-[#1a2035] transition-all duration-300"
+                      className="group flex items-center gap-3 p-4 rounded-xl bg-bg-input/50 border border-transparent hover:border-ice-400/30 hover:bg-bg-hover transition-all duration-300"
                     >
-                      <div className={`p-2 rounded-lg bg-[#141525] group-hover:scale-110 transition-transform ${link.color}`}>
+                      <div className={`p-2 rounded-lg bg-bg-card group-hover:scale-110 transition-transform ${link.color}`}>
                         {link.icon}
                       </div>
                       <span className="text-sm font-medium text-white">

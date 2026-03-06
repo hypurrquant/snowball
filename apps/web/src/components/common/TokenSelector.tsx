@@ -58,7 +58,7 @@ function TokenRow({
                     <span className="text-base font-medium text-white">
                         {info.symbol}
                     </span>
-                    <span className="text-xs text-[#8B8D97]">{info.name}</span>
+                    <span className="text-xs text-text-secondary">{info.name}</span>
                 </div>
             </div>
 
@@ -68,7 +68,7 @@ function TokenRow({
                         {formatTokenAmount(balanceData.value, balanceData.decimals, 4)}
                     </div>
                 ) : (
-                    <div className="text-sm text-[#8B8D97]">0.0000</div>
+                    <div className="text-sm text-text-secondary">0.0000</div>
                 )}
             </div>
         </div>
@@ -106,7 +106,7 @@ export function TokenSelector({
                     trigger
                 ) : (
                     <button
-                        className="flex items-center gap-2 rounded-xl border border-[#1F2037] bg-[#1a2035] px-3 py-2 text-sm font-medium text-white transition-colors hover:border-white/20 hover:bg-[#1e293b]"
+                        className="flex items-center gap-2 rounded-xl border border-border bg-bg-hover px-3 py-2 text-sm font-medium text-white transition-colors hover:border-white/20 hover:bg-bg-active"
                     >
                         {selectedInfo ? (
                             <>
@@ -140,10 +140,10 @@ export function TokenSelector({
                 </DialogHeader>
 
                 <div className="relative mt-2">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8B8D97]" />
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
                     <Input
                         placeholder="Search name or paste address"
-                        className="pl-9 bg-[#1C1D30] border-transparent focus-visible:ring-1 focus-visible:ring-[#60a5fa] placeholder:text-[#8B8D97]"
+                        className="pl-9 bg-bg-input border-transparent focus-visible:ring-1 focus-visible:ring-ice-400 placeholder:text-text-secondary"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -162,7 +162,7 @@ export function TokenSelector({
                             />
                         ))
                     ) : (
-                        <div className="py-8 text-center text-sm text-[#8B8D97]">
+                        <div className="py-8 text-center text-sm text-text-secondary">
                             No tokens found.
                         </div>
                     )}

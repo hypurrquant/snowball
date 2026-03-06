@@ -4,33 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { X, Snowflake } from "lucide-react";
-import {
-  ArrowLeftRight,
-  Droplets,
-  Landmark,
-  HandCoins,
-  Percent,
-  ChartCandlestick,
-  History,
-  LayoutDashboard,
-  BarChart3,
-  Bot,
-  MessageSquare,
-} from "lucide-react";
-
-const MOBILE_NAV = [
-  { href: "/swap", label: "Swap", icon: <ArrowLeftRight className="w-5 h-5" /> },
-  { href: "/pool", label: "Pool", icon: <Droplets className="w-5 h-5" /> },
-  { href: "/lend", label: "Lend", icon: <Landmark className="w-5 h-5" /> },
-  { href: "/borrow", label: "Borrow", icon: <HandCoins className="w-5 h-5" /> },
-  { href: "/earn", label: "Earn", icon: <Percent className="w-5 h-5" /> },
-  { href: "/options", label: "Options", icon: <ChartCandlestick className="w-5 h-5" /> },
-  { href: "/options/history", label: "History", icon: <History className="w-5 h-5" /> },
-  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" /> },
-  { href: "/analytics", label: "Analytics", icon: <BarChart3 className="w-5 h-5" /> },
-  { href: "/agent", label: "Agent", icon: <Bot className="w-5 h-5" /> },
-  { href: "/chat", label: "Chat", icon: <MessageSquare className="w-5 h-5" /> },
-];
+import { NAV_GROUPS } from "@/config/nav";
 
 export function MobileNav({
   open,
@@ -71,7 +45,7 @@ export function MobileNav({
 
         {/* Links */}
         <nav className="py-4 px-3 space-y-1 overflow-y-auto">
-          {MOBILE_NAV.map((item) => {
+          {NAV_GROUPS.flatMap((g) => g.items).map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/" && pathname.startsWith(item.href));
@@ -87,7 +61,7 @@ export function MobileNav({
                     : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
                 )}
               >
-                {item.icon}
+                {item.icon("w-5 h-5")}
                 {item.label}
               </Link>
             );

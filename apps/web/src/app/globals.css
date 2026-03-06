@@ -77,7 +77,7 @@ html {
 }
 
 body {
-  background: var(--color-bg-primary);
+  background: transparent;
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;

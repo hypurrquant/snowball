@@ -26,35 +26,35 @@ export default function AnalyticsPage() {
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold flex items-center gap-2 text-white">
-          <BarChart3 className="w-6 h-6 text-[#60a5fa]" />
+          <BarChart3 className="w-6 h-6 text-ice-400" />
           Protocol Analytics
         </h1>
-        <div className="bg-[#1C1D30] px-3 py-1.5 rounded-lg text-xs font-medium text-[#8B8D97] border border-[#1F2037]">
+        <div className="bg-bg-input px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary border border-border">
           Data updates every 5 mins
         </div>
       </div>
 
       {/* Overview Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Value Locked" value="$4.20M" icon={<DollarSign className="w-5 h-5 text-[#60a5fa]" />} sub={
-          <span className="flex items-center text-[#22c55e] text-xs mt-1"><ArrowUpRight className="w-3 h-3 mr-0.5" /> +12.5%</span>
+        <StatCard label="Total Value Locked" value="$4.20M" icon={<DollarSign className="w-5 h-5 text-ice-400" />} sub={
+          <span className="flex items-center text-success text-xs mt-1"><ArrowUpRight className="w-3 h-3 mr-0.5" /> +12.5%</span>
         } />
-        <StatCard label="24h Volume" value="$565K" icon={<Activity className="w-5 h-5 text-[#8B5CF6]" />} sub={
-          <span className="flex items-center text-[#22c55e] text-xs mt-1"><ArrowUpRight className="w-3 h-3 mr-0.5" /> +5.2%</span>
+        <StatCard label="24h Volume" value="$565K" icon={<Activity className="w-5 h-5 text-violet-500" />} sub={
+          <span className="flex items-center text-success text-xs mt-1"><ArrowUpRight className="w-3 h-3 mr-0.5" /> +5.2%</span>
         } />
-        <StatCard label="Total Users" value="1,248" icon={<Users className="w-5 h-5 text-[#34D399]" />} sub={
-          <span className="flex items-center text-[#22c55e] text-xs mt-1"><ArrowUpRight className="w-3 h-3 mr-0.5" /> +18 today</span>
+        <StatCard label="Total Users" value="1,248" icon={<Users className="w-5 h-5 text-emerald-400" />} sub={
+          <span className="flex items-center text-success text-xs mt-1"><ArrowUpRight className="w-3 h-3 mr-0.5" /> +18 today</span>
         } />
-        <StatCard label="Total Fees" value="$24.5K" icon={<DollarSign className="w-5 h-5 text-[#F59E0B]" />} sub="Last 30 days" />
+        <StatCard label="Total Fees" value="$24.5K" icon={<DollarSign className="w-5 h-5 text-amber-500" />} sub="Last 30 days" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart */}
-        <Card className="lg:col-span-2 bg-[#141525]/60 backdrop-blur-xl border-[#1F2037] shadow-xl">
+        <Card className="lg:col-span-2 bg-bg-card/60 backdrop-blur-xl border-border shadow-xl">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle className="text-lg font-bold text-white">TVL History</CardTitle>
-              <p className="text-sm text-[#8B8D97] mt-1">Total Value Locked across all pools and lending</p>
+              <p className="text-sm text-text-secondary mt-1">Total Value Locked across all pools and lending</p>
             </div>
             <div className="text-2xl font-bold text-white font-mono">$4.20M</div>
           </CardHeader>
@@ -89,22 +89,22 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Top Pools */}
-        <Card className="bg-[#141525]/60 backdrop-blur-xl border-[#1F2037] shadow-xl">
+        <Card className="bg-bg-card/60 backdrop-blur-xl border-border shadow-xl">
           <CardHeader>
             <CardTitle className="text-lg font-bold text-white">Top Pools by Volume</CardTitle>
           </CardHeader>
           <CardContent className="px-0">
-            <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-6 pb-2 text-xs font-semibold text-[#8B8D97] uppercase tracking-wider border-b border-[#1F2037]">
+            <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-6 pb-2 text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-border">
               <span>Pool</span>
               <span className="text-right">Volume</span>
               <span className="text-right">APY</span>
             </div>
             <div className="flex flex-col">
               {MOCK_POOLS.map((pool, i) => (
-                <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center px-6 py-4 hover:bg-[#1a2035] transition-colors border-b border-[#1F2037] last:border-0 cursor-pointer">
+                <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center px-6 py-4 hover:bg-bg-hover transition-colors border-b border-border last:border-0 cursor-pointer">
                   <span className="font-semibold text-white">{pool.pair}</span>
-                  <span className="font-mono text-sm text-[#F5F5F7] text-right">{pool.vol24h}</span>
-                  <span className="font-mono text-sm text-[#22c55e] text-right">{pool.apy}</span>
+                  <span className="font-mono text-sm text-text-primary text-right">{pool.vol24h}</span>
+                  <span className="font-mono text-sm text-success text-right">{pool.apy}</span>
                 </div>
               ))}
             </div>
