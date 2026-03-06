@@ -19,5 +19,11 @@ export const creditcoinTestnet = defineChain({
       url: "https://creditcoin-testnet.blockscout.com",
     },
   },
+  contracts: {
+    multicall3: {
+      address: "0xa943BE162b5036539017Ce9fcdF7295D41De80c1",
+      blockCreated: 4382268,
+    },
+  },
   testnet: true,
 });

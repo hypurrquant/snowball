@@ -49,10 +49,10 @@ const walletClient = createWalletClient({
 
 // ─── Real token addresses ───
 const REAL_TOKENS = {
+  wCTC: "0xdb5c8e9d0827c474342bea03e0e35a60d621afea" as Address,
+  lstCTC: "0x47ad69498520edb2e1e9464fedf5309504e26207" as Address,
   sbUSD: "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd" as Address,
-  wCTC: "0x8f7f60a0f615d828eafcbbf6121f73efcfb56969" as Address,
-  lstCTC: "0x72968ff9203dc5f352c5e42477b84d11c8c8f153" as Address,
-  USDC: "0xbcaa46ef7a399fcdb64adf4520cdcc6d62fcaaed" as Address,
+  USDC: "0x3e31b08651644b9e6535f5bf0c7a9e7e6ad92e02" as Address,
 };
 
 // ─── Deployed DEX core addresses ───
