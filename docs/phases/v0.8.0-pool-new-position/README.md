@@ -34,7 +34,7 @@
    - `PriceRangeSelector` 컴포넌트 구조 차용
 
 ### 세부 결정사항
-- **Estimated APR**: useProtocolStats의 mock 고정값 표시 (실제 계산은 향후 Phase)
+- **Estimated APR**: usePoolList에서 token0-token1 매칭되는 풀의 feesAPR 값 표시. 매칭 실패 시 "—" (실제 계산은 향후 Phase)
 - **가격 표시 방향**: token0/token1 고정 (반전 토글 없음)
 - **가격 소수점**: `formatPriceCompact()` 규칙 — <0.0001 지수표기, <1 유효4자리, <1000 소수4자리, 그 외 소수2자리
 - **반응형 레이아웃**: lg 이상 2컬럼, lg 미만 1컬럼 세로 스택 (Select Range → Deposit 순)
@@ -47,7 +47,7 @@
 - Execution Pipeline (approve → swap → mint → farm 오케스트레이션)
 - Pool 선택 테이블 (현재 pool list 페이지에서 선택 후 진입하는 플로우 유지)
 - 실제 USD 가격 표시 (토큰 USD 가격 피드 미구현)
-- APR 실제 계산 (mock 고정값만 표시)
+- APR 실제 계산 (usePoolList.feesAPR 표시만, 실제 온체인 계산은 향후)
 - 가격 방향 반전 토글
 
 ## 제약사항
