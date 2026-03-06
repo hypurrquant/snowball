@@ -28,6 +28,17 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 > - 새 기능 개발, 버그 수정, 리팩토링 시 Options 관련 파일은 무시한다
 > - ABI 감사에서 Options 관련 CRITICAL 이슈(16건 중 5건)도 수정 대상이 아니다
 
+## 온체인 참고사항
+
+### Oracle 스케일링
+- MockOracle의 `price()`는 **18 decimals** 반환 (Morpho 본가 스펙은 36 decimals이지만 이 프로젝트는 18)
+- 현재 테스트넷 가격: wCTC=$5, lstCTC=$5, sbUSD=$1 (고정값)
+- `useMorphoPosition.ts`의 `ORACLE_SCALE = 10n ** 18n` — oracle 컨트랙트 변경 시 같이 수정 필요
+
+### 컨트랙트 배포 상태 (Creditcoin Testnet)
+- SnowballLend, AdaptiveCurveIRM, Oracle 3개 모두 배포 완료
+- `borrowRateView` 온체인 호출 가능 (유동성 없으면 rate=0 → fallback 근사치 사용)
+
 ## 커밋 컨벤션
 
 - 한글 커밋 메시지 사용
@@ -35,11 +46,11 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 현재 페이즈
 
-- **버전**: v0.10.0
-- **기능**: Agent (ERC-8004) 프론트엔드 구현
+- **버전**: v0.11.0
+- **기능**: Agent Delegation Demo (Morpho + Liquity 위임 실행 데모)
 - **상태**: Step 1 - PRD
-- **문서**: [docs/phases/v0.10.0-agent-erc8004/](docs/phases/v0.10.0-agent-erc8004/)
-- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.10.0-agent-erc8004`
+- **문서**: [docs/phases/v0.11.0-agent-delegation-demo/](docs/phases/v0.11.0-agent-delegation-demo/)
+- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.11.0-agent-delegation-demo`
 - **시작일**: 2026-03-06
 
 ## 문서 구조
