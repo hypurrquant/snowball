@@ -71,14 +71,24 @@ export function useStabilityPool(branch: "wCTC" | "lstCTC") {
     return waitAndRefetch(hash);
   };
 
-  const claimAll = async () => {
-    const hash = await writeContractAsync({
-      address: b.stabilityPool,
-      abi: StabilityPoolABI,
-      functionName: "claimAllCollGains",
-    });
+  // Claim rewards: use withdrawFromSP(0, doClaim=true) for active depositors,
+  // claimAllCollGains() only works when user has NO deposit (stashed coll only)
+  const claimRewards = async () => {
+    const hasDeposit = position.userDeposit > 0n;
+    const hash = hasDeposit
+      ? await writeContractAsync({
+          address: b.stabilityPool,
+          abi: StabilityPoolABI,
+          functionName: "withdrawFromSP",
+          args: [0n, true],
+        })
+      : await writeContractAsync({
+          address: b.stabilityPool,
+          abi: StabilityPoolABI,
+          functionName: "claimAllCollGains",
+        });
     return waitAndRefetch(hash);
   };
 
-  return { position, isLoading, deposit, withdraw, claimAll, isPending };
+  return { position, isLoading, deposit, withdraw, claimRewards, isPending };
 }

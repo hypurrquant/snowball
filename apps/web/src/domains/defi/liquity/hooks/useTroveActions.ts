@@ -11,8 +11,12 @@ import {
 import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
 import { getInsertPosition } from "../lib/liquityMath";
 import type { Address } from "viem";
+import { encodePacked, keccak256 } from "viem";
 
 const BRANCH_INDEX: Record<string, bigint> = { wCTC: 0n, lstCTC: 1n };
+
+// Liquity V2: gas compensation deposited to GasPool on openTrove, returned on closeTrove
+const ETH_GAS_COMPENSATION = 200n * 10n ** 18n;
 
 export function useTroveActions(
   branch: "wCTC" | "lstCTC",
@@ -52,8 +56,11 @@ export function useTroveActions(
     debt: bigint;
     rate: bigint;
     maxFee: bigint;
+    ownerIndex?: bigint;
   }) => {
-    await approve(params.coll);
+    const ownerIndex = params.ownerIndex ?? 0n;
+    // Approve coll + gas compensation (200 CTC WETH deposited to GasPool)
+    await approve(params.coll + ETH_GAS_COMPENSATION);
 
     const [upperHint, lowerHint] = await getInsertPosition(
       readContractFn,
@@ -71,7 +78,7 @@ export function useTroveActions(
       functionName: "openTrove",
       args: [
         owner!,
-        0n,
+        ownerIndex,
         params.coll,
         params.debt,
         upperHint,

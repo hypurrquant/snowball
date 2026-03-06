@@ -17,15 +17,15 @@ export const TOKEN_INFO: Record<string, { symbol: string; name: string; decimals
   [TOKENS.wCTC]: { symbol: "wCTC", name: "Wrapped CTC", decimals: 18, mockPriceUsd: 2.50 },
   [TOKENS.lstCTC]: { symbol: "lstCTC", name: "Liquid Staked CTC", decimals: 18, mockPriceUsd: 2.60 },
   [TOKENS.sbUSD]: { symbol: "sbUSD", name: "Snowball USD", decimals: 18, mockPriceUsd: 1.00 },
-  [TOKENS.USDC]: { symbol: "USDC", name: "Mock USDC", decimals: 6, mockPriceUsd: 1.00 },
+  [TOKENS.USDC]: { symbol: "USDC", name: "Mock USDC", decimals: 18, mockPriceUsd: 1.00 },
 };
 
 // ─── DEX (Uniswap V3) ───
 export const DEX = {
-  factory: "0xd478a63345d7cd17881a540e15943919604691f6" as Address,
-  swapRouter: "0xd604593426538fd1fa5b2660e3e443fa1ce93411" as Address,
-  nonfungiblePositionManager: "0x54b8584dd202cee8db0fbfa3522f78cb7d9bf6dd" as Address,
-  quoterV2: "0xeb2b122a28dceaeecb87b745173d6aa3c990d5c0" as Address,
+  factory: "0x09616b503326dc860b3c3465525b39fe4fcdd049" as Address,
+  swapRouter: "0xec48ed2e9c81b77ab6f8e79c257f9d0c21074154" as Address,
+  nonfungiblePositionManager: "0xa28bfaa2e84098de8d654f690e51c265e4ae01c9" as Address,
+  quoterV2: "0x2383343c2c7ae52984872f541b8b22f8da0b419a" as Address,
 } as const;
 
 // ─── Liquity (Borrow / Earn) ───
@@ -45,11 +45,11 @@ export const LIQUITY = {
       addressesRegistry: "0x5f407d42b3cd83a5bbb70c09726d8a8ebd2c866c" as Address,
       borrowerOperations: "0x34f36f41f912e29c600733d90a4d210a49718a5d" as Address,
       troveManager: "0xda7b322d26b3477161dc80282d1ea4d486528232" as Address,
-      stabilityPool: "0x2bcdc50ec56a9d3b9e35427fbc70e11e4de0c3a2" as Address,
-      activePool: "0xad1c8b7ab9d44db1e3ac39e756eea1f78d9dc9c6" as Address,
-      troveNFT: "0xc2e0c3979cff7c8dea36ddaa3ece05f7e5a0f12f" as Address,
-      sortedTroves: "0x53c4e99c7e46b0e47fa4df7aa6e10b7e4a5ccf38" as Address,
-      priceFeed: "0x5f97ceb4c17b90b6e04f17d08e2a9e0d97d59d95" as Address,
+      stabilityPool: "0x353f40353453f123f9073f117956e8fdf324e977" as Address,
+      activePool: "0x94e0d44e8b03782f7616a3488b4f973d7f76b6a4" as Address,
+      troveNFT: "0x32da60f2b720e67889c4a2722ae881c99c2dc281" as Address,
+      sortedTroves: "0x645b38f477ea61bd71072face0892021208b8d49" as Address,
+      priceFeed: "0x702121516551b72f7f1ee77906b2488bd8d2eb0a" as Address,
     },
   },
   shared: {

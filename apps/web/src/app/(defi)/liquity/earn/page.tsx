@@ -22,7 +22,7 @@ export default function LiquityEarnPage() {
   const branch = (searchParams.get("branch") as "wCTC" | "lstCTC") ?? "wCTC";
   const { address, isConnected } = useConnection();
 
-  const { position, isLoading, deposit, withdraw, claimAll, isPending } =
+  const { position, isLoading, deposit, withdraw, claimRewards, isPending } =
     useStabilityPool(branch);
   const { data: sbUSDBalance, refetch: refetchBalance } = useTokenBalance({ address, token: TOKENS.sbUSD });
 
@@ -53,7 +53,7 @@ export default function LiquityEarnPage() {
 
   const handleClaim = async () => {
     try {
-      await claimAll();
+      await claimRewards();
       refetchBalance();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Claim failed");

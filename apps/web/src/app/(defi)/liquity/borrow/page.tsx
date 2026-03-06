@@ -32,7 +32,7 @@ export default function LiquityBorrowPage() {
   const { address, isConnected } = useConnection();
 
   const { stats, isLoading: statsLoading } = useLiquityBranch(branch);
-  const { troves, troveCount, isLoading: trovesLoading, refetch: refetchTroves } = useTroves(branch, address);
+  const { troves, troveCount, isLoading: trovesLoading, refetch: refetchTroves, nextOwnerIndex } = useTroves(branch, address);
   const { openTrove, adjustTrove, adjustInterestRate, closeTrove, isPending } =
     useTroveActions(branch, address);
   const collToken = branch === "wCTC" ? TOKENS.wCTC : TOKENS.lstCTC;
@@ -72,6 +72,7 @@ export default function LiquityBorrowPage() {
         debt: parseEther(debtAmount),
         rate: parseEther(String(Number(rateAmount) / 100)),
         maxFee: parseEther("1"),
+        ownerIndex: nextOwnerIndex,
       });
       setCollAmount("");
       setDebtAmount("");

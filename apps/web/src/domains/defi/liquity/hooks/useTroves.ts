@@ -2,20 +2,27 @@
 
 import { useReadContract, useReadContracts } from "wagmi";
 import { LIQUITY } from "@/core/config/addresses";
-import { TroveManagerABI, TroveNFTABI, MockPriceFeedABI } from "@/core/abis";
+import { TroveManagerABI, MockPriceFeedABI } from "@/core/abis";
 import type { TroveData } from "../types";
 import type { Address } from "viem";
+import { encodeAbiParameters, keccak256 } from "viem";
+
+// Compute troveId the same way the contract does:
+// troveId = uint256(keccak256(abi.encode(sender, owner, ownerIndex)))
+// For direct user calls, sender == owner
+function computeTroveId(sender: Address, owner: Address, ownerIndex: bigint): bigint {
+  const encoded = encodeAbiParameters(
+    [{ type: "address" }, { type: "address" }, { type: "uint256" }],
+    [sender, owner, ownerIndex],
+  );
+  return BigInt(keccak256(encoded));
+}
+
+// Max ownerIndex to scan per user (MVP: typically 1-3 troves)
+const MAX_OWNER_INDEX = 5;
 
 export function useTroves(branch: "wCTC" | "lstCTC", owner?: Address) {
   const b = LIQUITY.branches[branch];
-
-  const { data: nftBalance } = useReadContract({
-    address: b.troveNFT,
-    abi: TroveNFTABI,
-    functionName: "balanceOf",
-    args: [owner!],
-    query: { enabled: !!owner, refetchInterval: 10_000 },
-  });
 
   const { data: price } = useReadContract({
     address: b.priceFeed,
@@ -24,27 +31,33 @@ export function useTroves(branch: "wCTC" | "lstCTC", owner?: Address) {
     query: { refetchInterval: 10_000 },
   });
 
-  const count = Number(nftBalance ?? 0n);
-  const indices = Array.from({ length: count }, (_, i) => i);
+  // Compute candidate troveIds for ownerIndex 0..MAX_OWNER_INDEX
+  const candidateIds = owner
+    ? Array.from({ length: MAX_OWNER_INDEX }, (_, i) => computeTroveId(owner, owner, BigInt(i)))
+    : [];
 
-  // Fetch trove IDs owned by this user
-  const { data: idResults } = useReadContracts({
-    contracts: indices.map((i) => ({
-      address: b.troveNFT,
-      abi: TroveNFTABI,
-      functionName: "tokenOfOwnerByIndex" as const,
-      args: [owner!, BigInt(i)] as const,
+  // Check status of each candidate to find which ones exist
+  const { data: statusResults } = useReadContracts({
+    contracts: candidateIds.map((id) => ({
+      address: b.troveManager,
+      abi: TroveManagerABI,
+      functionName: "getTroveStatus" as const,
+      args: [id] as const,
     })),
-    query: { enabled: count > 0 && !!owner, refetchInterval: 10_000 },
+    query: { enabled: candidateIds.length > 0, refetchInterval: 10_000 },
   });
 
-  const troveIds = (idResults ?? [])
-    .filter((r) => r.status === "success")
-    .map((r) => r.result as bigint);
+  // Filter to active troves (status 1 = active)
+  const activeTroveIds = candidateIds.filter((_, i) => {
+    const r = statusResults?.[i];
+    if (r?.status !== "success") return false;
+    const status = Number(r.result as number);
+    return status === 1; // active
+  });
 
-  // Fetch trove details + ICR for each ID
+  // Fetch trove details + ICR for active troves
   const { data: detailResults, isLoading, refetch } = useReadContracts({
-    contracts: troveIds.flatMap((id) => [
+    contracts: activeTroveIds.flatMap((id) => [
       {
         address: b.troveManager,
         abi: TroveManagerABI,
@@ -57,22 +70,15 @@ export function useTroves(branch: "wCTC" | "lstCTC", owner?: Address) {
         functionName: "getCurrentICR" as const,
         args: [id, price ?? 0n] as const,
       },
-      {
-        address: b.troveManager,
-        abi: TroveManagerABI,
-        functionName: "getTroveStatus" as const,
-        args: [id] as const,
-      },
     ]),
-    query: { enabled: troveIds.length > 0 && !!price, refetchInterval: 10_000 },
+    query: { enabled: activeTroveIds.length > 0 && !!price, refetchInterval: 10_000 },
   });
 
   const troves: TroveData[] = [];
   if (detailResults) {
-    for (let i = 0; i < troveIds.length; i++) {
-      const dataResult = detailResults[i * 3];
-      const icrResult = detailResults[i * 3 + 1];
-      const statusResult = detailResults[i * 3 + 2];
+    for (let i = 0; i < activeTroveIds.length; i++) {
+      const dataResult = detailResults[i * 2];
+      const icrResult = detailResults[i * 2 + 1];
 
       if (dataResult?.status !== "success") continue;
 
@@ -84,20 +90,28 @@ export function useTroves(branch: "wCTC" | "lstCTC", owner?: Address) {
       const icr = icrResult?.status === "success"
         ? Number((icrResult.result as bigint) * 100n / (10n ** 18n)) / 100
         : 0;
-      const status = statusResult?.status === "success"
-        ? Number(statusResult.result as number)
-        : 0;
 
       troves.push({
-        id: troveIds[i],
+        id: activeTroveIds[i],
         coll: troveData.entireColl,
         debt: troveData.entireDebt,
         interestRate: troveData.annualInterestRate,
         icr,
-        status,
+        status: 1,
       });
     }
   }
 
-  return { troves, troveCount: BigInt(count), isLoading, refetch };
+  // Next available ownerIndex for opening a new trove
+  const nextOwnerIndex = owner
+    ? BigInt(
+        candidateIds.findIndex((_, i) => {
+          const r = statusResults?.[i];
+          if (r?.status !== "success") return true;
+          return Number(r.result as number) === 0; // nonExistent
+        }),
+      )
+    : 0n;
+
+  return { troves, troveCount: BigInt(troves.length), isLoading, refetch, nextOwnerIndex };
 }
