@@ -17,7 +17,7 @@ export const TOKEN_INFO: Record<string, { symbol: string; name: string; decimals
   [TOKENS.wCTC]: { symbol: "wCTC", name: "Wrapped CTC", decimals: 18 },
   [TOKENS.lstCTC]: { symbol: "lstCTC", name: "Liquid Staked CTC", decimals: 18 },
   [TOKENS.sbUSD]: { symbol: "sbUSD", name: "Snowball USD", decimals: 18 },
-  [TOKENS.USDC]: { symbol: "USDC", name: "Mock USDC", decimals: 18 },
+  [TOKENS.USDC]: { symbol: "USDC", name: "Mock USDC", decimals: 6 },
 };
 
 // ─── DEX (Uniswap V3) ───

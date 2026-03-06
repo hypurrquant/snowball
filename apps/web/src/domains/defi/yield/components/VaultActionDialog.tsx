@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { parseEther, maxUint256 } from "viem";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
@@ -9,9 +9,10 @@ import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { VaultData } from "@/domains/defi/yield/hooks/useYieldVaults";
-import { ERC20ApproveABI, SnowballYieldVaultABI } from "@/core/abis";
+import { SnowballYieldVaultABI } from "@/core/abis";
 import { formatTokenAmount } from "@/shared/lib/utils";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
+import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
 
 interface VaultActionDialogProps {
     vault: VaultData;
@@ -39,31 +40,22 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
         token: vault.want,
     });
 
-    const { data: allowance, refetch: refetchAllowance } = useReadContract({
-        address: vault.want,
-        abi: ERC20ApproveABI,
-        functionName: "allowance",
-        args: [address!, vault.address],
-        query: { enabled: !!address },
+    const depositAmountBigInt = parsedAmountStr && !isNaN(Number(parsedAmountStr)) ? parseEther(parsedAmountStr) : 0n;
+
+    const { needsApproval, approve, isApproving: isApprovePending } = useTokenApproval({
+        token: vault.want,
+        spender: vault.address,
+        amount: depositAmountBigInt,
+        owner: address,
     });
 
-    const depositAmountBigInt = parsedAmountStr && !isNaN(Number(parsedAmountStr)) ? parseEther(parsedAmountStr) : 0n;
-    const needsApproval = depositAmountBigInt > 0n && allowance !== undefined && allowance < depositAmountBigInt;
-
-    const { writeContractAsync: approveAsync, isPending: isApprovePending } = useWriteContract();
     const { writeContractAsync: depositAsync, isPending: isDepositPending } = useWriteContract();
     const { writeContractAsync: withdrawAsync, isPending: isWithdrawPending } = useWriteContract();
 
     const handleApprove = async () => {
         try {
             if (!depositAmountBigInt) return;
-            await approveAsync({
-                address: vault.want,
-                abi: ERC20ApproveABI,
-                functionName: "approve",
-                args: [vault.address, maxUint256],
-            });
-            await refetchAllowance();
+            await approve(maxUint256);
         } catch (error) {
             console.error("Approve failed", error);
         }

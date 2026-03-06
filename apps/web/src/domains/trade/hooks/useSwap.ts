@@ -1,8 +1,9 @@
 "use client";
 
 import { useConnection, useReadContract, useWriteContract } from "wagmi";
-import { QuoterV2ABI, SwapRouterABI, MockERC20ABI } from "@/core/abis";
+import { QuoterV2ABI, SwapRouterABI } from "@/core/abis";
 import { DEX } from "@/core/config/addresses";
+import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
 import type { Address } from "viem";
 
 export function useSwap(
@@ -35,33 +36,12 @@ export function useSwap(
 
   const expectedAmountOut = quoteData?.[0];
 
-  // Allowance check
-  const { data: allowance } = useReadContract({
-    address: tokenIn,
-    abi: MockERC20ABI,
-    functionName: "allowance",
-    args: [address!, DEX.swapRouter],
-    query: { enabled: !!address && !!tokenIn },
-  });
-
-  const isApprovalNeeded =
-    !!amountIn && !!allowance && allowance < amountIn;
-
-  // Approve
+  // Approval
   const {
-    writeContractAsync: approveAsync,
-    isPending: isApprovePending,
-  } = useWriteContract();
-
-  const approve = async () => {
-    if (!tokenIn || !amountIn) return;
-    return approveAsync({
-      address: tokenIn,
-      abi: MockERC20ABI,
-      functionName: "approve",
-      args: [DEX.swapRouter, amountIn],
-    });
-  };
+    needsApproval: isApprovalNeeded,
+    approve,
+    isApproving: isApprovePending,
+  } = useTokenApproval({ token: tokenIn, spender: DEX.swapRouter, amount: amountIn, owner: address });
 
   // Swap
   const {

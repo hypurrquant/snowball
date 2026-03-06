@@ -2,6 +2,7 @@
 
 import { useReadContract, useBalance } from "wagmi";
 import { erc20Abi, type Address } from "viem";
+import { TOKEN_INFO } from "@/core/config/addresses";
 
 export function useTokenBalance({ address, token }: { address?: Address; token?: Address }) {
     const native = useBalance({
@@ -19,8 +20,12 @@ export function useTokenBalance({ address, token }: { address?: Address; token?:
 
     if (!token) return native;
 
+    const info = token ? TOKEN_INFO[token] : undefined;
+
     return {
         ...erc20,
-        data: erc20.data !== undefined ? { value: erc20.data as bigint, decimals: 18, symbol: "ERC20" } : undefined,
+        data: erc20.data !== undefined
+            ? { value: erc20.data as bigint, decimals: info?.decimals ?? 18, symbol: info?.symbol ?? "ERC20" }
+            : undefined,
     };
 }

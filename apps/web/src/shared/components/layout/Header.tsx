@@ -1,7 +1,8 @@
 "use client";
 
 import { usePrivy } from "@privy-io/react-auth";
-import { useConnection, useBalance, useConnect, useDisconnect } from "wagmi";
+import { useConnection, useConnect, useDisconnect } from "wagmi";
+import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { shortenAddress, formatTokenAmount } from "@/shared/lib/utils";
 import {
   LogOut,
@@ -27,7 +28,7 @@ function HeaderInner({
   displayName: string | null;
 }) {
   const { address, isConnected } = useConnection();
-  const { data: balance } = useBalance({ address });
+  const { data: balance } = useTokenBalance({ address });
   const [copied, setCopied] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -74,7 +75,7 @@ function HeaderInner({
               {/* Balance */}
               {balance && (
                 <span className="hidden sm:inline text-xs text-text-secondary font-mono">
-                  {formatTokenAmount(balance.value, 18, 2)} tCTC
+                  {formatTokenAmount(balance.value, balance.decimals, 2)} {balance.symbol}
                 </span>
               )}
 

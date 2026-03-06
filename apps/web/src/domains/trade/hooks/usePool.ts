@@ -22,7 +22,7 @@ export function usePool(tokenA?: Address, tokenB?: Address, fee: number = 3000) 
   const poolExists =
     !!poolAddress && poolAddress !== "0x0000000000000000000000000000000000000000";
 
-  // Batch: slot0 + liquidity + fee
+  // Batch: slot0 + liquidity + fee + tickSpacing
   const { data: poolData, isLoading: isDataLoading } = useReadContracts({
     contracts: [
       {
@@ -40,6 +40,11 @@ export function usePool(tokenA?: Address, tokenB?: Address, fee: number = 3000) 
         abi: UniswapV3PoolABI,
         functionName: "fee",
       },
+      {
+        address: poolAddress!,
+        abi: UniswapV3PoolABI,
+        functionName: "tickSpacing",
+      },
     ],
     query: {
       enabled: poolExists,
@@ -53,6 +58,8 @@ export function usePool(tokenA?: Address, tokenB?: Address, fee: number = 3000) 
     poolData?.[1]?.status === "success" ? poolData[1].result : undefined;
   const poolFee =
     poolData?.[2]?.status === "success" ? poolData[2].result : undefined;
+  const tickSpacing =
+    poolData?.[3]?.status === "success" ? poolData[3].result : undefined;
 
   return {
     poolAddress: poolExists ? poolAddress : undefined,
@@ -61,6 +68,7 @@ export function usePool(tokenA?: Address, tokenB?: Address, fee: number = 3000) 
     slot0,
     liquidity,
     fee: poolFee,
+    tickSpacing,
     isLoading: isPoolLoading || isDataLoading,
   };
 }
