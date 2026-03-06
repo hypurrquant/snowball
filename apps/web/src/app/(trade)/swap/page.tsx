@@ -2,16 +2,16 @@
 
 import { useState, useMemo } from "react";
 import { useConnection } from "wagmi";
-import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { parseEther, formatEther, type Address } from "viem";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { TOKENS, TOKEN_INFO } from "@/config/addresses";
-import { useSwap } from "@/hooks/trade/useSwap";
-import { formatTokenAmount } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { TOKENS, TOKEN_INFO } from "@/core/config/addresses";
+import { useSwap } from "@/domains/trade/hooks/useSwap";
+import { formatTokenAmount } from "@/shared/lib/utils";
 import { ArrowDownUp, Settings, Loader2 } from "lucide-react";
-import { TokenSelector } from "@/components/common/TokenSelector";
+import { TokenSelector } from "@/shared/components/common/TokenSelector";
 
 const TOKEN_LIST = Object.entries(TOKENS) as [string, Address][];
 

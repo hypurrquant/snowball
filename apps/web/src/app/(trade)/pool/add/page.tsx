@@ -2,16 +2,16 @@
 
 import { useState } from "react";
 import { useConnection } from "wagmi";
-import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { parseEther, type Address } from "viem";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { TOKENS, TOKEN_INFO } from "@/config/addresses";
-import { useAddLiquidity } from "@/hooks/trade/useAddLiquidity";
-import { usePool } from "@/hooks/trade/usePool";
-import { formatTokenAmount } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Badge } from "@/shared/components/ui/badge";
+import { TOKENS, TOKEN_INFO } from "@/core/config/addresses";
+import { useAddLiquidity } from "@/domains/trade/hooks/useAddLiquidity";
+import { usePool } from "@/domains/trade/hooks/usePool";
+import { formatTokenAmount } from "@/shared/lib/utils";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Providers } from "@/components/providers";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
-import { AuroraBackground } from "@/components/background/AuroraBackground";
-import { SnowParticles } from "@/components/background/SnowParticles";
-import { SnowballAnimation } from "@/components/background/SnowballAnimation";
-import { SnowGround } from "@/components/background/SnowGround";
+import { Providers } from "@/shared/providers";
+import { Sidebar } from "@/shared/components/layout/Sidebar";
+import { Header } from "@/shared/components/layout/Header";
+import { AuroraBackground } from "@/shared/components/background/AuroraBackground";
+import { SnowParticles } from "@/shared/components/background/SnowParticles";
+import { SnowballAnimation } from "@/shared/components/background/SnowballAnimation";
+import { SnowGround } from "@/shared/components/background/SnowGround";
 import "./globals.css";
 
 export const metadata: Metadata = {

@@ -5,17 +5,17 @@ import { useConnection, useWriteContract } from "wagmi";
 import { parseEther } from "viem";
 import {
   Card, CardHeader, CardTitle, CardContent, CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { StatCard } from "@/components/common/StatCard";
-import { PriceChart } from "@/components/options/PriceChart";
-import { useOptions } from "@/hooks/options/useOptions";
-import { useOptionsPrice } from "@/hooks/options/useOptionsPrice";
-import { OptionsClearingHouseABI } from "@/abis";
-import { OPTIONS } from "@/config/addresses";
-import { formatTokenAmount, formatNumber } from "@/lib/utils";
+} from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Badge } from "@/shared/components/ui/badge";
+import { StatCard } from "@/shared/components/common/StatCard";
+import { PriceChart } from "@/domains/options/components/PriceChart";
+import { useOptions } from "@/domains/options/hooks/useOptions";
+import { useOptionsPrice } from "@/domains/options/hooks/useOptionsPrice";
+import { OptionsClearingHouseABI } from "@/core/abis";
+import { OPTIONS } from "@/core/config/addresses";
+import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
 import {
   ChartCandlestick,
   TrendingUp,

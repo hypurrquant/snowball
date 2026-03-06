@@ -1,9 +1,9 @@
 "use client";
 
 import { useConnection } from "wagmi";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
 import { Bot, Shield, Zap, Settings } from "lucide-react";
 
 export default function AgentPage() {

@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { useConnection, useReadContract, useWriteContract } from "wagmi";
-import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { parseEther, formatEther } from "viem";
 import {
   Card, CardHeader, CardTitle, CardContent, CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+} from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Badge } from "@/shared/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -18,15 +18,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { StatCard } from "@/components/common/StatCard";
-import { LIQUITY, TOKENS } from "@/config/addresses";
+} from "@/shared/components/ui/dialog";
+import { StatCard } from "@/shared/components/common/StatCard";
+import { LIQUITY, TOKENS } from "@/core/config/addresses";
 import {
   TroveManagerABI,
   TroveNFTABI,
   MockPriceFeedABI,
-} from "@/abis";
-import { formatTokenAmount, formatNumber } from "@/lib/utils";
+} from "@/core/abis";
+import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
 import { HandCoins, Shield, TrendingDown, DollarSign, Loader2 } from "lucide-react";
 
 const BRANCHES = [

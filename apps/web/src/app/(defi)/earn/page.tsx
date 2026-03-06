@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 import { useConnection, useReadContract, useWriteContract } from "wagmi";
-import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { parseEther } from "viem";
 import {
   Card, CardHeader, CardTitle, CardContent, CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatCard } from "@/components/common/StatCard";
-import { LIQUITY, TOKENS } from "@/config/addresses";
-import { StabilityPoolABI } from "@/abis";
-import { formatTokenAmount } from "@/lib/utils";
+} from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { StatCard } from "@/shared/components/common/StatCard";
+import { LIQUITY, TOKENS } from "@/core/config/addresses";
+import { StabilityPoolABI } from "@/core/abis";
+import { formatTokenAmount } from "@/shared/lib/utils";
 import { Percent, DollarSign, Gift, Loader2 } from "lucide-react";
 
 const BRANCHES = [

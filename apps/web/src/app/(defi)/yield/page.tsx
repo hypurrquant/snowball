@@ -1,9 +1,9 @@
 "use client";
 
-import { useYieldVaults } from "@/hooks/defi/useYieldVaults";
-import { VaultCard } from "@/components/yield/VaultCard";
-import { StatCard } from "@/components/common/StatCard";
-import { formatTokenAmount } from "@/lib/utils";
+import { useYieldVaults } from "@/domains/defi/yield/hooks/useYieldVaults";
+import { VaultCard } from "@/domains/defi/yield/components/VaultCard";
+import { StatCard } from "@/shared/components/common/StatCard";
+import { formatTokenAmount } from "@/shared/lib/utils";
 import { Vault, Activity, TrendingUp } from "lucide-react";
 
 export default function YieldPage() {

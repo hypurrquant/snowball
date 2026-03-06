@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { TOKENS, TOKEN_INFO } from "@/config/addresses";
-import { usePool } from "@/hooks/trade/usePool";
-import { formatTokenAmount } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { TOKENS, TOKEN_INFO } from "@/core/config/addresses";
+import { usePool } from "@/domains/trade/hooks/usePool";
+import { formatTokenAmount } from "@/shared/lib/utils";
 import { Plus, Droplets } from "lucide-react";
 import type { Address } from "viem";
 

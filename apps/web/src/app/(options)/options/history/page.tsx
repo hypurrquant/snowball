@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useConnection } from "wagmi";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { API_BASE } from "@/config/addresses";
-import { formatNumber } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import { Badge } from "@/shared/components/ui/badge";
+import { API_BASE } from "@/core/config/addresses";
+import { formatNumber } from "@/shared/lib/utils";
 import { History, TrendingUp, TrendingDown } from "lucide-react";
 
 interface OrderHistory {

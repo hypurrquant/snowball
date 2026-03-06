@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { CHAT_API_BASE } from "@/config/addresses";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { CHAT_API_BASE } from "@/core/config/addresses";
 import { MessageSquare, Send, Loader2, Bot, User } from "lucide-react";
 
 interface Message {

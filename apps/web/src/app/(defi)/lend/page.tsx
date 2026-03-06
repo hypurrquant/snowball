@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { StatCard } from "@/components/common/StatCard";
-import { useLendMarkets } from "@/hooks/defi/useLendMarkets";
-import { formatTokenAmount, formatNumber } from "@/lib/utils";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import { StatCard } from "@/shared/components/common/StatCard";
+import { useLendMarkets } from "@/domains/defi/lend/hooks/useLendMarkets";
+import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
 import { Landmark, TrendingUp, Percent, DollarSign } from "lucide-react";
 
 export default function LendPage() {

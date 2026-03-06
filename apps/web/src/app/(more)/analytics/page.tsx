@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { StatCard } from "@/components/common/StatCard";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import { StatCard } from "@/shared/components/common/StatCard";
 import { BarChart3, DollarSign, Activity, Users, ArrowUpRight } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 

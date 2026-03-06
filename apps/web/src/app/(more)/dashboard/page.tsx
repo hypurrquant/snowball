@@ -1,12 +1,12 @@
 "use client";
 
 import { useConnection, useReadContracts } from "wagmi";
-import { useTokenBalance } from "@/hooks/useTokenBalance";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { StatCard } from "@/components/common/StatCard";
-import { TOKENS, LIQUITY } from "@/config/addresses";
-import { TroveNFTABI, StabilityPoolABI } from "@/abis";
-import { formatTokenAmount } from "@/lib/utils";
+import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
+import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
+import { StatCard } from "@/shared/components/common/StatCard";
+import { TOKENS, LIQUITY } from "@/core/config/addresses";
+import { TroveNFTABI, StabilityPoolABI } from "@/core/abis";
+import { formatTokenAmount } from "@/shared/lib/utils";
 import {
   Wallet,
   LayoutDashboard,
