@@ -1,4 +1,4 @@
-export type TxStepStatus = "pending" | "executing" | "done" | "error";
+export type TxStepStatus = "pending" | "executing" | "confirming" | "done" | "error";
 export type TxStepType =
   | "approve"
   | "mint"

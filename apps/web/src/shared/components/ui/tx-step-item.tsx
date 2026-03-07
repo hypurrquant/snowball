@@ -16,6 +16,11 @@ const STATUS_ICONS: Record<TxStepStatus, React.ReactNode> = {
       <Loader2 className="w-5 h-5 text-ice-400 animate-spin" />
     </div>
   ),
+  confirming: (
+    <div className="w-6 h-6 flex items-center justify-center">
+      <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
+    </div>
+  ),
   done: (
     <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
       <Check className="w-3.5 h-3.5 text-white" />
@@ -31,6 +36,7 @@ const STATUS_ICONS: Record<TxStepStatus, React.ReactNode> = {
 const STATUS_COLORS: Record<TxStepStatus, string> = {
   pending: "text-text-tertiary",
   executing: "text-text-primary",
+  confirming: "text-yellow-400",
   done: "text-green-400",
   error: "text-red-400",
 };
@@ -50,7 +56,7 @@ export function TxStepItem({ step, stepNumber, isLast }: TxStepItemProps) {
         {!isLast && (
           <div
             className={`w-0.5 flex-1 min-h-[16px] ${
-              step.status === "done" ? "bg-green-500" : "bg-border-primary"
+              step.status === "done" ? "bg-green-500" : step.status === "confirming" ? "bg-yellow-400" : "bg-border-primary"
             }`}
           />
         )}
@@ -69,11 +75,17 @@ export function TxStepItem({ step, stepNumber, isLast }: TxStepItemProps) {
 
         {step.status === "executing" && (
           <p className="mt-1 text-xs text-text-tertiary">
-            Waiting for confirmation...
+            Waiting for wallet confirmation...
           </p>
         )}
 
-        {step.status === "done" && step.txHash && (
+        {step.status === "confirming" && (
+          <p className="mt-1 text-xs text-yellow-400">
+            Confirming on-chain...
+          </p>
+        )}
+
+        {(step.status === "done" || step.status === "confirming") && step.txHash && (
           <a
             href={`${step.chainId ? CHAIN_EXPLORERS[step.chainId] ?? EXPLORER_URL : EXPLORER_URL}/tx/${step.txHash}`}
             target="_blank"

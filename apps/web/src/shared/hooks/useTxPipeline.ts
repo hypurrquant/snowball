@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useConfig } from "wagmi";
+import { waitForTransactionReceipt } from "wagmi/actions";
 import type { TxStep, TxPhase, TxStepType } from "@/shared/types/tx";
 
 export function useTxPipeline() {
+  const config = useConfig();
   const [txSteps, setTxSteps] = useState<TxStep[]>([]);
   const [txPhase, setTxPhase] = useState<TxPhase>("idle");
   const [showTxModal, setShowTxModal] = useState(false);
@@ -27,17 +30,24 @@ export function useTxPipeline() {
         if (!executor) continue;
         setTxSteps((prev) => prev.map((s) => (s.id === step.id ? { ...s, status: "executing" } : s)));
         const hash = await executor();
+        if (hash) {
+          setTxSteps((prev) => prev.map((s) => (s.id === step.id ? { ...s, status: "confirming", txHash: hash } : s)));
+          const receipt = await waitForTransactionReceipt(config, { hash });
+          if (receipt.status === "reverted") {
+            throw new Error("Transaction reverted on-chain");
+          }
+        }
         setTxSteps((prev) => prev.map((s) => (s.id === step.id ? { ...s, status: "done", txHash: hash } : s)));
       }
       setTxPhase("complete");
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Transaction failed";
       setTxSteps((prev) => prev.map((s) =>
-        s.status === "executing" ? { ...s, status: "error" as const, error: errorMsg } : s,
+        s.status === "executing" || s.status === "confirming" ? { ...s, status: "error" as const, error: errorMsg } : s,
       ));
       setTxPhase("error");
     }
-  }, []);
+  }, [config]);
 
   const reset = useCallback(() => {
     setShowTxModal(false);
