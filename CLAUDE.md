@@ -47,9 +47,11 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 현재 페이즈
 
-- 없음 (v0.22.0 완료)
-- **문서**: [docs/phases/v0.22.0-yield-vault-fe/](docs/phases/v0.22.0-yield-vault-fe/)
-- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.22.0-yield-vault-fe`
+- **버전**: v0.23.0
+- **기능**: Trove Agent Delegation Trigger
+- **상태**: Step 1 - PRD
+- **문서**: [docs/phases/v0.23.0-trove-agent-delegation-trigger/](docs/phases/v0.23.0-trove-agent-delegation-trigger/)
+- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.23.0-trove-agent-delegation-trigger`
 - **시작일**: 2026-03-07
 
 ## Scripts 구조
