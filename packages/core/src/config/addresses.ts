@@ -70,18 +70,16 @@ export const LIQUITY = {
 
 // ─── Morpho (Lend) ───
 export const LEND = {
-  snowballLend: "0x7d604b31297b36aace73255931f65e891cf289d3" as Address,
-  adaptiveCurveIRM: "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe" as Address,
-  vaultFactory: "0x6e97df392462b8c2b8d13e2cd77a90168925edf6" as Address,
-  publicAllocator: "0x35b35a8c835eaf78b43137a51c4adccfc5d653b4" as Address,
+  snowballLend: "0x190a733eda9ba7d2b52d56764c5921d5cd4752ca" as Address,
+  adaptiveCurveIRM: "0xc4c694089af9bab4c6151663ae8424523fce32a8" as Address,
   oracles: {
-    wCTC: "0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2" as Address,
-    lstCTC: "0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a" as Address,
-    sbUSD: "0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a" as Address,
+    wCTC: "0xbd2c8afda5fa753669c5dd03885a45a3612171af" as Address,
+    lstCTC: "0xa9aeac36aab8ce93fe4a3d63cf6b1d263dd2eb31" as Address,
+    sbUSD: "0xf82396f39e93d77802bfecc33344faafc4df50f2" as Address,
   },
   markets: [
     {
-      id: "0x8dce00fbd59450e4d2f46e9aa637690fc21c058c4c8abf4dea75e9ab2ce38364" as `0x${string}`,
+      id: "0x5aa4edaf3dcbf0e54abbf2bb639acbdc95305f61bd4a4f4801d42040998c5752" as `0x${string}`,
       name: "wCTC / sbUSD",
       loanToken: TOKENS.sbUSD,
       collateralToken: TOKENS.wCTC,
@@ -90,7 +88,7 @@ export const LEND = {
       lltv: 770000000000000000n, // 0.77
     },
     {
-      id: "0x93c1cf16ce13082a758d11757a899388741c39c4ed01364116137074fc9671ae" as `0x${string}`,
+      id: "0x2eea8a6ba032c2af6adef715c6f9ed1068e77782c7d8e127a3975389e8bedd0e" as `0x${string}`,
       name: "lstCTC / sbUSD",
       loanToken: TOKENS.sbUSD,
       collateralToken: TOKENS.lstCTC,
@@ -99,7 +97,7 @@ export const LEND = {
       lltv: 770000000000000000n,
     },
     {
-      id: "0x6708534b3aa0dc0b77dd4e534187d801f664958238b45b0563e63dbfe914fddd" as `0x${string}`,
+      id: "0x3a94c96ec40aa5fe54bcd20ecbcd733497e4f4f2c8d31ae4862951b20f992a0c" as `0x${string}`,
       name: "sbUSD / USDC",
       loanToken: TOKENS.USDC,
       collateralToken: TOKENS.sbUSD,

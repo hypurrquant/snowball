@@ -17,12 +17,12 @@ export function loadConfig(): AgentConfig {
     agentPrivateKey: requireEnv("AGENT_PRIVATE_KEY") as `0x${string}`,
 
     morpho: {
-      core: "0x7d604b31297b36aace73255931f65e891cf289d3" as Address,
-      marketId: "0x8dce00fbd59450e4d2f46e9aa637690fc21c058c4c8abf4dea75e9ab2ce38364" as `0x${string}`,
+      core: "0x190a733eda9ba7d2b52d56764c5921d5cd4752ca" as Address,
+      marketId: "0x5aa4edaf3dcbf0e54abbf2bb639acbdc95305f61bd4a4f4801d42040998c5752" as `0x${string}`,
       loanToken: "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5" as Address,   // sbUSD
       collateralToken: "0xca69344e2917f026ef4a5ace5d7b122343fc8528" as Address, // wCTC
-      oracle: "0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2" as Address,
-      irm: "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe" as Address,
+      oracle: "0xbd2c8afda5fa753669c5dd03885a45a3612171af" as Address,
+      irm: "0xc4c694089af9bab4c6151663ae8424523fce32a8" as Address,
       lltv: 770000000000000000n,
     },
 

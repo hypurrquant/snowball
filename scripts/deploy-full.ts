@@ -34,8 +34,8 @@ const EXISTING = {
   swapRouter: "0xec48ed2e9c81b77ab6f8e79c257f9d0c21074154" as Address,
   npm: "0xa28bfaa2e84098de8d654f690e51c265e4ae01c9" as Address,
   quoterV2: "0x2383343c2c7ae52984872f541b8b22f8da0b419a" as Address,
-  snowballLend: "0x7d604b31297b36aace73255931f65e891cf289d3" as Address,
-  adaptiveCurveIRM: "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe" as Address,
+  snowballLend: "0x190a733eda9ba7d2b52d56764c5921d5cd4752ca" as Address,
+  adaptiveCurveIRM: "0xc4c694089af9bab4c6151663ae8424523fce32a8" as Address,
 };
 
 const OUT = path.join(__dirname, "../packages/liquity/out");

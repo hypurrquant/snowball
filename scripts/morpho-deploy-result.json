@@ -1,0 +1,38 @@
+{
+  "snowballLend": "0x190a733eda9ba7d2b52d56764c5921d5cd4752ca",
+  "adaptiveCurveIRM": "0xc4c694089af9bab4c6151663ae8424523fce32a8",
+  "oracles": {
+    "wCTC": "0xbd2c8afda5fa753669c5dd03885a45a3612171af",
+    "lstCTC": "0xa9aeac36aab8ce93fe4a3d63cf6b1d263dd2eb31",
+    "sbUSD": "0xf82396f39e93d77802bfecc33344faafc4df50f2"
+  },
+  "markets": [
+    {
+      "id": "0x5aa4edaf3dcbf0e54abbf2bb639acbdc95305f61bd4a4f4801d42040998c5752",
+      "name": "wCTC/sbUSD",
+      "loanToken": "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5",
+      "collateralToken": "0xca69344e2917f026ef4a5ace5d7b122343fc8528",
+      "loanSymbol": "sbUSD",
+      "collSymbol": "wCTC",
+      "lltv": "770000000000000000"
+    },
+    {
+      "id": "0x2eea8a6ba032c2af6adef715c6f9ed1068e77782c7d8e127a3975389e8bedd0e",
+      "name": "lstCTC/sbUSD",
+      "loanToken": "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5",
+      "collateralToken": "0xa768d376272f9216c8c4aa3063391bdafbcad4c2",
+      "loanSymbol": "sbUSD",
+      "collSymbol": "lstCTC",
+      "lltv": "770000000000000000"
+    },
+    {
+      "id": "0x3a94c96ec40aa5fe54bcd20ecbcd733497e4f4f2c8d31ae4862951b20f992a0c",
+      "name": "sbUSD/USDC",
+      "loanToken": "0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9",
+      "collateralToken": "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5",
+      "loanSymbol": "USDC",
+      "collSymbol": "sbUSD",
+      "lltv": "900000000000000000"
+    }
+  ]
+}

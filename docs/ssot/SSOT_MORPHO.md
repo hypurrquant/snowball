@@ -23,10 +23,8 @@
 
 | 컨트랙트 | 주소 | 비고 |
 |----------|------|------|
-| **SnowballLend** | `0x7d604b31297b36aace73255931f65e891cf289d3` | 핵심 렌딩 프로토콜 |
-| **AdaptiveCurveIRM** | `0x0ac487d84507b2fbe9130acc080f2b554cb3fffe` | 금리 모델 |
-| **SnowballVaultFactory** | `0x6e97df392462b8c2b8d13e2cd77a90168925edf6` | ERC-4626 Vault 팩토리 |
-| **PublicAllocator** | `0x35b35a8c835eaf78b43137a51c4adccfc5d653b4` | 크로스마켓 재배분 |
+| **SnowballLend** | `0x190a733eda9ba7d2b52d56764c5921d5cd4752ca` | 핵심 렌딩 프로토콜 |
+| **AdaptiveCurveIRM** | `0xc4c694089af9bab4c6151663ae8424523fce32a8` | 금리 모델 |
 
 ---
 
@@ -48,11 +46,11 @@
 
 | 오라클 | 주소 | 초기 가격 | 스케일 |
 |--------|------|----------|--------|
-| **wCTC Oracle** | `0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2` | 5e18 ($5) | 1e18 |
-| **lstCTC Oracle** | `0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a` | 5.2e18 ($5.20) | 1e18 |
-| **sbUSD Oracle** | `0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a` | 1e18 ($1) | 1e18 |
+| **wCTC Oracle** | `0xbd2c8afda5fa753669c5dd03885a45a3612171af` | 5e36 ($5) | 1e36 |
+| **lstCTC Oracle** | `0xa9aeac36aab8ce93fe4a3d63cf6b1d263dd2eb31` | 5.2e36 ($5.20) | 1e36 |
+| **sbUSD Oracle** | `0xf82396f39e93d77802bfecc33344faafc4df50f2` | 1e36 ($1) | 1e36 |
 
-**인터페이스**: `price() → uint256` (ORACLE_PRICE_SCALE = 1e18)
+**인터페이스**: `price() → uint256` (ORACLE_PRICE_SCALE = 1e36, Morpho Blue 표준)
 **가격 변경**: `setPrice(uint256)` (owner only)
 
 ---
@@ -63,33 +61,33 @@
 
 | 항목 | 값 |
 |------|-----|
-| **Market ID** | `0x8dce00fbd59450e4d2f46e9aa637690fc21c058c4c8abf4dea75e9ab2ce38364` |
+| **Market ID** | `0x5aa4edaf3dcbf0e54abbf2bb639acbdc95305f61bd4a4f4801d42040998c5752` |
 | Loan Token | sbUSD (`0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5`) |
 | Collateral Token | wCTC (`0xca69344e2917f026ef4a5ace5d7b122343fc8528`) |
-| Oracle | `0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2` |
-| IRM | `0x0ac487d84507b2fbe9130acc080f2b554cb3fffe` |
+| Oracle | `0xbd2c8afda5fa753669c5dd03885a45a3612171af` |
+| IRM | `0xc4c694089af9bab4c6151663ae8424523fce32a8` |
 | LLTV | 77% (`770000000000000000`) |
 
 ### Market 2: lstCTC / sbUSD
 
 | 항목 | 값 |
 |------|-----|
-| **Market ID** | `0x93c1cf16ce13082a758d11757a899388741c39c4ed01364116137074fc9671ae` |
+| **Market ID** | `0x2eea8a6ba032c2af6adef715c6f9ed1068e77782c7d8e127a3975389e8bedd0e` |
 | Loan Token | sbUSD (`0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5`) |
 | Collateral Token | lstCTC (`0xa768d376272f9216c8c4aa3063391bdafbcad4c2`) |
-| Oracle | `0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a` |
-| IRM | `0x0ac487d84507b2fbe9130acc080f2b554cb3fffe` |
+| Oracle | `0xa9aeac36aab8ce93fe4a3d63cf6b1d263dd2eb31` |
+| IRM | `0xc4c694089af9bab4c6151663ae8424523fce32a8` |
 | LLTV | 77% (`770000000000000000`) |
 
 ### Market 3: sbUSD / USDC
 
 | 항목 | 값 |
 |------|-----|
-| **Market ID** | `0x6708534b3aa0dc0b77dd4e534187d801f664958238b45b0563e63dbfe914fddd` |
+| **Market ID** | `0x3a94c96ec40aa5fe54bcd20ecbcd733497e4f4f2c8d31ae4862951b20f992a0c` |
 | Loan Token | USDC (`0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9`) |
 | Collateral Token | sbUSD (`0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5`) |
-| Oracle | `0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a` |
-| IRM | `0x0ac487d84507b2fbe9130acc080f2b554cb3fffe` |
+| Oracle | `0xf82396f39e93d77802bfecc33344faafc4df50f2` |
+| IRM | `0xc4c694089af9bab4c6151663ae8424523fce32a8` |
 | LLTV | 90% (`900000000000000000`) |
 
 ---
@@ -195,8 +193,8 @@ import {
 
 ```typescript
 // ─── Addresses ───
-const SNOWBALL_LEND    = "0x7d604b31297b36aace73255931f65e891cf289d3";
-const ADAPTIVE_IRM     = "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe";
+const SNOWBALL_LEND    = "0x190a733eda9ba7d2b52d56764c5921d5cd4752ca";
+const ADAPTIVE_IRM     = "0xc4c694089af9bab4c6151663ae8424523fce32a8";
 const VAULT_FACTORY    = "0x6e97df392462b8c2b8d13e2cd77a90168925edf6";
 const PUBLIC_ALLOCATOR = "0x35b35a8c835eaf78b43137a51c4adccfc5d653b4";
 
@@ -207,14 +205,14 @@ const SBUSD    = "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5";
 const USDC     = "0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9"; // 18 decimals
 
 // ─── Oracles (1e18 scale) ───
-const WCTC_ORACLE   = "0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2";
-const LSTCTC_ORACLE = "0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a";
-const SBUSD_ORACLE  = "0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a";
+const WCTC_ORACLE   = "0xbd2c8afda5fa753669c5dd03885a45a3612171af";
+const LSTCTC_ORACLE = "0xa9aeac36aab8ce93fe4a3d63cf6b1d263dd2eb31";
+const SBUSD_ORACLE  = "0xf82396f39e93d77802bfecc33344faafc4df50f2";
 
 // ─── Market IDs ───
-const MARKET_WCTC_SBUSD   = "0x8dce00fbd59450e4d2f46e9aa637690fc21c058c4c8abf4dea75e9ab2ce38364";
-const MARKET_LSTCTC_SBUSD = "0x93c1cf16ce13082a758d11757a899388741c39c4ed01364116137074fc9671ae";
-const MARKET_SBUSD_USDC   = "0x6708534b3aa0dc0b77dd4e534187d801f664958238b45b0563e63dbfe914fddd";
+const MARKET_WCTC_SBUSD   = "0x5aa4edaf3dcbf0e54abbf2bb639acbdc95305f61bd4a4f4801d42040998c5752";
+const MARKET_LSTCTC_SBUSD = "0x2eea8a6ba032c2af6adef715c6f9ed1068e77782c7d8e127a3975389e8bedd0e";
+const MARKET_SBUSD_USDC   = "0x3a94c96ec40aa5fe54bcd20ecbcd733497e4f4f2c8d31ae4862951b20f992a0c";
 ```
 
 ---
