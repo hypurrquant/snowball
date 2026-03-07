@@ -25,6 +25,16 @@ export function useEditTrove(
 
   const { stats, isLoading: statsLoading } = useLiquityBranch(branch);
   const marketStats = useMarketRateStats(branch);
+
+  // Pre-fill from existing trove
+  const existingCollStr = Number(formatEther(trove.coll)).toFixed(6);
+  const existingDebtStr = Number(formatEther(trove.debt)).toFixed(2);
+  const existingRatePct = Number(trove.interestRate) / 1e16;
+
+  const [collAmount, setCollAmount] = useState(existingCollStr);
+  const [debtAmount, setDebtAmount] = useState(existingDebtStr);
+  const [ratePercent, setRatePercent] = useState(existingRatePct);
+
   const collDeltaForApproval = useMemo(() => {
     try {
       const parsed = collAmount ? parseEther(collAmount) : 0n;
@@ -39,15 +49,6 @@ export function useEditTrove(
     adjustInterestRate,
     needsApproval,
   } = useTroveActions(branch, address, collDeltaForApproval);
-
-  // Pre-fill from existing trove
-  const existingCollStr = Number(formatEther(trove.coll)).toFixed(6);
-  const existingDebtStr = Number(formatEther(trove.debt)).toFixed(2);
-  const existingRatePct = Number(trove.interestRate) / 1e16;
-
-  const [collAmount, setCollAmount] = useState(existingCollStr);
-  const [debtAmount, setDebtAmount] = useState(existingDebtStr);
-  const [ratePercent, setRatePercent] = useState(existingRatePct);
 
   // Parse current input values
   const parsedColl = useMemo(() => {
