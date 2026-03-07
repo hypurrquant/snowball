@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-03-06T16:49:31.428Z",
+  "deployer": "0xE550Afa5f8C81D7c3219a4Ece9c2e58618C125c6",
+  "sepolia": {
+    "dnToken": "0xCc5154b7ECB8164966106Ea1d75ce0CEe198D844",
+    "deployBlock": 10397347
+  },
+  "usc": {
+    "dnBridgeUSC": "0xCc5154b7ECB8164966106Ea1d75ce0CEe198D844"
+  }
+}
