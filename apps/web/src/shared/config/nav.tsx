@@ -3,8 +3,8 @@ import {
   Droplets,
   Landmark,
   HandCoins,
-  // ChartCandlestick,  // Options 비활성화
-  // History,           // Options 비활성화
+  // ChartCandlestick,  // Options disabled
+  // History,           // Options disabled
   LayoutDashboard,
   BarChart3,
   Bot,
@@ -44,7 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/bridge", label: "Hyperliquid DN Vault Bridge", icon: (cls) => <Link2 className={cls} /> },
     ],
   },
-  // Options: 비활성화 — EIP-712 미구현 + API 스키마 불일치 + 출금 불가 (options-fe-analysis.md 참조)
+  // Options: disabled — EIP-712 not implemented + API schema mismatch + withdrawal broken (see options-fe-analysis.md)
   // {
   //   title: "Options",
   //   items: [

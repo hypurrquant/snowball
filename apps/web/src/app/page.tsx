@@ -4,7 +4,6 @@ import {
   Landmark,
   HandCoins,
   Percent,
-  ChartCandlestick,
   ArrowRight,
 } from "lucide-react";
 
@@ -37,13 +36,6 @@ const FEATURES = [
     icon: <Percent className="w-6 h-6" />,
     gradient: "from-purple-500/20 to-pink-500/20",
   },
-  {
-    href: "/options",
-    title: "Options",
-    desc: "Trade BTC binary options with real-time oracle pricing",
-    icon: <ChartCandlestick className="w-6 h-6" />,
-    gradient: "from-rose-500/20 to-red-500/20",
-  },
 ];
 
 export default function HomePage() {
@@ -63,15 +55,12 @@ export default function HomePage() {
         </h1>
         <p className="text-text-secondary text-lg lg:text-xl font-medium max-w-2xl mx-auto leading-relaxed">
           The unified DeFi protocol on Creditcoin.
-          <br className="hidden sm:block" /> Swap, Lend, Borrow, Earn, and Trade Binary Options in one seamless experience.
+          <br className="hidden sm:block" /> Swap, Lend, Borrow, and Earn in one seamless experience.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4 mt-8">
           <Link href="/swap" className="px-8 py-3 rounded-full bg-ice-400 text-white font-semibold hover:bg-ice-500 transition-all hover:shadow-[0_0_20px_rgba(96,165,250,0.5)] active:scale-95">
             Launch App
-          </Link>
-          <Link href="https://docs.snowball.fi" target="_blank" className="px-8 py-3 rounded-full bg-bg-input text-white font-semibold hover:bg-bg-hover border border-border hover:border-white/20 transition-all active:scale-95">
-            Read Docs
           </Link>
         </div>
       </div>
