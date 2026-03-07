@@ -1,56 +1,51 @@
 # Snowball Protocol
 
-**Liquity V2 fork on Creditcoin Testnet with AI agent automation**
+DeFi 프로토콜 on Creditcoin Testnet (Chain ID: 102031)
 
-Snowball is a decentralized lending protocol that lets users deposit CTC as collateral (wCTC or lstCTC) to borrow sbUSD, a USD-pegged stablecoin. It extends the Liquity V2 architecture with an AI agent layer that monitors positions, prevents liquidations, and optimizes interest rates automatically.
+5개 프로토콜: DEX (Uniswap V3) · Borrow (Liquity V2) · Lend (Morpho Blue) · Yield Vaults · Agent (ERC-8004)
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    Frontend (React)  :5173               │
-│  Landing · Dashboard · Borrow · Earn · Stats · Agent · Chat │
-└────────────────────┬────────────────────────────────────┘
-                     │ REST / SSE
-        ┌────────────┴────────────┐
-        ▼                         ▼
-┌───────────────┐        ┌─────────────────┐
-│ agent-consumer│        │  agent-chatbot  │
-│   (API :3000) │        │    (AI :3002)   │
-│  monitor loop │        │ OpenAI fallback │
-└───────┬───────┘        └─────────────────┘
-        │ A2A JSON-RPC
-        ▼
-┌───────────────────┐
-│ agent-cdp-provider│
-│     (A2A :3001)   │
-│  builds unsigned  │
-│     tx calldata   │
-└───────────────────┘
-        │ viem
-        ▼
-┌───────────────────────────────────────┐
-│     Creditcoin Testnet (Chain 102031) │
-│  BorrowerOperations · TroveManager   │
-│  StabilityPool · CollateralRegistry  │
-└───────────────────────────────────────┘
+                        ┌──────────────────────────┐
+                        │   Frontend (Next.js)     │
+                        │   localhost:3000          │
+                        └────────────┬─────────────┘
+                                     │
+                    ┌────────────────┼────────────────┐
+                    ▼                ▼                 ▼
+             ┌────────────┐  ┌─────────────┐  ┌──────────────┐
+             │   nginx    │  │   nginx     │  │    nginx     │
+             │  /api/*    │  │ /api/agent/*│  │   (future)   │
+             └─────┬──────┘  └──────┬──────┘  └──────────────┘
+                   ▼                ▼
+            ┌────────────┐  ┌──────────────┐
+            │   server   │  │ agent-server │──→ claude-proxy ──→ codex CLI (LLM)
+            │  (NestJS)  │  │   (NestJS)   │         │
+            │  :3001     │  │   :3002      │         ▼
+            └────────────┘  └──────┬───────┘    LLM 판단 JSON
+                                   │
+                                   ▼
+                          AgentVault.executeOnBehalf()
+                                   │
+                                   ▼
+                     Creditcoin Testnet (102031)
 ```
 
----
+### Monorepo 구조
 
-## Packages
-
-| Package | Description | Port |
-|---------|-------------|------|
-| `contracts-liquity` | Solidity CDP protocol (Liquity V2 fork) | — |
-| `contracts-8004` | ERC-8004 agent identity & reputation registry | — |
-| `shared` | Shared ABIs, types, constants | — |
-| `frontend` | React/Vite web UI | 5173 |
-| `agent-consumer` | Core REST API + position monitor | 3000 |
-| `agent-cdp-provider` | A2A JSON-RPC transaction builder | 3001 |
-| `agent-chatbot` | Natural language DeFi assistant | 3002 |
+| 패키지 | 설명 |
+|--------|------|
+| `apps/web` | Next.js 프론트엔드 |
+| `apps/server` | NestJS API (Volume/TVL 수집) |
+| `apps/agent-server` | NestJS Agent 서버 (Observer → Planner → Executor) |
+| `apps/claude-proxy` | Codex CLI 프록시 (LLM 판단용) |
+| `apps/usc-worker` | Sepolia→USC 브릿지 워커 |
+| `packages/core` | 공유 주소/ABI/설정 |
+| `packages/agent-runtime` | Agent 런타임 (Capability Registry, Snapshot, Planner) |
+| `packages/liquity` | Liquity V2 Solidity 컨트랙트 |
 
 ---
 
@@ -59,163 +54,144 @@ Snowball is a decentralized lending protocol that lets users deposit CTC as coll
 ### Prerequisites
 
 - Node.js 20+, pnpm 9+
-- Creditcoin Testnet wallet with tCTC
-- `.env` file (see `.env.example`)
+- Docker, Docker Compose
+- [Codex CLI](https://github.com/openai/codex) (`npm i -g @openai/codex`)
+- `OPENAI_API_KEY` 환경변수 (codex CLI용)
 
-### Install
+### 1. 환경변수
+
+```bash
+cp .env.example .env
+# AGENT_PRIVATE_KEY, DEPLOYER_PRIVATE_KEY 설정
+```
+
+### 2. 의존성 설치
 
 ```bash
 pnpm install
-pnpm --filter @snowball/shared build
 ```
 
-### Run (4 terminals)
+### 3. 서버 실행 (Docker)
 
 ```bash
-# Terminal 1 — CDP Provider
-pnpm dev:provider
+# nginx + server + agent-server + usc-worker
+docker compose up -d
+```
 
-# Terminal 2 — Consumer API + Monitor
-pnpm dev:consumer
+### 4. Claude Proxy 실행 (Docker 밖)
 
-# Terminal 3 — Chatbot
-pnpm dev:chatbot
+```bash
+cd apps/claude-proxy
+make up      # 로그와 함께 실행
+# make logs  — 로그만 보기
+# make down  — 종료
+```
 
-# Terminal 4 — Frontend
+> codex CLI는 Docker 안에서 실행 불가 → 호스트에서 직접 실행
+
+### 5. 프론트엔드
+
+```bash
+# 로컬 개발
 pnpm --filter @snowball/web dev
+
+# 또는 just 사용
+just fe
 ```
 
-Open `http://localhost:5173`
+> 배포 서버에서는 `pnpm --filter @snowball/web build` 후 정적 파일 서빙
 
 ---
 
-## Protocol Overview
+## Agent E2E 파이프라인
 
-### Key Concepts
-
-| Term | Description |
-|------|-------------|
-| **Trove** | Individual borrowing position (one per collateral type per user) |
-| **sbUSD** | Protocol stablecoin, 1:1 USD peg maintained via redemptions |
-| **Health Factor** | `Collateral Value / Debt` — must stay above minimum |
-| **Stability Pool** | Absorbs liquidations; depositors earn collateral rewards + interest yield |
-| **Redemption** | sbUSD holders exchange sbUSD for collateral at face value (targets lowest-rate Troves) |
-
-### Parameters
-
-| Parameter | wCTC Branch | lstCTC Branch |
-|-----------|-------------|---------------|
-| Min Health Factor | 1.10 | 1.20 |
-| System HF (CCR) | 1.50 | 1.60 |
-| Interest Rate | 0.5% – 25% APR | 0.5% – 25% APR |
-| Min Debt | 200 sbUSD | 200 sbUSD |
-| Upfront Fee | `debt × rate × 7/365` | same |
-
-### Reward Flow
-
-1. Every Trove operation accrues interest since `lastDebtUpdateTime`
-2. Accrued interest is distributed to Stability Pool depositors via `triggerBoldRewards`
-3. SP depositors earn **collateral gains** (from liquidations) + **sbUSD gains** (from interest)
-4. Both are claimable via `claimReward()` or auto-claimed on `withdrawFromSP()`
-
----
-
-## Smart Contracts
-
-Deployed on **Creditcoin Testnet** (Chain ID: 102031).
-All addresses: [`deployments/addresses.json`](./deployments/addresses.json) and [`docs/ssot/`](./docs/ssot/)
-
-### Key Functions
-
-**BorrowerOperations**
-```
-openTrove(owner, index, coll, debt, upperHint, lowerHint, rate, maxFee) → troveId
-closeTrove(troveId)
-adjustTrove(troveId, collChange, isCollInc, debtChange, isDebtInc, ...)
-adjustTroveInterestRate(troveId, newRate, ...)
-addColl(troveId, amount) / withdrawColl(troveId, amount)
-repayBold(troveId, amount) / withdrawBold(troveId, amount, maxFee)
-claimCollateral()
-```
-
-**StabilityPool**
-```
-provideToSP(amount)
-withdrawFromSP(amount)      ← also auto-claims all rewards
-claimReward()               ← claims collGain (collateral) + boldGain (sbUSD)
-```
-
-**TroveManager**
-```
-liquidate(troveId)
-batchLiquidateTroves(troveIds[])
-redeemCollateral(redeemer, boldAmount, price, maxIterations)
-```
-
----
-
-## AI Agent
-
-The AI Agent monitors positions every 30 seconds and can:
-
-- Detect **DANGER** (HF < minHF × 1.1) → auto-rebalance by adding collateral
-- Detect **WARNING** (HF < minHF × 1.2) → suggest actions
-- Detect **redemption risk** (rate below market avg) → auto-adjust interest rate
-
-**Strategies**
-
-| Strategy | Min HF Target |
-|----------|--------------|
-| Conservative | > 2.00 |
-| Moderate | > 1.60 |
-| Aggressive | > 1.30 |
-
-**Agent API (port 3000)**
+Agent는 Liquity V2 Trove 이자율을 시장 평균 대비 자동 조정한다.
 
 ```
-POST /api/agent/server-wallet        Register agent for user
-GET  /api/agent/server-wallet        Get agent status
-DELETE /api/agent/server-wallet      Deactivate agent
-POST /api/agent/execute              Execute CDP action
-GET  /api/events                     SSE stream (real-time updates)
+1. agent-server (cron/API) → Observer: 온체인 데이터 수집 (user rate, avg rate)
+2. agent-server → claude-proxy → codex CLI: LLM이 올릴지/내릴지 판단
+3. agent-server → Executor: AgentVault.executeOnBehalf() 온체인 TX 실행
 ```
 
----
-
-## Contract Deployment
+### Agent API
 
 ```bash
-cd packages/contracts-liquity
-npx hardhat compile
-npx tsx scripts/deploy-viem.ts
+# 수동 실행
+curl -X POST http://localhost/api/agent/run \
+  -H "Content-Type: application/json" \
+  -d '{"user": "0x...", "manifestId": "snowball-demo-defi-manager", "troveId": "..."}'
+
+# 실행 이력
+curl http://localhost/api/agent/runs
+
+# 상태
+curl http://localhost/api/agent/status
 ```
 
-Addresses are auto-saved to:
-- `deployments/addresses.json` (used by all backends)
-- `apps/web/src/config/addresses.json` (update manually or copy)
+### 위임 설정 (Agent에게 이자율 조정 권한 부여)
+
+```bash
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/setup-delegation.ts
+```
 
 ---
 
-## Tech Stack
+## Scripts
 
-| Layer | Technology |
-|-------|-----------|
-| Smart Contracts | Solidity 0.8.24, Hardhat, OpenZeppelin 5 |
-| Frontend | React 18, Vite, TailwindCSS, wagmi v2, viem, Privy, TanStack Query |
-| Backend | Node.js, Express, TypeScript, tsx, viem, Pino |
-| Auth | Privy (Web3 login + server wallet) |
-| Real-time | Server-Sent Events (SSE) |
-| Blockchain | Creditcoin Testnet, Chain ID 102031 |
-| Package Manager | pnpm workspaces |
+```bash
+# 스크립트 실행 (viem 의존성이 apps/web/node_modules에 있음)
+NODE_PATH=apps/web/node_modules npx tsx scripts/deploy/<script>.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/<script>.ts
+```
+
+| 경로 | 용도 |
+|------|------|
+| `scripts/deploy/` | 컨트랙트 배포 |
+| `scripts/sim/` | 시뮬레이션/테스트 |
+| `scripts/simulation-accounts.json` | 8 페르소나 + deployer 계정 |
+
+---
+
+## 외부 서버 배포
+
+```bash
+# 1. 코드 클론 + .env 설정
+git clone ... && cp .env.example .env
+
+# 2. Docker 서비스
+docker compose up -d
+
+# 3. Claude Proxy (Linux에서는 CLAUDE_PROXY_URL 수정 필요)
+echo 'CLAUDE_PROXY_URL=http://172.17.0.1:3003' >> .env
+docker compose up -d agent-server  # 재시작
+cd apps/claude-proxy && OPENAI_API_KEY=sk-... make up
+
+# 4. 프론트엔드 빌드
+pnpm --filter @snowball/web build
+# 빌드 결과: apps/web/.next/ → nginx나 pm2로 서빙
+```
+
+> Linux Docker에서 `host.docker.internal`이 안 되므로 `172.17.0.1` (Docker bridge IP) 사용.
+> 또는 docker-compose.yml에 `extra_hosts: ["host.docker.internal:host-gateway"]` 추가.
 
 ---
 
 ## Documentation
 
-| File | Description |
-|------|-------------|
-| [`docs/ssot/`](./docs/ssot/) | All deployed contract addresses (SSOT per protocol) |
-| [`docs/guide/PROJECT_OVERVIEW.md`](./docs/guide/PROJECT_OVERVIEW.md) | Detailed protocol design |
-| [`docs/guide/DEMO_SCENARIO.md`](./docs/guide/DEMO_SCENARIO.md) | 5-7 min demo walkthrough |
-| [`docs/guide/OP.md`](./docs/guide/OP.md) | Operations & maintenance guide |
-| [`docs/security/audit_report_v2.md`](./docs/security/audit_report_v2.md) | Security audit |
+| 문서 | 설명 |
+|------|------|
+| [`docs/ssot/`](./docs/ssot/) | 프로토콜별 컨트랙트 주소 (SSOT) |
+| [`docs/guide/deploy-history.md`](./docs/guide/deploy-history.md) | 배포 이력 |
+| [`docs/test/agent-test.md`](./docs/test/agent-test.md) | Agent E2E 테스트 시나리오 |
+| [`docs/guide/OPERATIONS.md`](./docs/guide/OPERATIONS.md) | 운영 가이드 |
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Smart Contracts | Solidity 0.8.24, Foundry |
+| Frontend | Next.js 15, TailwindCSS, wagmi v2, viem |
+| Backend | NestJS, TypeScript, SQLite |
+| Agent | agent-runtime (Observer→Planner→Executor), Codex CLI |
+| Infra | Docker Compose, nginx |
+| Blockchain | Creditcoin Testnet (102031) |
