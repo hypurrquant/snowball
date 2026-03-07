@@ -126,7 +126,7 @@ export const YIELD = {
       want: TOKENS.sbUSD,
       wantSymbol: "sbUSD",
       name: "Stability Pool",
-      description: "Liquity 청산 수익 자동 복리",
+      description: "Auto-compound Liquity liquidation gains",
       strategyType: "stabilityPool" as const,
     },
     {
@@ -135,7 +135,7 @@ export const YIELD = {
       want: TOKENS.sbUSD,
       wantSymbol: "sbUSD",
       name: "Morpho sbUSD",
-      description: "SnowballLend sbUSD 공급 이자",
+      description: "SnowballLend sbUSD supply interest",
       strategyType: "morpho" as const,
       morphoMarketId: "0x5aa4edaf3dcbf0e54abbf2bb639acbdc95305f61bd4a4f4801d42040998c5752" as `0x${string}`,
     },
@@ -145,7 +145,7 @@ export const YIELD = {
       want: TOKENS.wCTC,
       wantSymbol: "wCTC",
       name: "Morpho wCTC",
-      description: "SnowballLend wCTC 공급 이자",
+      description: "SnowballLend wCTC supply interest",
       strategyType: "morpho" as const,
       morphoMarketId: "0xdb8d70912f854011992e1314b9c0837bf14e7314dccb160584e3b7d24d20f6bd" as `0x${string}`,
     },
@@ -155,7 +155,7 @@ export const YIELD = {
       want: TOKENS.USDC,
       wantSymbol: "USDC",
       name: "Morpho USDC",
-      description: "SnowballLend USDC 공급 이자",
+      description: "SnowballLend USDC supply interest",
       strategyType: "morpho" as const,
       morphoMarketId: "0x3a94c96ec40aa5fe54bcd20ecbcd733497e4f4f2c8d31ae4862951b20f992a0c" as `0x${string}`,
     },
@@ -178,6 +178,7 @@ export const ERC8004 = {
   reputationRegistry: "0x3E5E194e39b777F568c9a261f46a5DCC43840726" as Address,
   validationRegistry: "0x84b9B2121187155C1c85bA6EA34e35c981BbA023" as Address,
   agentVault: "0x7bca6fb903cc564d92ed5384512976c94f2730d7" as Address,
+  defaultAgentId: 1n,
 } as const;
 
 // Backend API constants are in apps/web (process.env is Next.js-specific)
