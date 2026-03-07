@@ -31,11 +31,16 @@ export interface Validation {
   certificationURI: string;
 }
 
+export interface TokenAllowanceView {
+  token: Address;
+  cap: bigint;
+  spent: bigint;
+}
+
 export interface Permission {
   allowedTargets: readonly Address[];
   allowedFunctions: readonly `0x${string}`[];
-  spendingCap: bigint;
-  spent: bigint;
   expiry: bigint;
   active: boolean;
+  tokenAllowances: readonly TokenAllowanceView[];
 }

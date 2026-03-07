@@ -1,6 +1,6 @@
 "use client";
 
-import { useWriteContract } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { ERC8004 } from "@/core/config/addresses";
 import { IdentityRegistryABI } from "@/core/abis";
 
@@ -8,7 +8,7 @@ export function useAgentActions() {
   const {
     writeContractAsync,
     isPending,
-  } = useWriteContract();
+  } = useChainWriteContract();
 
   const activate = async (agentId: bigint) => {
     return writeContractAsync({

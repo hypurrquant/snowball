@@ -104,12 +104,15 @@ export function DelegationSetupWizard({
   const handleGrantPermission = async () => {
     const preset = scenario === "morpho" ? MORPHO_PERMISSION : LIQUITY_PERMISSION;
     const expiry = BigInt(Math.floor(Date.now() / 1000) + 30 * 24 * 3600);
+    const tokenCaps = scenario === "morpho"
+      ? [{ token: TOKENS.sbUSD as Address, cap: parseEther("1000") }]
+      : [{ token: TOKENS.wCTC as Address, cap: parseEther("100") }];
     await grantPermission({
       agent: agentAddress,
       targets: preset.targets,
       functions: preset.functions,
-      cap: parseEther("1000"),
       expiry,
+      tokenCaps,
     });
   };
 
@@ -251,7 +254,7 @@ export function DelegationSetupWizard({
               <div>Agent: {agentAddress.slice(0, 8)}...{agentAddress.slice(-6)}</div>
               <div>Scope: {scenario === "morpho" ? "Morpho supply + withdraw" : "Liquity adjustRate + addColl"}</div>
               <div>Expiry: 30 days</div>
-              <div>Cap: 1,000 tokens</div>
+              <div>Token Cap: {scenario === "morpho" ? "1,000 sbUSD" : "100 wCTC"}</div>
             </div>
             <div className="flex gap-2">
               <Button onClick={handleGrantPermission} disabled={isGrantPending} className="flex-1">

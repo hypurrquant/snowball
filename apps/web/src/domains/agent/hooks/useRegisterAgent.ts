@@ -1,6 +1,7 @@
 "use client";
 
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useWaitForTransactionReceipt } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { decodeEventLog } from "viem";
 import { ERC8004 } from "@/core/config/addresses";
 import { IdentityRegistryABI } from "@/core/abis";
@@ -11,7 +12,7 @@ export function useRegisterAgent() {
     writeContractAsync,
     isPending,
     reset,
-  } = useWriteContract();
+  } = useChainWriteContract();
 
   const { data: receipt, isLoading: isConfirming } =
     useWaitForTransactionReceipt({ hash });

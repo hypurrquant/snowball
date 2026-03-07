@@ -1,23 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { isAddress, parseEther, toFunctionSelector } from "viem";
+import { isAddress, parseEther, toFunctionSelector, type Address } from "viem";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
 import { Shield, Loader2 } from "lucide-react";
-import { LIQUITY } from "@/core/config/addresses";
+import { LIQUITY, TOKENS } from "@/core/config/addresses";
 import { useVaultPermission } from "../hooks/useVaultPermission";
 
-// Preset: Allow agent to manage Liquity trove interest rate
+// Preset: Allow agent to manage Liquity trove interest rate + add collateral
 const PRESET_LIQUITY_RATE = {
   label: "Liquity Rate Adjuster",
-  description: "Allow agent to adjust your trove interest rate",
+  description: "Allow agent to adjust your trove interest rate and add collateral",
   targets: [LIQUITY.branches.wCTC.borrowerOperations],
   functions: [
     toFunctionSelector("adjustTroveInterestRate(uint256,uint256,uint256,uint256)"),
   ] as `0x${string}`[],
-  cap: parseEther("0"), // no spending needed for rate adjustment
+  tokenCaps: [
+    { token: TOKENS.wCTC as Address, cap: parseEther("100") },
+  ],
 };
 
 interface PermissionFormProps {
@@ -30,7 +32,6 @@ export function PermissionForm({ agentEndpoint, onSuccess }: PermissionFormProps
   const [customAgent, setCustomAgent] = useState("");
   const [customTargets, setCustomTargets] = useState("");
   const [customFunctions, setCustomFunctions] = useState("");
-  const [customCap, setCustomCap] = useState("");
   const [customExpiry, setCustomExpiry] = useState("");
 
   const { grantPermission, isGrantPending } = useVaultPermission();
@@ -42,8 +43,8 @@ export function PermissionForm({ agentEndpoint, onSuccess }: PermissionFormProps
         agent: agentEndpoint,
         targets: PRESET_LIQUITY_RATE.targets,
         functions: PRESET_LIQUITY_RATE.functions,
-        cap: PRESET_LIQUITY_RATE.cap,
         expiry,
+        tokenCaps: PRESET_LIQUITY_RATE.tokenCaps,
       });
       onSuccess?.();
     } catch {
@@ -66,7 +67,6 @@ export function PermissionForm({ agentEndpoint, onSuccess }: PermissionFormProps
 
     if (targets.length === 0 || functions.length === 0) return;
 
-    const cap = customCap ? parseEther(customCap) : 0n;
     const expiryDate = customExpiry ? new Date(customExpiry) : null;
     const now = Date.now();
 
@@ -80,7 +80,7 @@ export function PermissionForm({ agentEndpoint, onSuccess }: PermissionFormProps
       : 0n;
 
     try {
-      await grantPermission({ agent, targets, functions, cap, expiry });
+      await grantPermission({ agent, targets, functions, expiry, tokenCaps: [] });
       onSuccess?.();
     } catch {
       // handled by wallet
@@ -160,29 +160,19 @@ export function PermissionForm({ agentEndpoint, onSuccess }: PermissionFormProps
                 className="w-full rounded-lg bg-bg-input border border-border px-3 py-2 text-sm text-white font-mono placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-ice-400"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <label className="text-xs text-text-secondary">
-                  Spending Cap (ETH)
-                </label>
-                <input
-                  value={customCap}
-                  onChange={(e) => setCustomCap(e.target.value)}
-                  placeholder="0"
-                  className="w-full rounded-lg bg-bg-input border border-border px-3 py-2 text-sm text-white font-mono placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-ice-400"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs text-text-secondary">
-                  Expiry Date
-                </label>
-                <input
-                  type="date"
-                  value={customExpiry}
-                  onChange={(e) => setCustomExpiry(e.target.value)}
-                  className="w-full rounded-lg bg-bg-input border border-border px-3 py-2 text-sm text-white placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-ice-400"
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="text-xs text-text-secondary">
+                Expiry Date
+              </label>
+              <input
+                type="date"
+                value={customExpiry}
+                onChange={(e) => setCustomExpiry(e.target.value)}
+                className="w-full rounded-lg bg-bg-input border border-border px-3 py-2 text-sm text-white placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-ice-400"
+              />
+              <p className="text-xs text-text-tertiary">
+                Custom mode: execution-only (no token caps). Use executeOnBehalf only.
+              </p>
             </div>
             <Button
               onClick={handleCustom}

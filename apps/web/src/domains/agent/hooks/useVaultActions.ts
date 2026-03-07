@@ -1,6 +1,6 @@
 "use client";
 
-import { useWriteContract } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { ERC8004 } from "@/core/config/addresses";
 import { AgentVaultABI } from "@/core/abis";
 import type { Address } from "viem";
@@ -9,12 +9,12 @@ export function useVaultActions() {
   const {
     writeContractAsync: depositAsync,
     isPending: isDepositPending,
-  } = useWriteContract();
+  } = useChainWriteContract();
 
   const {
     writeContractAsync: withdrawAsync,
     isPending: isWithdrawPending,
-  } = useWriteContract();
+  } = useChainWriteContract();
 
   const deposit = async (token: Address, amount: bigint) => {
     return depositAsync({

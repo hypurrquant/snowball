@@ -1,12 +1,16 @@
 "use client";
 
-import { useWriteContract, useAccount } from "wagmi";
+import { useAccount } from "wagmi";
 import { usePublicClient } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { useState, useEffect, useCallback } from "react";
 import { parseAbiItem, type Address } from "viem";
-import { ERC8004 } from "@/core/config/addresses";
+import { ERC8004, TOKENS } from "@/core/config/addresses";
 import { AgentVaultABI } from "@/core/abis";
 import type { Permission } from "../types";
+
+// Known tokens for getPermission query
+const KNOWN_TOKENS: Address[] = [TOKENS.wCTC, TOKENS.sbUSD, TOKENS.lstCTC, TOKENS.USDC];
 
 interface PermissionEntry {
   agent: Address;
@@ -29,7 +33,7 @@ export function useVaultPermission() {
       const logs = await publicClient.getLogs({
         address: ERC8004.agentVault,
         event: parseAbiItem(
-          "event PermissionGranted(address indexed user, address indexed agent, uint256 expiry)"
+          "event PermissionGranted(address indexed user, address indexed agent, address[] targets, bytes4[] functions, uint256 expiry, (address token, uint256 cap)[] tokenCaps)"
         ),
         args: { user: address },
         fromBlock: 0n,
@@ -44,7 +48,7 @@ export function useVaultPermission() {
         agentMap.set(agent.toLowerCase(), { agent, expiry });
       }
 
-      // Fetch current permission for each agent
+      // Fetch current permission for each agent (with token allowances)
       const entries: PermissionEntry[] = [];
       for (const { agent, expiry } of agentMap.values()) {
         try {
@@ -52,7 +56,7 @@ export function useVaultPermission() {
             address: ERC8004.agentVault,
             abi: AgentVaultABI,
             functionName: "getPermission",
-            args: [address, agent],
+            args: [address, agent, KNOWN_TOKENS],
           });
           entries.push({
             agent,
@@ -78,14 +82,14 @@ export function useVaultPermission() {
 
   // WRITE: grantPermission
   const { writeContractAsync: grantAsync, isPending: isGrantPending } =
-    useWriteContract();
+    useChainWriteContract();
 
   const grantPermission = async (params: {
     agent: Address;
     targets: Address[];
     functions: `0x${string}`[];
-    cap: bigint;
     expiry: bigint;
+    tokenCaps?: { token: Address; cap: bigint }[];
   }) => {
     const result = await grantAsync({
       address: ERC8004.agentVault,
@@ -95,8 +99,8 @@ export function useVaultPermission() {
         params.agent,
         params.targets,
         params.functions,
-        params.cap,
         params.expiry,
+        params.tokenCaps ?? [],
       ],
     });
     setFetchVersion((v) => v + 1);
@@ -105,7 +109,7 @@ export function useVaultPermission() {
 
   // WRITE: revokePermission
   const { writeContractAsync: revokeAsync, isPending: isRevokePending } =
-    useWriteContract();
+    useChainWriteContract();
 
   const revokePermission = async (agent: Address) => {
     const result = await revokeAsync({

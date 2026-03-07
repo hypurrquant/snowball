@@ -92,12 +92,24 @@ export function PermissionList() {
                           {entry.permission.allowedFunctions.map((f) => f.slice(0, 10)).join(", ")}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Spending Cap</span>
-                        <span className="font-mono">
-                          {formatEther(entry.permission.spendingCap)} ETH
-                        </span>
-                      </div>
+                      {entry.permission.tokenAllowances.length > 0 && (
+                        <div className="space-y-1 pt-1 border-t border-border/50">
+                          <span className="text-text-secondary">Token Caps</span>
+                          {entry.permission.tokenAllowances
+                            .filter((ta) => ta.cap > 0n)
+                            .map((ta) => (
+                              <div key={ta.token} className="flex justify-between pl-2">
+                                <span className="font-mono">{ta.token.slice(0, 6)}...{ta.token.slice(-4)}</span>
+                                <span className="font-mono">
+                                  {formatEther(ta.spent)}/{formatEther(ta.cap)}
+                                </span>
+                              </div>
+                            ))}
+                          {entry.permission.tokenAllowances.every((ta) => ta.cap === 0n) && (
+                            <span className="pl-2 text-text-tertiary">No token caps (execution only)</span>
+                          )}
+                        </div>
+                      )}
                       {entry.expiry > 0n && (
                         <div className="flex justify-between">
                           <span>Expires</span>

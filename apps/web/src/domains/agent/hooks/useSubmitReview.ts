@@ -1,6 +1,7 @@
 "use client";
 
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useWaitForTransactionReceipt } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { ERC8004 } from "@/core/config/addresses";
 import { ReputationRegistryABI } from "@/core/abis";
 
@@ -12,7 +13,7 @@ export function useSubmitReview() {
     writeContractAsync,
     isPending,
     reset,
-  } = useWriteContract();
+  } = useChainWriteContract();
 
   const { data: receipt, isLoading: isConfirming } =
     useWaitForTransactionReceipt({ hash });
