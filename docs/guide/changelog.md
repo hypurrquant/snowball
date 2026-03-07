@@ -4,6 +4,22 @@
 
 ---
 
+### v0.22.0 - Yield Vault FE 개선 (2026-03-07)
+- **APY 표시**: Morpho 볼트 supply rate 온체인 계산 (2-phase IRM), StabilityPool은 "Variable"
+- **USD 환산**: TVL 옆 (~$X.XX) 표시, Total Deposits StatCard USD 합산
+- **입력 검증**: useMemo + try-catch 안전 파싱, Insufficient balance / Exceeds shares 에러
+- **withdrawAll**: Max 클릭 시 withdrawAll() 호출, 수동 수정 시 withdraw(shares)
+- **스켈레톤 UI**: VaultCard/StatCard 로딩 시 Skeleton 표시, APY 영역 독립 로딩
+- **DDD 정리**: morphoMath.ts를 shared/lib/으로 이동 (cross-domain import 해소)
+
+### v0.21.0 - nginx 리버스 프록시 (2026-03-07)
+- **nginx 단일 진입점**: 포트 80으로 통일, 경로 기반 라우팅 (`/api/agent/*`, `/api/*`, `/*`)
+- **API Key guard 제거**: agent-server에서 ApiKeyGuard 삭제, Next.js API Route 프록시 제거
+- **agent-server 정규화**: `setGlobalPrefix("api")` + HealthController 추가
+- **Docker Compose 재구성**: nginx → server/agent-server/frontend, 호스트 포트 매핑 제거
+- **프론트엔드 정리**: 상대경로 전환, `NEXT_PUBLIC_API_URL` 제거
+- 📝 [Phase 문서](../archive/v0.21.0-nginx-reverse-proxy/README.md)
+
 ### v0.20.0 - Claude CLI Proxy (2026-03-07)
 - **Claude Proxy 서버**: `apps/claude-proxy/` — Claude CLI를 HTTP로 래핑하는 경량 프록시 (포트 3002)
 - **CLI Planner**: Anthropic SDK 대신 로컬 Claude CLI를 통해 전략 수립

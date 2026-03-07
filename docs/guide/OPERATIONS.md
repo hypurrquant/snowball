@@ -921,10 +921,10 @@ Step 6: 시작
 
 | Vault | Vault 주소 | Strategy 주소 | 예치 토큰 |
 |-------|-----------|---------------|-----------|
-| mooSbUSD-SP | `0xd91035c1c48bd28dc7072f78a0b6a9adf55a38cd` | `0x282d87f4e4f20ad2d38d8570a76b72f8031ac88d` | sbUSD |
-| mooSbUSD-Morpho | `0x8076a963a86daa86ee8f0929c03d075e2bd62ccf` | `0x5c3f1b8d16abb5114f08ed7d9c6aa2ab425fcfdb` | sbUSD |
-| mooWCTC-Morpho | `0x5796211d1e317ca07f4f5315b8a47f2f9eb433ea` | `0xd61fc96c85f39199abdee0db5f8676c794620bc9` | wCTC |
-| mooUSDC-Morpho | `0xb5fd93247f0fd8cbf3b8db7963e699e35bc79b97` | `0xb76d6fbc6403d4890202e9c6cd39cecd078ac734` | USDC |
+| mooSbUSD-SP | `0x40a8b5b8a6c1e4236da10da2731944e59444c179` | `0x342c8a3385341b07111bbf1a73aac48cdda32917` | sbUSD |
+| mooSbUSD-Morpho | `0x384ebff116bb8458628b62624ab9535a4636a397` | `0x9176910f4c9dc7a868d5e6261fd651f98d7cc0c3` | sbUSD |
+| mooWCTC-Morpho | `0x766c8bf45d7a7356f63e830c134c07911b662757` | `0x241f5661d6db304434dfc48dab75f1c5be63404a` | wCTC |
+| mooUSDC-Morpho | `0xa6f9c033dba98f2d0fc79522b1b5c5098dc567b7` | `0xcdb7a9fb0040d2631f4cd212601838d195e8d08b` | USDC |
 
 ### ERC-8004 (Agent)
 

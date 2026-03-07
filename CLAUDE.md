@@ -47,7 +47,10 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 현재 페이즈
 
-- 없음 (v0.20.0 완료)
+- 없음 (v0.22.0 완료)
+- **문서**: [docs/phases/v0.22.0-yield-vault-fe/](docs/phases/v0.22.0-yield-vault-fe/)
+- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.22.0-yield-vault-fe`
+- **시작일**: 2026-03-07
 
 ## Scripts 구조
 
