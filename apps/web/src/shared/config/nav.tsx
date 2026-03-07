@@ -12,6 +12,7 @@ import {
   Vault,
   Link2,
   Layers,
+  GlassWater,
 } from "lucide-react";
 
 export interface NavItem {
@@ -37,10 +38,10 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "DeFi",
     items: [
-      { href: "/liquity", label: "Liquity", icon: (cls) => <HandCoins className={cls} /> },
-      { href: "/morpho", label: "Morpho", icon: (cls) => <Landmark className={cls} /> },
+      { href: "/liquity", label: "CDP", icon: (cls) => <HandCoins className={cls} /> },
+      { href: "/morpho", label: "Lending", icon: (cls) => <Landmark className={cls} /> },
       { href: "/yield", label: "Yield", icon: (cls) => <Vault className={cls} /> },
-      { href: "/bridge", label: "Bridge", icon: (cls) => <Link2 className={cls} /> },
+      { href: "/bridge", label: "Hyperliquid DN Vault Bridge", icon: (cls) => <Link2 className={cls} /> },
     ],
   },
   // Options: 비활성화 — EIP-712 미구현 + API 스키마 불일치 + 출금 불가 (options-fe-analysis.md 참조)
@@ -54,6 +55,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "More",
     items: [
+      { href: "/faucet", label: "Faucet", icon: (cls) => <GlassWater className={cls} /> },
       { href: "/dashboard", label: "Dashboard", icon: (cls) => <LayoutDashboard className={cls} /> },
       { href: "/analytics", label: "Analytics", icon: (cls) => <BarChart3 className={cls} /> },
       { href: "/agent", label: "Agent", icon: (cls) => <Bot className={cls} /> },
