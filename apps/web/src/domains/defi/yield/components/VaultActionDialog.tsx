@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { parseEther, maxUint256 } from "viem";
@@ -32,12 +32,13 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
     const [amount, setAmount] = useState("");
     const pipeline = useTxPipeline();
 
-    const parsedAmountStr = amount.replace(/,/g, "");
+    const [isWithdrawAll, setIsWithdrawAll] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             setActiveTab(defaultTab);
             setAmount("");
+            setIsWithdrawAll(false);
         }
     }, [isOpen, defaultTab]);
 
@@ -46,7 +47,33 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
         token: vault.want,
     });
 
-    const depositAmountBigInt = parsedAmountStr && !isNaN(Number(parsedAmountStr)) ? parseEther(parsedAmountStr) : 0n;
+    const parsedAmount = useMemo(() => {
+        const cleaned = amount.replace(/,/g, "").trim();
+        if (!cleaned) return 0n;
+        try {
+            return parseEther(cleaned);
+        } catch {
+            return null; // invalid input
+        }
+    }, [amount]);
+
+    const errors = useMemo(() => {
+        const errs: string[] = [];
+        if (parsedAmount === null) {
+            errs.push("Invalid amount");
+            return errs;
+        }
+        if (parsedAmount === 0n) return errs;
+        if (activeTab === "deposit") {
+            if (wantBalance && parsedAmount > wantBalance.value) errs.push("Insufficient balance");
+        } else {
+            if (vault.userShares !== undefined && parsedAmount > vault.userShares) errs.push("Exceeds shares");
+        }
+        return errs;
+    }, [parsedAmount, activeTab, wantBalance, vault.userShares]);
+
+    const canSubmit = parsedAmount !== null && parsedAmount > 0n && errors.length === 0;
+    const depositAmountBigInt = parsedAmount ?? 0n;
 
     const { needsApproval, approve } = useTokenApproval({
         token: vault.want,
@@ -59,7 +86,7 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
     const { writeContractAsync: withdrawAsync } = useChainWriteContract();
 
     const handleDeposit = async () => {
-        if (!depositAmountBigInt) return;
+        if (!canSubmit) return;
         const steps = [];
         if (needsApproval) {
             steps.push({ id: "approve", type: "approve" as const, label: `Approve ${vault.wantSymbol}` });
@@ -89,23 +116,30 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
     };
 
     const handleWithdraw = async () => {
-        if (!depositAmountBigInt) return;
+        if (!canSubmit && !isWithdrawAll) return;
         await pipeline.run(
-            [{ id: "withdraw", type: "withdraw" as const, label: "Withdraw" }],
+            [{ id: "withdraw", type: "withdraw" as const, label: isWithdrawAll ? "Withdraw All" : "Withdraw" }],
             {
                 withdraw: async () => {
-                    const hash = await withdrawAsync({
-                        address: vault.address,
-                        abi: SnowballYieldVaultABI,
-                        functionName: "withdraw",
-                        args: [depositAmountBigInt],
-                    });
+                    const hash = isWithdrawAll
+                        ? await withdrawAsync({
+                            address: vault.address,
+                            abi: SnowballYieldVaultABI,
+                            functionName: "withdrawAll",
+                          })
+                        : await withdrawAsync({
+                            address: vault.address,
+                            abi: SnowballYieldVaultABI,
+                            functionName: "withdraw",
+                            args: [depositAmountBigInt],
+                          });
                     await waitForTransactionReceipt(config, { hash });
                     return hash;
                 },
             },
         );
         setAmount("");
+        setIsWithdrawAll(false);
     };
 
     const receiveShareEstimate = vault.pricePerShare && vault.pricePerShare > 0n && depositAmountBigInt > 0n
@@ -160,7 +194,11 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
                                 <span className="font-mono">~{formatTokenAmount(receiveShareEstimate, 18, 4)} moo{vault.wantSymbol}</span>
                             </div>
 
-                            <Button className="w-full" onClick={handleDeposit} disabled={!depositAmountBigInt || !isConnected || vault.paused}>
+                            {activeTab === "deposit" && errors.length > 0 && (
+                                <p className="text-xs text-red-400 px-1">{errors[0]}</p>
+                            )}
+
+                            <Button className="w-full" onClick={handleDeposit} disabled={!canSubmit || !isConnected || vault.paused}>
                                 {vault.paused ? "Paused" : "Deposit"}
                             </Button>
                         </TabsContent>
@@ -171,7 +209,10 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
                                     <span className="text-xs text-text-tertiary">Amount Shares</span>
                                     <button
                                         onClick={() => {
-                                            if (vault.userShares) setAmount(formatTokenAmount(vault.userShares, 18, 18).replace(/,/g, ""));
+                                            if (vault.userShares) {
+                                                setAmount(formatTokenAmount(vault.userShares, 18, 18).replace(/,/g, ""));
+                                                setIsWithdrawAll(true);
+                                            }
                                         }}
                                         className="text-xs text-text-secondary hover:text-ice-400"
                                     >
@@ -183,7 +224,7 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
                                     inputMode="decimal"
                                     placeholder="0.0"
                                     value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
+                                    onChange={(e) => { setAmount(e.target.value); setIsWithdrawAll(false); }}
                                     className="border-0 bg-transparent text-lg font-mono p-0 h-auto focus-visible:ring-0"
                                 />
                             </div>
@@ -198,13 +239,17 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
                                 <span>{vault.withdrawFee !== undefined ? `${(Number(vault.withdrawFee) / 100).toFixed(1)}%` : "0.1%"}</span>
                             </div>
 
+                            {activeTab === "withdraw" && errors.length > 0 && (
+                                <p className="text-xs text-red-400 px-1">{errors[0]}</p>
+                            )}
+
                             <Button
                                 className="w-full"
                                 variant="secondary"
                                 onClick={handleWithdraw}
-                                disabled={!depositAmountBigInt || !isConnected}
+                                disabled={!canSubmit || !isConnected}
                             >
-                                Withdraw
+                                {isWithdrawAll ? "Withdraw All" : "Withdraw"}
                             </Button>
                         </TabsContent>
                     </Tabs>

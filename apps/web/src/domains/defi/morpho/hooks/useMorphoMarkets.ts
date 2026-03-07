@@ -3,7 +3,7 @@
 import { useReadContracts } from "wagmi";
 import { SnowballLendABI, MockOracleABI, AdaptiveCurveIRMABI } from "@/core/abis";
 import { LEND } from "@/core/config/addresses";
-import { utilization, supplyAPY, borrowRateToAPR } from "../lib/morphoMath";
+import { utilization, supplyAPY, borrowRateToAPR } from "@/shared/lib/morphoMath";
 import { getMarketParams } from "../lib/marketParams";
 import type { MorphoMarket } from "../types";
 

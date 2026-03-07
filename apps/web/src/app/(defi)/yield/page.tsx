@@ -1,27 +1,35 @@
 "use client";
 
 import { useYieldVaults } from "@/domains/defi/yield/hooks/useYieldVaults";
+import { useYieldVaultAPY } from "@/domains/defi/yield/hooks/useYieldVaultAPY";
 import { VaultCard } from "@/domains/defi/yield/components/VaultCard";
 import { StatCard } from "@/shared/components/common/StatCard";
-import { formatTokenAmount } from "@/shared/lib/utils";
+import { formatUSD } from "@/shared/lib/utils";
+import { TOKEN_INFO } from "@/core/config/addresses";
+import { formatUnits } from "viem";
 import { Vault, Activity, TrendingUp } from "lucide-react";
+
+function tvlToUsd(tvl: bigint | undefined, want: string): number {
+    if (!tvl) return 0;
+    const info = TOKEN_INFO[want.toLowerCase()];
+    const price = info?.mockPriceUsd ?? 0;
+    return Number(formatUnits(tvl, 18)) * price;
+}
 
 export default function YieldPage() {
     const { vaults, isLoading } = useYieldVaults();
+    const apyMap = useYieldVaultAPY();
 
     const activeVaultsCount = vaults.filter(v => !v.paused).length;
 
-    // Naive sum of TVL for demonstration purposes
-    const totalTvl = vaults.reduce((acc, vault) => {
-        if (vault.tvl) {
-            return acc + vault.tvl;
-        }
-        return acc;
-    }, 0n);
+    const totalTvlUsd = vaults.reduce((acc, vault) => acc + tvlToUsd(vault.tvl, vault.want), 0);
 
-    const avgPricePerShare = vaults.length > 0
-        ? vaults.reduce((acc, vault) => acc + (vault.pricePerShare || 1000000000000000000n), 0n) / BigInt(vaults.length)
-        : 1000000000000000000n;
+    const hasAnyReadyApy = vaults.some((v) => apyMap[v.address]?.kind === "ready");
+    const bestApy = vaults.reduce((best, vault) => {
+        const state = apyMap[vault.address];
+        if (state?.kind === "ready" && state.value > best) return state.value;
+        return best;
+    }, 0);
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -32,25 +40,34 @@ export default function YieldPage() {
 
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                 <StatCard
-                    label="Total Deposits (Raw)"
-                    value={isLoading ? "..." : formatTokenAmount(totalTvl, 18, 2)}
+                    label="Total Deposits"
+                    value={formatUSD(totalTvlUsd)}
                     icon={<Vault className="w-4 h-4" />}
+                    loading={isLoading}
                 />
                 <StatCard
                     label="Active Vaults"
-                    value={isLoading ? "..." : activeVaultsCount.toString()}
+                    value={activeVaultsCount.toString()}
                     icon={<Activity className="w-4 h-4" />}
+                    loading={isLoading}
                 />
                 <StatCard
-                    label="Avg Price/Share"
-                    value={isLoading ? "..." : formatTokenAmount(avgPricePerShare, 18, 4)}
+                    label="Best APY"
+                    value={hasAnyReadyApy ? `${bestApy.toFixed(2)}%` : "—"}
                     icon={<TrendingUp className="w-4 h-4" />}
+                    loading={isLoading}
                 />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {vaults.map((vault) => (
-                    <VaultCard key={`${vault.address}-${vault.want}`} vault={vault} />
+                    <VaultCard
+                        key={`${vault.address}-${vault.want}`}
+                        vault={vault}
+                        apyState={apyMap[vault.address]}
+                        tvlUsd={tvlToUsd(vault.tvl, vault.want)}
+                        loading={isLoading}
+                    />
                 ))}
             </div>
 

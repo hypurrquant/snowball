@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { VaultData } from "@/domains/defi/yield/hooks/useYieldVaults";
-import { formatTokenAmount } from "@/shared/lib/utils";
+import type { ApyState } from "@/domains/defi/yield/hooks/useYieldVaultAPY";
+import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
 import { Vault, TrendingUp, Clock } from "lucide-react";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import {
     Card,
     CardHeader,
@@ -17,15 +19,14 @@ import { VaultActionDialog } from "./VaultActionDialog";
 
 interface VaultCardProps {
     vault: VaultData;
+    apyState?: ApyState;
+    tvlUsd?: number;
+    loading?: boolean;
 }
 
-export function VaultCard({ vault }: VaultCardProps) {
+export function VaultCard({ vault, apyState, tvlUsd, loading }: VaultCardProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [dialogDefaultTab, setDialogDefaultTab] = useState<"deposit" | "withdraw">("deposit");
-
-    const pricePerShareFormatted = vault.pricePerShare
-        ? formatTokenAmount(vault.pricePerShare, 18, 4)
-        : "1.0000";
 
     const tvlFormatted = vault.tvl !== undefined
         ? formatTokenAmount(vault.tvl, 18, 2)
@@ -47,6 +48,29 @@ export function VaultCard({ vault }: VaultCardProps) {
     const withdrawFeeFormatted = vault.withdrawFee !== undefined
         ? `${(Number(vault.withdrawFee) / 100).toFixed(1)}%`
         : "—";
+
+    if (loading) {
+        return (
+            <Card className="bg-bg-card border border-border-hover/40 rounded-2xl flex flex-col h-full p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                    <Skeleton className="w-10 h-10 rounded-xl" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-3 w-48" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 py-3">
+                    <Skeleton className="h-10 rounded" />
+                    <Skeleton className="h-10 rounded" />
+                    <Skeleton className="h-10 rounded" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                    <Skeleton className="h-9 rounded" />
+                    <Skeleton className="h-9 rounded" />
+                </div>
+            </Card>
+        );
+    }
 
     return (
         <>
@@ -76,13 +100,26 @@ export function VaultCard({ vault }: VaultCardProps) {
                             <div className="text-xs text-text-tertiary mb-1">TVL</div>
                             <div className="text-sm font-medium">
                                 {tvlFormatted} <span className="text-xs text-text-secondary">{vault.wantSymbol}</span>
+                                {tvlUsd !== undefined && (
+                                    <div className="text-xs text-text-tertiary">(~${formatNumber(tvlUsd)})</div>
+                                )}
                             </div>
                         </div>
                         <div>
                             <div className="text-xs text-text-tertiary mb-1 flex items-center gap-1">
-                                <TrendingUp className="w-3 h-3" /> Price/Share
+                                <TrendingUp className="w-3 h-3" /> Est. APY
                             </div>
-                            <div className="text-sm font-medium">{pricePerShareFormatted}</div>
+                            <div className="text-sm font-medium">
+                                {!apyState || apyState.kind === "loading" ? (
+                                    <Skeleton className="h-4 w-12" />
+                                ) : apyState.kind === "ready" ? (
+                                    <span className="text-success">{formatNumber(apyState.value)}%</span>
+                                ) : apyState.kind === "variable" ? (
+                                    <span className="text-text-secondary">Variable</span>
+                                ) : (
+                                    <span className="text-text-secondary">&mdash;</span>
+                                )}
+                            </div>
                         </div>
                         <div>
                             <div className="text-xs text-text-tertiary mb-1">Your Deposit</div>

@@ -3,7 +3,7 @@
 import { useReadContract } from "wagmi";
 import { SnowballLendABI } from "@/core/abis";
 import { LEND } from "@/core/config/addresses";
-import { toAssetsDown, calculateHealthFactor, calculateLiquidationPrice } from "../lib/morphoMath";
+import { toAssetsDown, calculateHealthFactor, calculateLiquidationPrice } from "@/shared/lib/morphoMath";
 import type { MorphoPosition } from "../types";
 import type { Address } from "viem";
 

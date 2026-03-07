@@ -127,6 +127,7 @@ export const YIELD = {
       wantSymbol: "sbUSD",
       name: "Stability Pool",
       description: "Liquity 청산 수익 자동 복리",
+      strategyType: "stabilityPool" as const,
     },
     {
       address: "0x384ebff116bb8458628b62624ab9535a4636a397" as Address,
@@ -135,6 +136,8 @@ export const YIELD = {
       wantSymbol: "sbUSD",
       name: "Morpho sbUSD",
       description: "SnowballLend sbUSD 공급 이자",
+      strategyType: "morpho" as const,
+      morphoMarketId: "0x5aa4edaf3dcbf0e54abbf2bb639acbdc95305f61bd4a4f4801d42040998c5752" as `0x${string}`,
     },
     {
       address: "0x766c8bf45d7a7356f63e830c134c07911b662757" as Address,
@@ -143,6 +146,8 @@ export const YIELD = {
       wantSymbol: "wCTC",
       name: "Morpho wCTC",
       description: "SnowballLend wCTC 공급 이자",
+      strategyType: "morpho" as const,
+      morphoMarketId: "0xdb8d70912f854011992e1314b9c0837bf14e7314dccb160584e3b7d24d20f6bd" as `0x${string}`,
     },
     {
       address: "0xa6f9c033dba98f2d0fc79522b1b5c5098dc567b7" as Address,
@@ -151,6 +156,8 @@ export const YIELD = {
       wantSymbol: "USDC",
       name: "Morpho USDC",
       description: "SnowballLend USDC 공급 이자",
+      strategyType: "morpho" as const,
+      morphoMarketId: "0x3a94c96ec40aa5fe54bcd20ecbcd733497e4f4f2c8d31ae4862951b20f992a0c" as `0x${string}`,
     },
   ],
 } as const;
