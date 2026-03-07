@@ -4,7 +4,8 @@ import type { AgentManifest, RunResult, AgentConfig } from "./types";
 import { CapabilityRegistry } from "./registry";
 import { morphoSupply, morphoWithdraw, liquityAdjustInterestRate, liquityAddCollateral } from "./capabilities/index";
 import { buildSnapshot } from "./observers/build-snapshot";
-import { plan as planWithClaude } from "./planner/anthropic-planner";
+import { plan as planWithApi } from "./planner/anthropic-planner";
+import { plan as planWithCli } from "./planner/cli-planner";
 import { executePlan } from "./executor/execute-plan";
 import { loadConfig } from "./config";
 
@@ -55,9 +56,11 @@ export class AgentRuntime {
       );
       logs.push("[Runtime] Snapshot built successfully");
 
-      // 3. Planner: Claude API
-      logs.push("[Runtime] Planning...");
-      const { plan, reasoning } = await planWithClaude(
+      // 3. Planner: CLI proxy or API
+      const plannerMode = process.env.PLANNER_MODE || "cli";
+      const planFn = plannerMode === "api" ? planWithApi : planWithCli;
+      logs.push(`[Runtime] Planning (mode=${plannerMode})...`);
+      const { plan, reasoning } = await planFn(
         snapshot,
         manifest,
         this.registry,

@@ -4,6 +4,11 @@
 
 ---
 
+### v0.20.0 - Claude CLI Proxy (2026-03-07)
+- **Claude Proxy 서버**: `apps/claude-proxy/` — Claude CLI를 HTTP로 래핑하는 경량 프록시 (포트 3002)
+- **CLI Planner**: Anthropic SDK 대신 로컬 Claude CLI를 통해 전략 수립
+- **모드 전환**: `PLANNER_MODE=cli|api` 환경변수로 CLI/API 전환
+
 ### v0.18.0 - Agent Server 운영 강화 (2026-03-07)
 - **SQLite 영속화**: 2-phase write + WAL 모드 + crash recovery
 - **Winston 로깅**: 콘솔 + 파일 + 에러 파일 3중 로깅

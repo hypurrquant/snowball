@@ -1,0 +1,8 @@
+{
+  "name": "@snowball/claude-proxy",
+  "version": "0.20.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  }
+}
