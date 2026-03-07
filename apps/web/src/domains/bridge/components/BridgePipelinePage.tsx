@@ -34,7 +34,7 @@ export function BridgePipelinePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -42,7 +42,7 @@ export function BridgePipelinePage() {
           DN Crosschain Bridge
         </h1>
         <p className="text-sm text-text-tertiary mt-1">
-          USDC (CC Testnet) → DN (Sepolia) → DN (USC Testnet)
+          USDC (CTC Testnet) → DN (Eth Sepolia) → DN (CTC USC Testnet)
         </p>
       </div>
 
@@ -54,7 +54,7 @@ export function BridgePipelinePage() {
         <CardHeader>
           <CardTitle>Bridge Pipeline</CardTitle>
           <CardDescription>
-            4 signatures across 2 chains + automatic attestation
+            Transfer USDC via Wormhole across chains with automatic attestation
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

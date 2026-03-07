@@ -6,9 +6,9 @@ import { Loader2 } from "lucide-react";
 import { useMultiChainBalances } from "../hooks/useMultiChainBalances";
 
 const CHAINS = [
-  { label: "CC Testnet", token: "USDC", key: "ccUsdc" as const, color: "bg-blue-500" },
-  { label: "Sepolia", token: "DN", key: "sepoliaDN" as const, color: "bg-purple-500" },
-  { label: "USC Testnet", token: "DN", key: "uscDN" as const, color: "bg-green-500" },
+  { label: "CTC Testnet", token: "USDC", key: "ccUsdc" as const, color: "bg-blue-500" },
+  { label: "Eth Sepolia", token: "DN", key: "sepoliaDN" as const, color: "bg-purple-500" },
+  { label: "CTC USC Testnet", token: "DN", key: "uscDN" as const, color: "bg-green-500" },
 ];
 
 export function ChainDashboard() {

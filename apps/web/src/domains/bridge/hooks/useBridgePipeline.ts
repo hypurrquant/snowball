@@ -33,11 +33,11 @@ function getSessionKey(address: string) {
 function createInitialSteps(): TxStep[] {
   return [
     { id: "approve", type: "approve", label: "Approve USDC", status: "pending", chainId: creditcoinTestnet.id },
-    { id: "deposit", type: "vaultDeposit", label: "Deposit to Vault", status: "pending", chainId: creditcoinTestnet.id },
-    { id: "mint", type: "mint", label: "Mint DN (Sepolia)", status: "pending", chainId: sepoliaChain.id },
+    { id: "deposit", type: "vaultDeposit", label: "Send USDC via Wormhole", status: "pending", chainId: creditcoinTestnet.id },
+    { id: "mint", type: "mint", label: "Mint DN (Eth Sepolia)", status: "pending", chainId: sepoliaChain.id },
     { id: "burn", type: "bridgeBurn", label: "Bridge Burn DN", status: "pending", chainId: sepoliaChain.id },
     { id: "attest", type: "attestWait", label: "Attestation (~5 min)", status: "pending", chainId: uscTestnet.id },
-    { id: "uscMint", type: "uscMint", label: "USC Mint (Auto)", status: "pending", chainId: uscTestnet.id },
+    { id: "uscMint", type: "uscMint", label: "CTC USC Mint (Auto)", status: "pending", chainId: uscTestnet.id },
   ];
 }
 
@@ -57,16 +57,16 @@ interface BridgeSession {
 }
 
 function saveSession(address: string, session: BridgeSession) {
-  try { sessionStorage.setItem(getSessionKey(address), JSON.stringify(session)); } catch {}
+  try { localStorage.setItem(getSessionKey(address), JSON.stringify(session)); } catch {}
 }
 
 function loadSession(address: string): BridgeSession | null {
   try {
-    const raw = sessionStorage.getItem(getSessionKey(address));
+    const raw = localStorage.getItem(getSessionKey(address));
     if (!raw) return null;
     const session = JSON.parse(raw) as BridgeSession;
     if (Date.now() - session.timestamp > 86_400_000) {
-      sessionStorage.removeItem(getSessionKey(address));
+      localStorage.removeItem(getSessionKey(address));
       return null;
     }
     return session;
@@ -74,7 +74,7 @@ function loadSession(address: string): BridgeSession | null {
 }
 
 function clearSession(address: string) {
-  try { sessionStorage.removeItem(getSessionKey(address)); } catch {}
+  try { localStorage.removeItem(getSessionKey(address)); } catch {}
 }
 
 export function useBridgePipeline() {
