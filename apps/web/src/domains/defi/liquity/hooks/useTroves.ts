@@ -19,7 +19,7 @@ function computeTroveId(sender: Address, owner: Address, ownerIndex: bigint): bi
 }
 
 // Max ownerIndex to scan per user (MVP: typically 1-3 troves)
-const MAX_OWNER_INDEX = 5;
+const MAX_OWNER_INDEX = 100;
 
 export function useTroves(branch: "wCTC" | "lstCTC", owner?: Address) {
   const b = LIQUITY.branches[branch];
@@ -103,15 +103,15 @@ export function useTroves(branch: "wCTC" | "lstCTC", owner?: Address) {
   }
 
   // Next available ownerIndex for opening a new trove
-  const nextOwnerIndex = owner
-    ? BigInt(
-        candidateIds.findIndex((_, i) => {
-          const r = statusResults?.[i];
-          if (r?.status !== "success") return true;
-          return Number(r.result as number) === 0; // nonExistent
-        }),
-      )
-    : 0n;
+  const nextOwnerIndexRaw = owner
+    ? candidateIds.findIndex((_, i) => {
+        const r = statusResults?.[i];
+        if (r?.status !== "success") return true;
+        return Number(r.result as number) === 0; // nonExistent
+      })
+    : 0;
+  // findIndex returns -1 when all slots are occupied → fall back to next slot
+  const nextOwnerIndex = BigInt(nextOwnerIndexRaw === -1 ? MAX_OWNER_INDEX : nextOwnerIndexRaw);
 
   return { troves, troveCount: BigInt(troves.length), isLoading, refetch, nextOwnerIndex };
 }
