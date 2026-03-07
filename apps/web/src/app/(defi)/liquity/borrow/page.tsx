@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useConnection } from "wagmi";
-import { parseEther, formatEther } from "viem";
+import { parseEther, formatEther, toFunctionSelector, maxUint256, type Address } from "viem";
 import {
   Card, CardHeader, CardTitle, CardContent, CardDescription,
 } from "@/shared/components/ui/card";
@@ -20,7 +20,7 @@ import { useAllTroves } from "@/domains/defi/liquity/hooks/useAllTroves";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { usePositionPreview } from "@/domains/defi/liquity/hooks/usePositionPreview";
 import { useMarketRateStats } from "@/domains/defi/liquity/hooks/useMarketRateStats";
-import { TOKENS } from "@/core/config/addresses";
+import { TOKENS, ERC8004, LIQUITY } from "@/core/config/addresses";
 import { InterestRateSlider } from "@/domains/defi/liquity/components/InterestRateSlider";
 import { PositionSummary } from "@/domains/defi/liquity/components/PositionSummary";
 import { EditTroveDialog } from "@/domains/defi/liquity/components/EditTroveDialog";
@@ -34,8 +34,7 @@ import type { TxStep, TxPhase } from "@/shared/types/tx";
 import { Shield, TrendingDown, DollarSign, HandCoins, Loader2, Users, AlertTriangle, Info, Bot } from "lucide-react";
 import { useTroveDelegationStatus } from "@/domains/defi/liquity/hooks/useTroveDelegationStatus";
 import { useTroveDelegate } from "@/domains/defi/liquity/hooks/useTroveDelegate";
-import { ERC8004 } from "@snowball/core/src/config/addresses";
-import Link from "next/link";
+import { useVaultPermission } from "@/domains/agent/hooks/useVaultPermission";
 
 const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
 // Matches on-chain Constants.sol MIN_DEBT = 10e18
@@ -81,17 +80,69 @@ export default function LiquityBorrowPage() {
   // Delegation
   const troveIds = useMemo(() => troves.map((t) => t.id), [troves]);
   const { delegationMap } = useTroveDelegationStatus(branch, troveIds);
-  const { fullUndelegate, isPending: isDelegatePending } = useTroveDelegate(branch);
+  const { fullUndelegate, setAddManager, setInterestIndividualDelegate, isPending: isDelegatePending } = useTroveDelegate(branch);
+  const { grantPermission } = useVaultPermission();
   const [undelegateTarget, setUndelegateTarget] = useState<bigint | null>(null);
+  const [delegateTarget, setDelegateTarget] = useState<bigint | null>(null);
+  const delegatePipeline = useTxPipeline();
 
   const handleUndelegate = async (troveId: bigint) => {
     if (!address) return;
     try {
       await fullUndelegate(troveId, address, ERC8004.agentVault);
       setUndelegateTarget(null);
+      refetchTroves();
     } catch {
       // error visible to user through isPending state reset
     }
+  };
+
+  const handleDelegate = async (troveId: bigint) => {
+    if (!address) return;
+    const b = LIQUITY.branches[branch];
+    const collToken = (branch === "lstCTC" ? TOKENS.lstCTC : TOKENS.wCTC) as Address;
+
+    await delegatePipeline.run(
+      [
+        { id: "permission", type: "approve" as const, label: "Grant Vault Permission" },
+        { id: "add-manager", type: "delegate" as const, label: "Set Add Manager" },
+        { id: "interest-delegate", type: "delegate" as const, label: "Set Interest Delegate" },
+      ],
+      {
+        permission: async () => {
+          const hash = await grantPermission({
+            agent: ERC8004.agentEOA as Address,
+            targets: [b.borrowerOperations as Address],
+            functions: [
+              toFunctionSelector("adjustTroveInterestRate(uint256,uint256,uint256,uint256,uint256)"),
+              toFunctionSelector("addColl(uint256,uint256)"),
+            ],
+            expiry: BigInt(Math.floor(Date.now() / 1000) + 30 * 24 * 3600),
+            tokenCaps: [{ token: collToken, cap: parseEther("100") }],
+          });
+          return hash as `0x${string}` | undefined;
+        },
+        "add-manager": async () => {
+          const hash = await setAddManager(troveId, ERC8004.agentVault as Address);
+          return hash as `0x${string}` | undefined;
+        },
+        "interest-delegate": async () => {
+          const hash = await setInterestIndividualDelegate({
+            troveId,
+            delegate: ERC8004.agentVault as Address,
+            minInterestRate: parseEther("0.005"),
+            maxInterestRate: parseEther("0.15"),
+            newAnnualInterestRate: 0n,
+            upperHint: 0n,
+            lowerHint: 0n,
+            maxUpfrontFee: maxUint256,
+            minInterestRateChangePeriod: 0n,
+          });
+          return hash as `0x${string}` | undefined;
+        },
+      },
+    );
+    refetchTroves();
   };
 
   // Edit Trove
@@ -460,7 +511,7 @@ export default function LiquityBorrowPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-2 items-center flex-wrap">
+                  <div className="flex gap-2 items-center flex-shrink-0">
                     {t.isDemo && (
                       <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">[Demo]</span>
                     )}
@@ -469,17 +520,16 @@ export default function LiquityBorrowPage() {
                       const isDelegated = info?.isDelegated ?? false;
                       return (
                         <>
-                          {isDelegated && (
-                            <span className="text-xs bg-ice-400/20 text-ice-300 px-2 py-0.5 rounded flex items-center gap-1">
-                              <Bot className="w-3 h-3" /> Agent Delegated
-                            </span>
-                          )}
+                          {/* Agent icon — colored when delegated, click to delegate/undelegate */}
                           {isDelegated ? (
                             <Dialog open={undelegateTarget === t.id} onOpenChange={(open) => setUndelegateTarget(open ? t.id : null)}>
                               <DialogTrigger asChild>
-                                <Button size="sm" variant="outline" disabled={!isConnected || isDelegatePending}>
-                                  Undelegate
-                                </Button>
+                                <button
+                                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-ice-400/20 text-ice-300 hover:bg-ice-400/30 transition-colors text-xs font-medium"
+                                  title="Agent Delegated — click to undelegate"
+                                >
+                                  <Bot className="w-3.5 h-3.5" /> Delegated
+                                </button>
                               </DialogTrigger>
                               <DialogContent className="sm:max-w-md">
                                 <DialogHeader>
@@ -505,11 +555,66 @@ export default function LiquityBorrowPage() {
                               </DialogContent>
                             </Dialog>
                           ) : (
-                            <Button size="sm" variant="outline" disabled={!isConnected} asChild>
-                              <Link href={`/agent/delegate/${ERC8004.defaultAgentId}?scenario=liquity&troveId=${t.id}&branch=${branch}`}>
-                                <Bot className="w-3 h-3 mr-1" /> Delegate
-                              </Link>
-                            </Button>
+                            <Dialog open={delegateTarget === t.id} onOpenChange={(open) => setDelegateTarget(open ? t.id : null)}>
+                              <DialogTrigger asChild>
+                                <button
+                                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-text-tertiary hover:text-ice-300 hover:bg-ice-400/10 transition-colors text-xs"
+                                  title="Delegate to Agent"
+                                >
+                                  <Bot className="w-3.5 h-3.5" /> Delegate
+                                </button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>Delegate Trove to Agent</DialogTitle>
+                                  <DialogDescription>
+                                    Allow the AI agent to manage this trove&apos;s interest rate automatically.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-2">
+                                  <div className="rounded-xl bg-bg-input p-3 grid grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                      <span className="text-text-tertiary">Collateral</span>
+                                      <p className="font-mono text-white">{formatTokenAmount(t.coll, 18, 4)} {branch}</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-text-tertiary">Debt</span>
+                                      <p className="font-mono text-white">{formatTokenAmount(t.debt, 18, 2)} sbUSD</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-text-tertiary">Current Rate</span>
+                                      <p className="font-mono text-white">{formatNumber(Number(t.interestRate) / 1e16)}%</p>
+                                    </div>
+                                    <div>
+                                      <span className="text-text-tertiary">ICR</span>
+                                      <p className="font-mono text-white">{formatNumber(t.icr)}%</p>
+                                    </div>
+                                  </div>
+                                  <div className="rounded-xl bg-ice-400/10 border border-ice-400/20 p-3 text-xs space-y-1.5">
+                                    <p className="text-ice-300 font-medium">Agent will manage:</p>
+                                    <ul className="text-text-secondary space-y-1 ml-3 list-disc">
+                                      <li>Adjust interest rate to track market average</li>
+                                      <li>Rate range: 0.5% ~ 15%</li>
+                                      <li>Cooldown: 7 days between changes</li>
+                                      <li>Permission expires in 30 days</li>
+                                    </ul>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button variant="outline" onClick={() => setDelegateTarget(null)} className="flex-1">
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleDelegate(t.id)}
+                                      disabled={isDelegatePending}
+                                      className="flex-1"
+                                    >
+                                      {isDelegatePending && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                                      Confirm Delegate
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           )}
                           <Button size="sm" variant="secondary" onClick={() => setEditTroveId(t.id)}>
                             Edit
@@ -627,6 +732,15 @@ export default function LiquityBorrowPage() {
         steps={closePipeline.txSteps}
         phase={closePipeline.txPhase}
         title="Close Trove"
+      />
+
+      {/* Tx Pipeline Modal — Delegate Trove */}
+      <TxPipelineModal
+        open={delegatePipeline.showTxModal}
+        onClose={() => { delegatePipeline.reset(); setDelegateTarget(null); }}
+        steps={delegatePipeline.txSteps}
+        phase={delegatePipeline.txPhase}
+        title="Delegate Trove"
       />
     </div>
   );

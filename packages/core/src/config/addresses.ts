@@ -178,6 +178,7 @@ export const ERC8004 = {
   reputationRegistry: "0x3E5E194e39b777F568c9a261f46a5DCC43840726" as Address,
   validationRegistry: "0x84b9B2121187155C1c85bA6EA34e35c981BbA023" as Address,
   agentVault: "0x7bca6fb903cc564d92ed5384512976c94f2730d7" as Address,
+  agentEOA: "0xE550Afa5f8C81D7c3219a4Ece9c2e58618C125c6" as Address,
   defaultAgentId: 1n,
 } as const;
 

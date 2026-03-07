@@ -18,7 +18,8 @@ export type TxStepType =
   | "vaultDeposit"
   | "bridgeBurn"
   | "attestWait"
-  | "uscMint";
+  | "uscMint"
+  | "delegate";
 export type TxPhase = "idle" | "executing" | "complete" | "error";
 
 export interface TxStep {

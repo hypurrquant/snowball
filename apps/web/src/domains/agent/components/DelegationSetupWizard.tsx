@@ -142,7 +142,7 @@ export function DelegationSetupWizard({
       upperHint: 0n,
       lowerHint: 0n,
       maxUpfrontFee: parseEther("1000"),
-      minInterestRateChangePeriod: BigInt(7 * 24 * 3600),
+      minInterestRateChangePeriod: 0n,
     });
   };
 
