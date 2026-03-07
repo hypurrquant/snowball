@@ -108,7 +108,7 @@
 | MultiTroveGetter | `0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6` |
 | RedemptionHelper | `0x8baf58113f968b4dfb2916290b57ce3ae114fb77` |
 | DebtInFrontHelper | `0x9fd6116fc1d006fa1d8993746ac1924f16d722bb` |
-| AgentVault | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` |
+| AgentVault | `0x7bca6fb903cc564d92ed5384512976c94f2730d7` |
 
 ### Liquity Parameters
 

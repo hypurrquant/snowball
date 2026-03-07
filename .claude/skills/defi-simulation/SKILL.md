@@ -8,6 +8,7 @@
 
 - "시뮬레이션 실행", "simulate", "페르소나 실행"
 - "DEX 스왑 시뮬레이션", "Morpho 시뮬레이션"
+- "Yield Vault 시뮬레이션", "vault deposit", "vault withdraw"
 - "계정별 전략 실행", "시뮬 돌려"
 - "볼륨 생성", "스왑 볼륨", "풀 볼륨 채우기"
 
@@ -61,6 +62,38 @@ NODE_PATH=/Users/mousebook/Documents/side-project/snowball/apps/web/node_modules
 - **토큰**: wCTC, lstCTC, sbUSD, USDC (all 18 decimals)
 - **DEX**: Uniswap V3 (SwapRouter, NonfungiblePositionManager, QuoterV2)
 - **Morpho**: SnowballLend (3 markets: wCTC/sbUSD, lstCTC/sbUSD, sbUSD/USDC)
+- **Yield**: SnowballYieldVault (4 vaults: StabilityPool sbUSD, Morpho sbUSD/wCTC/USDC)
+
+---
+
+## Yield Vault 시뮬레이션 가이드
+
+상세: [yield-guide.md](yield-guide.md)
+
+### 가능한 액션
+
+| 액션 | 함수 | approve 필요 |
+|------|------|-------------|
+| Deposit | `deposit(uint256)` | want → vault |
+| Deposit All | `depositAll()` | want → vault |
+| Withdraw | `withdraw(uint256)` | 불필요 |
+| Withdraw All | `withdrawAll()` | 불필요 |
+
+### Vault 정보
+
+| Vault | Want | Address |
+|-------|------|---------|
+| StabilityPool sbUSD | sbUSD | `0x40a8b5b8a6c1e4236da10da2731944e59444c179` |
+| Morpho sbUSD | sbUSD | `0x384ebff116bb8458628b62624ab9535a4636a397` |
+| Morpho wCTC | wCTC | `0x766c8bf45d7a7356f63e830c134c07911b662757` |
+| Morpho USDC | USDC | `0xa6f9c033dba98f2d0fc79522b1b5c5098dc567b7` |
+
+### Deposit 패턴 (기본)
+
+```typescript
+// 1. approve want → vault (maxUint256)
+// 2. deposit(amount)  — amount는 want 토큰 수량 (18 decimals)
+```
 
 ---
 
@@ -157,19 +190,30 @@ const marketParams = {
 | `simulate-morpho-borrow.ts` | 페르소나별 담보예치 + 대출 | 2 |
 | `simulate-morpho-rebalance.ts` | utilization 조정 (target% 지정) | 3 (필요시) |
 
+### Yield 스크립트
+
+상세: [yield-guide.md](yield-guide.md)
+
+| 스크립트 | 용도 | 프로토콜 |
+|---------|------|---------|
+| `simulate-yield-deposit.ts` | #4 계정 4개 vault deposit (5% 제한) | Yield |
+
 ### 전체 실행 순서
 
 ```bash
 # DEX (먼저 — sbUSD 민팅에 Liquity 필요)
-NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-dex-liquidity.ts
-NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-swap-volume.ts
-NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-sbUSD-pools.ts
-NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-lstCTC-pools.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/simulate-dex-liquidity.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/simulate-swap-volume.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/simulate-sbUSD-pools.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/simulate-lstCTC-pools.ts
 
 # Morpho (supply → borrow → rebalance)
-NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-supply.ts
-NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-borrow.ts
-NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-rebalance.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/simulate-morpho-supply.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/simulate-morpho-borrow.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/simulate-morpho-rebalance.ts
+
+# Yield (Morpho supply 이후 — vault가 Morpho에 supply하므로)
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/simulate-yield-deposit.ts
 ```
 
 ### 실전 핵심 교훈
@@ -185,6 +229,12 @@ NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-rebalance.ts
 6. supply 먼저 충분히 넣은 후 borrow (안 그러면 utilization 99% 급등)
 7. Oracle 1e36 스케일 필수 (CreditcoinOracle)
 8. utilization 조정은 rebalance 스크립트 활용
+
+**Yield:**
+9. sbUSD 2개 vault 분배: 5% 한도를 반으로 나눠 각 vault에 2.5%
+10. Morpho vault는 harvest() 실행 전까지 APY 0 — 전략이 Morpho에 supply해야 수익 발생
+11. approve는 maxUint256 권장 (시뮬레이션에서 TX 절약)
+12. withdrawAll() 사용 시 BigInt 정밀도 손실 없이 전액 인출 가능
 
 ---
 
