@@ -1,8 +1,32 @@
 {
+  "../liquity/lib/Solady": {
+    "rev": "362b2efd20f38aea7252b391e5e016633ff79641"
+  },
+  "../liquity/lib/openzeppelin-contracts": {
+    "rev": "c64a1edb67b6e3f4a15cca8909c9482ad33a02b0"
+  },
+  "../options/lib/forge-std": {
+    "rev": "59e4cc349b75f64520fbef515ef44ca03a0a7ef6"
+  },
+  "../options/lib/openzeppelin-contracts": {
+    "rev": "c1edd06131cf989cf3e0c72c089cbead127384e6"
+  },
+  "../oracle/lib/forge-std": {
+    "rev": "59e4cc349b75f64520fbef515ef44ca03a0a7ef6"
+  },
+  "../oracle/lib/openzeppelin-contracts": {
+    "rev": "c1edd06131cf989cf3e0c72c089cbead127384e6"
+  },
   "lib/forge-std": {
     "tag": {
       "name": "v1.15.0",
       "rev": "0844d7e1fc5e60d77b68e469bff60265f236c398"
+    }
+  },
+  "lib/openzeppelin-contracts": {
+    "tag": {
+      "name": "v4.9.6",
+      "rev": "dc44c9f1a4c3b10af99492eed84f83ed244203f6"
     }
   }
 }

@@ -75,7 +75,7 @@ pnpm deploy
 `scripts/deploy-viem.ts` 실행 순서:
 1. SnowballLend 배포
 2. AdaptiveCurveIRM 배포
-3. IRM 활성화 + LLTV 활성화 (77%, 80%, 86%)
+3. IRM 활성화 + LLTV 활성화 (77%, 90%)
 4. MockOracle 배포 (wCTC, lstCTC, sbUSD)
 5. MockERC20 (USDC) 배포 + 1M 민트
 6. SnowballVaultFactory 배포
@@ -106,26 +106,26 @@ packages/morpho/deployments/creditcoin-testnet/morpho.json
 
 | 대상 | 주소 |
 |------|------|
-| wCTC Oracle | `0x42ca12a83c14e95f567afc940b0118166d8bd852` |
-| lstCTC Oracle | `0x192f1feb36f319e79b3bba25a17359ee72266a14` |
-| sbUSD Oracle | `0xc39f222e034f4bd4f3c858e6fde9ce4398400a26` |
+| wCTC Oracle | `0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2` |
+| lstCTC Oracle | `0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a` |
+| sbUSD Oracle | `0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a` |
 
 ### 토큰
 
 | 토큰 | 주소 | Decimals |
 |------|------|----------|
-| wCTC | `0x8f7f60a0f615d828eafcbbf6121f73efcfb56969` | 18 |
-| lstCTC | `0x72968ff9203dc5f352c5e42477b84d11c8c8f153` | 18 |
-| sbUSD | `0x5772f9415b75ecca00e7667e0c7d730db3b29fbd` | 18 |
-| USDC (Mock) | `0xbcaa46ef7a399fcdb64adf4520cdcc6d62fcaaed` | 6 |
+| wCTC | `0xca69344e2917f026ef4a5ace5d7b122343fc8528` | 18 |
+| lstCTC | `0xa768d376272f9216c8c4aa3063391bdafbcad4c2` | 18 |
+| sbUSD | `0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5` | 18 |
+| USDC (Mock) | `0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9` | 18 |
 
 ### 마켓
 
 | 마켓 | LLTV | 담보 | 대출 |
 |------|------|------|------|
 | wCTC / sbUSD | 77% | wCTC | sbUSD |
-| lstCTC / sbUSD | 80% | lstCTC | sbUSD |
-| sbUSD / USDC | 86% | sbUSD | USDC |
+| lstCTC / sbUSD | 77% | lstCTC | sbUSD |
+| sbUSD / USDC | 90% | sbUSD | USDC |
 
 ---
 
@@ -174,13 +174,13 @@ cast call $SNOWBALL_LEND "idToMarketParams(bytes32)" $MARKET_ID
 ### Mock Oracle 가격 변경
 
 ```bash
-# 가격 설정 (36 decimals — Morpho 표준)
-# 예: wCTC = $200 → 200 * 10^36
-cast send $ORACLE "setPrice(uint256)" "200000000000000000000000000000000000000" \
+# 가격 설정 (18 decimals — 이 프로젝트 기준)
+# 예: wCTC = $200 → 200 * 10^18
+cast send $ORACLE "setPrice(uint256)" "200000000000000000000" \
   --private-key $DEPLOYER_PK
 ```
 
-> Morpho Blue 오라클은 `collateral/loan` 가격 비율을 36 decimals로 반환합니다.
+> 이 프로젝트의 MockOracle은 `collateral/loan` 가격 비율을 **18 decimals**로 반환합니다 (Morpho 본가 스펙은 36 decimals이지만, Snowball은 18 decimals 사용).
 
 ### 프로덕션 오라클
 
