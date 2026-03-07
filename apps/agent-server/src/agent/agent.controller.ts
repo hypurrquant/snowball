@@ -5,17 +5,14 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   HttpCode,
   NotFoundException,
 } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import { AgentService } from "./agent.service";
 import { RunAgentDto } from "./dto/run-agent.dto";
-import { ApiKeyGuard } from "../common/guards/api-key.guard";
 
 @Controller("agent")
-@UseGuards(ApiKeyGuard)
 export class AgentController {
   constructor(private readonly agentService: AgentService) {}
 

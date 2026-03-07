@@ -18,10 +18,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as os from "os";
 
-const API_KEY = "test-api-key";
-
-// Set env vars required by loadConfig() and guards
-process.env.API_KEY = API_KEY;
+// Set env vars required by loadConfig()
 process.env.AGENT_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 process.env.ANTHROPIC_API_KEY = "sk-ant-test-key";
 process.env.RPC_URL = "https://rpc.cc3-testnet.creditcoin.network";
@@ -103,6 +100,7 @@ async function createTestApp(
     .compile();
 
   const app = moduleFixture.createNestApplication();
+  app.setGlobalPrefix("api");
   app.useGlobalFilters(new AllExceptionsFilter());
   await app.init();
   return app;
@@ -125,8 +123,8 @@ describe("Agent E2E Tests", () => {
   // ─── Scenario 1: Normal run (F3) ───
   it("POST /agent/run should return success with valid API key", async () => {
     const res = await request(app.getHttpServer())
-      .post("/agent/run")
-      .set("x-api-key", API_KEY)
+      .post("/api/agent/run")
+      
       .send({ user: "0x1234567890abcdef1234567890abcdef12345678", manifestId: "snowball-demo-defi-manager" })
       .expect(200);
 
@@ -134,15 +132,7 @@ describe("Agent E2E Tests", () => {
     expect(res.body.runId).toBeDefined();
   });
 
-  // ─── Scenario 2: API key missing (E7) ───
-  it("POST /agent/run without API key should return 401", async () => {
-    await request(app.getHttpServer())
-      .post("/agent/run")
-      .send({ user: "0x1234567890abcdef1234567890abcdef12345678", manifestId: "snowball-demo-defi-manager" })
-      .expect(401);
-  });
-
-  // ─── Scenario 3: Concurrent execution (E6) ───
+  // ─── Scenario 2: Concurrent execution (E6) ───
   it("concurrent runs for same user+manifest should return 409", async () => {
     const slowRuntime = {
       async run(_m: unknown, user: string, _t: bigint, runId: string) {
@@ -161,10 +151,10 @@ describe("Agent E2E Tests", () => {
     const body = { user: "0xConcurrentUser000000000000000000000000ab", manifestId: "snowball-demo-defi-manager" };
 
     const [res1, res2] = await Promise.all([
-      request(server).post("/agent/run").set("x-api-key", API_KEY).send(body),
+      request(server).post("/api/agent/run").send(body),
       new Promise<request.Response>((resolve) =>
         setTimeout(() =>
-          request(server).post("/agent/run").set("x-api-key", API_KEY).send(body).then(resolve), 50)
+          request(server).post("/api/agent/run").send(body).then(resolve), 50)
       ),
     ]);
 
@@ -180,14 +170,14 @@ describe("Agent E2E Tests", () => {
     const user = "0xFilterUser0000000000000000000000000000ab";
 
     await request(app.getHttpServer())
-      .post("/agent/run")
-      .set("x-api-key", API_KEY)
+      .post("/api/agent/run")
+      
       .send({ user, manifestId: "snowball-demo-defi-manager" })
       .expect(200);
 
     const res = await request(app.getHttpServer())
-      .get("/agent/runs")
-      .set("x-api-key", API_KEY)
+      .get("/api/agent/runs")
+      
       .query({ user })
       .expect(200);
 
@@ -200,31 +190,31 @@ describe("Agent E2E Tests", () => {
   // ─── Scenario 5: Single run query (F6) ───
   it("GET /agent/runs/:id should return 200 for existing run", async () => {
     const createRes = await request(app.getHttpServer())
-      .post("/agent/run")
-      .set("x-api-key", API_KEY)
+      .post("/api/agent/run")
+      
       .send({ user: "0xSingleQuery000000000000000000000000000ab", manifestId: "snowball-demo-defi-manager" })
       .expect(200);
 
     const runId = createRes.body.runId;
 
     await request(app.getHttpServer())
-      .get(`/agent/runs/${runId}`)
-      .set("x-api-key", API_KEY)
+      .get(`/api/agent/runs/${runId}`)
+      
       .expect(200);
   });
 
   it("GET /agent/runs/:id should return 404 for non-existing run", async () => {
     await request(app.getHttpServer())
-      .get("/agent/runs/non-existing-id")
-      .set("x-api-key", API_KEY)
+      .get("/api/agent/runs/non-existing-id")
+      
       .expect(404);
   });
 
   // ─── Scenario 6: Server status ───
   it("GET /agent/status should return status info", async () => {
     const res = await request(app.getHttpServer())
-      .get("/agent/status")
-      .set("x-api-key", API_KEY)
+      .get("/api/agent/status")
+      
       .expect(200);
 
     expect(res.body.uptime).toBeDefined();
@@ -237,8 +227,8 @@ describe("Agent E2E Tests", () => {
     const user = "0xPersistUser0000000000000000000000000000ab";
 
     await request(app.getHttpServer())
-      .post("/agent/run")
-      .set("x-api-key", API_KEY)
+      .post("/api/agent/run")
+      
       .send({ user, manifestId: "snowball-demo-defi-manager" })
       .expect(200);
 
@@ -288,8 +278,8 @@ describe("Agent E2E Tests", () => {
     const bigintApp = await createTestApp(bigintDb, bigintRuntime);
 
     const res = await request(bigintApp.getHttpServer())
-      .post("/agent/run")
-      .set("x-api-key", API_KEY)
+      .post("/api/agent/run")
+      
       .send({ user: "0xBigintUser00000000000000000000000000000ab", manifestId: "snowball-demo-defi-manager" })
       .expect(200);
 
@@ -313,8 +303,8 @@ describe("Agent E2E Tests", () => {
     ).run("started-mapping-test", "0xmapuser", "test-manifest");
 
     const res = await request(app.getHttpServer())
-      .get("/agent/runs")
-      .set("x-api-key", API_KEY)
+      .get("/api/agent/runs")
+      
       .expect(200);
 
     const startedRun = res.body.find((r: any) => r.runId === "started-mapping-test");

@@ -15,6 +15,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger(winstonConfig),
   });
+  app.setGlobalPrefix("api");
   app.useGlobalFilters(new AllExceptionsFilter());
   const port = process.env.AGENT_SERVER_PORT || 3001;
   await app.listen(port);

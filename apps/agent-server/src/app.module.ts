@@ -5,6 +5,7 @@ import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { AgentModule } from "./agent/agent.module";
 import { SchedulerModule } from "./scheduler/scheduler.module";
 import { DatabaseModule } from "./database/database.module";
+import { HealthController } from "./health/health.controller";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { DatabaseModule } from "./database/database.module";
     AgentModule,
     SchedulerModule,
   ],
+  controllers: [HealthController],
   providers: [
     {
       provide: APP_GUARD,
