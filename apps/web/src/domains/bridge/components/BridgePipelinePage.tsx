@@ -18,8 +18,8 @@ export function BridgePipelinePage() {
 
   const parsedAmount = amountStr ? parseEther(amountStr) : 0n;
   const canStart = isConnected && parsedAmount > 0n && phase === "idle" && !isExecuting;
-  // Resumable mid-phases detected on mount (e.g. user refreshed during mint step)
-  const isResumable = ["mint", "burn"].includes(phase) && !isExecuting;
+  // Resumable mid-phases detected on mount (e.g. user refreshed during a step)
+  const isResumable = ["deposit", "mint", "burn"].includes(phase) && !isExecuting;
   const hasProgress = steps.some((s) => s.status !== "pending");
 
   const handleStart = () => {
@@ -117,7 +117,7 @@ export function BridgePipelinePage() {
                 )}
                 {isResumable && (
                   <Button className="w-full" onClick={handleResume}>
-                    Continue from {phase === "mint" ? "Mint" : "Burn"}
+                    Continue from {phase === "deposit" ? "Wormhole Transfer" : phase === "mint" ? "Mint" : "Burn"}
                   </Button>
                 )}
                 {(phase === "done" || phase === "error" || phase === "timeout") && (
