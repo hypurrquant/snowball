@@ -1,6 +1,6 @@
 import { encodeFunctionData, toFunctionSelector } from "viem";
 import { AgentVaultABI, MorphoABI } from "../abis";
-import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, PermissionSpec } from "../types";
+import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, AgentManifest, PermissionSpec } from "../types";
 
 const SUPPLY_SEL = toFunctionSelector("supply((address,address,address,address,uint256),uint256,uint256,address,bytes)");
 const WITHDRAW_SEL = toFunctionSelector("withdraw((address,address,address,address,uint256),uint256,uint256,address,address)");
@@ -21,7 +21,7 @@ export const morphoSupply: Capability<{ amount: string; reason: string }> = {
     required: ["amount", "reason"],
   },
 
-  requiredPermissions(config: AgentConfig): PermissionSpec[] {
+  requiredPermissions(config: AgentConfig, _manifest: AgentManifest): PermissionSpec[] {
     return [{ target: config.morpho.core, selectors: [SUPPLY_SEL, WITHDRAW_SEL] }];
   },
 

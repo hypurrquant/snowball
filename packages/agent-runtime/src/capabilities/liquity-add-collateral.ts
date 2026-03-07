@@ -1,6 +1,6 @@
 import { encodeFunctionData, toFunctionSelector } from "viem";
 import { AgentVaultABI, BorrowerOperationsABI } from "../abis";
-import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, PermissionSpec } from "../types";
+import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, AgentManifest, PermissionSpec } from "../types";
 
 const ADJUST_RATE_SEL = toFunctionSelector("adjustTroveInterestRate(uint256,uint256,uint256,uint256,uint256)");
 const ADD_COLL_SEL = toFunctionSelector("addColl(uint256,uint256)");
@@ -22,9 +22,10 @@ export const liquityAddCollateral: Capability<{ troveId: string; amount: string;
     required: ["troveId", "amount", "reason"],
   },
 
-  requiredPermissions(config: AgentConfig): PermissionSpec[] {
-    const branches = Object.values(config.liquityBranches);
-    return branches.map((b) => ({ target: b.borrowerOperations, selectors: [ADJUST_RATE_SEL, ADD_COLL_SEL] }));
+  requiredPermissions(config: AgentConfig, manifest: AgentManifest): PermissionSpec[] {
+    const branchName = manifest.scope.liquityBranch === "lstCTC" ? "lstCTC" : "wCTC";
+    const branch = config.liquityBranches[branchName as "wCTC" | "lstCTC"];
+    return [{ target: branch.borrowerOperations, selectors: [ADJUST_RATE_SEL, ADD_COLL_SEL] }];
   },
 
   preconditions(ctx: ExecutionContext, input: { troveId: string; amount: string; reason: string }): CheckResult[] {

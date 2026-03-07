@@ -29,7 +29,7 @@ export interface Capability<TInput = Record<string, unknown>> {
   id: string;
   description: string;
   inputSchema: JsonSchema;
-  requiredPermissions(config: AgentConfig): PermissionSpec[];
+  requiredPermissions(config: AgentConfig, manifest: AgentManifest): PermissionSpec[];
   preconditions(ctx: ExecutionContext, input: TInput): CheckResult[];
   buildCalls(ctx: ExecutionContext, input: TInput): PreparedCall[];
   buildCallsAsync?(ctx: ExecutionContext, input: TInput): Promise<PreparedCall[]>;

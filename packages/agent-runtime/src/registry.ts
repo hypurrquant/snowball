@@ -26,7 +26,7 @@ export class CapabilityRegistry {
       .filter((cap): cap is Capability => cap !== undefined)
       .filter((cap) => {
         // 1. Check vault permission
-        const requiredPerms = cap.requiredPermissions(config);
+        const requiredPerms = cap.requiredPermissions(config, manifest);
         const hasVaultPerm = requiredPerms.every((perm) =>
           this.isPermissionActive(perm.target, perm.selectors, snapshot)
         );
