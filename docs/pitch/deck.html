@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowball Protocol — Investor Deck</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --navy: #003A70;
+    --navy-light: #0055A4;
+    --accent: #0088CC;
+    --green: #00875A;
+    --orange: #E56717;
+    --red: #CC3333;
+    --gray-900: #1a1a2e;
+    --gray-700: #374151;
+    --gray-500: #6b7280;
+    --gray-300: #d1d5db;
+    --gray-100: #f3f4f6;
+    --gray-50: #f9fafb;
+  }
+
+  .reveal {
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--gray-900);
+  }
+  .reveal .slides { text-align: left; }
+  .reveal .slides section {
+    padding: 36px 56px 40px;
+    box-sizing: border-box;
+  }
+
+  /* Typography — McKinsey style: insight as title */
+  .reveal h1 {
+    font-size: 2.6em; font-weight: 800; color: var(--navy);
+    line-height: 1.15; letter-spacing: -0.03em;
+  }
+  .reveal h2 {
+    font-size: 1.15em; font-weight: 600; color: var(--navy);
+    line-height: 1.4; margin-bottom: 0.7em;
+    border-bottom: 2px solid var(--navy); padding-bottom: 8px;
+  }
+  .reveal h3 {
+    font-size: 0.78em; font-weight: 700; color: var(--navy);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+  .reveal p {
+    font-size: 0.65em; line-height: 1.65; color: var(--gray-700);
+  }
+  .reveal .slide-number {
+    font-size: 11px; color: var(--gray-500);
+    background: none !important;
+  }
+
+  /* Cover */
+  .cover h1 { font-size: 3em; margin-bottom: 0.15em; }
+  .cover .sub { font-size: 1em; color: var(--gray-500); font-weight: 400; }
+  .cover .pills { margin-top: 32px; }
+  .cover .pill {
+    display: inline-block; padding: 6px 16px; margin-right: 8px;
+    border: 1.5px solid var(--navy); border-radius: 4px;
+    font-size: 0.48em; font-weight: 600; color: var(--navy);
+  }
+  .cover .meta { font-size: 0.42em; color: var(--gray-500); margin-top: 40px; }
+
+  /* Tables */
+  .reveal table {
+    font-size: 0.58em; width: 100%;
+    border-collapse: collapse; margin-top: 10px;
+  }
+  .reveal table th {
+    background: var(--navy); color: #fff;
+    font-weight: 600; padding: 8px 12px; text-align: left;
+  }
+  .reveal table td {
+    padding: 7px 12px; border-bottom: 1px solid var(--gray-300);
+    color: var(--gray-700); vertical-align: top;
+  }
+  .reveal table tr:nth-child(even) td { background: var(--gray-50); }
+
+  /* Grids */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 14px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; margin-top: 14px; }
+
+  /* Box */
+  .box {
+    border: 1px solid var(--gray-300); padding: 16px;
+    background: var(--gray-50);
+  }
+  .box-navy {
+    border: 1.5px solid var(--navy); padding: 16px;
+    background: rgba(0,58,112,0.03);
+  }
+  .box h3 { margin-top: 0; }
+  .box p { margin: 4px 0 0; }
+
+  /* KPI */
+  .kpi { text-align: center; padding: 14px 8px; }
+  .kpi .num {
+    font-size: 2em; font-weight: 800; color: var(--navy);
+    line-height: 1;
+  }
+  .kpi .label {
+    font-size: 0.5em; color: var(--gray-500);
+    margin-top: 4px; font-weight: 500;
+  }
+
+  /* Lists */
+  .reveal ul { list-style: none; padding: 0; margin: 0; }
+  .reveal ul li {
+    font-size: 0.6em; color: var(--gray-700);
+    padding: 3px 0 3px 14px; position: relative;
+  }
+  .reveal ul li::before {
+    content: ''; position: absolute; left: 0; top: 0.65em;
+    width: 5px; height: 5px; background: var(--navy);
+  }
+
+  /* Source line */
+  .source {
+    font-size: 0.4em; color: var(--gray-500);
+    margin-top: 12px; font-style: italic;
+  }
+
+  /* Highlight bar */
+  .highlight-bar {
+    background: var(--navy); color: #fff;
+    padding: 10px 16px; font-size: 0.6em; font-weight: 600;
+    margin-top: 14px; text-align: center;
+  }
+
+  /* Tag */
+  .tag {
+    display: inline-block; padding: 2px 8px; font-size: 0.48em;
+    font-weight: 600; border-radius: 2px;
+  }
+  .tag-green { background: #dcfce7; color: var(--green); }
+  .tag-blue { background: #dbeafe; color: var(--navy); }
+  .tag-orange { background: #ffedd5; color: var(--orange); }
+
+  /* Flow arrow */
+  .flow { display: flex; align-items: center; gap: 8px; margin: 14px 0; }
+  .flow-step {
+    flex: 1; background: var(--gray-50); border: 1px solid var(--gray-300);
+    padding: 12px; text-align: center;
+  }
+  .flow-step h3 { margin-bottom: 2px; font-size: 0.62em; }
+  .flow-step p { font-size: 0.5em; margin: 0; }
+  .flow-arrow { font-size: 1.2em; color: var(--navy); font-weight: 700; flex-shrink: 0; }
+
+  /* Divider line */
+  .divider { border-top: 1px solid var(--gray-300); margin: 12px 0; }
+</style>
+</head>
+<body>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- ========== 1. COVER ========== -->
+<section class="cover" style="text-align: center; padding-top: 80px;" data-background-color="#ffffff">
+  <div style="display: flex; align-items: center; justify-content: center; gap: 24px;">
+    <img src="snowball.png" alt="Snowball" style="width: 160px; height: 160px;">
+    <h1 style="margin: 0;">Snowball</h1>
+  </div>
+  <p class="sub">Unlock CTC Liquidity. Earn Yield. Power Creditcoin DeFi.</p>
+  <div class="pills">
+    <span class="pill">Universal Smart Contracts</span>
+    <span class="pill">CDP Stablecoin</span>
+    <span class="pill">Lending</span>
+    <span class="pill">Yield Vaults</span>
+    <span class="pill">AI Agents</span>
+  </div>
+</section>
+
+<!-- ========== 2. OPPORTUNITY ========== -->
+<section data-background-color="#ffffff">
+  <h2>$80M+ of idle CTC, zero DeFi</h2>
+
+  <div style="display: flex; align-items: center; gap: 30px; margin-top: 20px;">
+    <!-- Left: Current State -->
+    <div style="flex: 1; background: #f8f8f8; border-radius: 12px; padding: 24px 28px; position: relative;">
+      <div style="position: absolute; top: -14px; left: 20px; background: var(--red); color: #fff; font-size: 0.55em; font-weight: 700; padding: 4px 16px; border-radius: 20px; letter-spacing: 0.05em;">CURRENT STATE</div>
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="min-width: 36px; height: 36px; background: #fde8e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75em;">&#10007;</div>
+          <div style="font-size: 0.72em; text-align: left;"><strong>No native stablecoin</strong></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="min-width: 36px; height: 36px; background: #fde8e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75em;">&#10007;</div>
+          <div style="font-size: 0.72em; text-align: left;"><strong>No lending markets</strong></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="min-width: 36px; height: 36px; background: #fde8e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75em;">&#10007;</div>
+          <div style="font-size: 0.72em; text-align: left;"><strong>No yield opportunities</strong></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="min-width: 36px; height: 36px; background: #fde8e8; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75em;">&#10007;</div>
+          <div style="font-size: 0.72em; text-align: left;"><strong>No DeFi rails</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="font-size: 2.5em; color: var(--navy); font-weight: 700;">&#10132;</div>
+
+    <!-- Right: With Snowball -->
+    <div style="flex: 1; background: linear-gradient(135deg, #e8f4fd, #f0faf5); border-radius: 12px; padding: 24px 28px; border: 2px solid var(--navy); position: relative;">
+      <div style="position: absolute; top: -14px; left: 20px; background: var(--navy); color: #fff; font-size: 0.55em; font-weight: 700; padding: 4px 16px; border-radius: 20px; letter-spacing: 0.05em;">WITH SNOWBALL</div>
+      <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="min-width: 36px; height: 36px; background: #d4edda; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75em; color: var(--green);">&#10003;</div>
+          <div style="font-size: 0.72em; text-align: left;"><strong>Mint sbUSD from CTC</strong></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="min-width: 36px; height: 36px; background: #d4edda; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75em; color: var(--green);">&#10003;</div>
+          <div style="font-size: 0.72em; text-align: left;"><strong>Yield vaults + lending</strong></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="min-width: 36px; height: 36px; background: #d4edda; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75em; color: var(--green);">&#10003;</div>
+          <div style="font-size: 0.72em; text-align: left;"><strong>Keep CTC upside</strong></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="min-width: 36px; height: 36px; background: #d4edda; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75em; color: var(--green);">&#10003;</div>
+          <div style="font-size: 0.72em; text-align: left;"><strong>AI agent for beginners</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-bar" style="margin-top: 20px;">
+    Snowball turns idle CTC into productive capital &mdash; first and only DeFi protocol on Creditcoin
+  </div>
+</section>
+
+<!-- ========== 3. WHY THIS, WHY NOW, WHY US ========== -->
+<section data-background-color="#ffffff">
+  <h2>Why Snowball</h2>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 18px;">
+    <!-- Why This -->
+    <div style="border-radius: 8px; overflow: hidden; border: 1.5px solid var(--navy);">
+      <div style="background: var(--navy); color: #fff; padding: 10px 16px; font-size: 0.62em; font-weight: 700; letter-spacing: 0.04em;">WHY THIS</div>
+      <div style="padding: 16px;">
+        <div style="font-size: 1.4em; font-weight: 800; color: var(--navy); line-height: 1.2;">$80M+</div>
+        <div style="font-size: 0.52em; color: var(--gray-500); margin-top: 2px;">CTC market cap, $0 DeFi TVL</div>
+        <div style="border-top: 1px solid var(--gray-300); margin: 12px 0;"></div>
+        <div style="font-size: 0.52em; color: var(--gray-700); line-height: 1.8;">
+          &#8226; No stablecoin or lending<br>&#8226; No yield infrastructure<br>&#8226; Zero DeFi for CTC holders<br>&#8226; Untapped liquidity potential
+        </div>
+      </div>
+    </div>
+    <!-- Why Now -->
+    <div style="border-radius: 8px; overflow: hidden; border: 1.5px solid var(--green);">
+      <div style="background: var(--green); color: #fff; padding: 10px 16px; font-size: 0.62em; font-weight: 700; letter-spacing: 0.04em;">WHY NOW</div>
+      <div style="padding: 16px;">
+        <div style="font-size: 1.4em; font-weight: 800; color: var(--green); line-height: 1.2;">100%</div>
+        <div style="font-size: 0.52em; color: var(--gray-500); margin-top: 2px;">Open market, zero competition</div>
+        <div style="border-top: 1px solid var(--gray-300); margin: 12px 0;"></div>
+        <div style="font-size: 0.52em; color: var(--gray-700); line-height: 1.8;">
+          &#8226; Creditcoin EVM launched<br>&#8226; USC cross-chain enabled<br>&#8226; RWA + staking narrative<br>&#8226; No competitor, winner takes all
+        </div>
+      </div>
+    </div>
+    <!-- Why Us -->
+    <div style="border-radius: 8px; overflow: hidden; border: 1.5px solid var(--accent);">
+      <div style="background: var(--accent); color: #fff; padding: 10px 16px; font-size: 0.62em; font-weight: 700; letter-spacing: 0.04em;">WHY US</div>
+      <div style="padding: 16px;">
+        <div style="font-size: 1.4em; font-weight: 800; color: var(--accent); line-height: 1.2;">6</div>
+        <div style="font-size: 0.52em; color: var(--gray-500); margin-top: 2px;">Protocols live on testnet</div>
+        <div style="border-top: 1px solid var(--gray-300); margin: 12px 0;"></div>
+        <div style="font-size: 0.52em; color: var(--gray-700); line-height: 1.8;">
+          &#8226; DeFi-native operators<br>&#8226; AI agent expertise (ERC-8004)<br>&#8226; Liquity, Morpho, Aave depth<br>&#8226; Full-stack deployed
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 4. HOW IT WORKS ========== -->
+<section data-background-color="#ffffff">
+  <h2>How Snowball Works</h2>
+
+  <!-- Flow: 4 steps -->
+  <div style="display: flex; align-items: center; gap: 0; margin-top: 16px;">
+    <div style="flex: 1; background: var(--navy); color: #fff; padding: 14px 16px; border-radius: 8px 0 0 8px; text-align: center;">
+      <div style="font-size: 0.55em; font-weight: 700;">1. Deposit CTC</div>
+    </div>
+    <div style="width: 0; height: 0; border-top: 24px solid transparent; border-bottom: 24px solid transparent; border-left: 14px solid var(--navy);"></div>
+    <div style="flex: 1; background: var(--accent); color: #fff; padding: 14px 16px; text-align: center; margin-left: -1px;">
+      <div style="font-size: 0.55em; font-weight: 700;">2. Mint sbUSD</div>
+    </div>
+    <div style="width: 0; height: 0; border-top: 24px solid transparent; border-bottom: 24px solid transparent; border-left: 14px solid var(--accent);"></div>
+    <div style="flex: 1; background: var(--green); color: #fff; padding: 14px 16px; text-align: center; margin-left: -1px;">
+      <div style="font-size: 0.55em; font-weight: 700;">3. Earn Yield</div>
+    </div>
+    <div style="width: 0; height: 0; border-top: 24px solid transparent; border-bottom: 24px solid transparent; border-left: 14px solid var(--green);"></div>
+    <div style="flex: 1; background: var(--orange); color: #fff; padding: 14px 16px; border-radius: 0 8px 8px 0; text-align: center; margin-left: -1px;">
+      <div style="font-size: 0.55em; font-weight: 700;">4. AI Compound</div>
+    </div>
+  </div>
+
+  <!-- DeFi Playground -->
+  <div style="background: var(--gray-50); border: 2px solid var(--navy); border-radius: 12px; padding: 16px 18px; margin-top: 18px; position: relative;">
+    <div style="position: absolute; top: -12px; left: 20px; background: var(--navy); color: #fff; font-size: 0.5em; font-weight: 700; padding: 3px 14px; border-radius: 20px; letter-spacing: 0.05em;">DEFI PLAYGROUND</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 6px;">
+      <div style="background: #fff; border: 1px solid var(--gray-300); border-radius: 8px; padding: 12px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.65em; font-weight: 700; color: var(--navy);">CDP</span>
+          <span class="tag tag-green">Live</span>
+        </div>
+        <div style="font-size: 0.48em; color: var(--gray-500); margin-top: 5px;">CTC &rarr; sbUSD stablecoin</div>
+      </div>
+      <div style="background: #fff; border: 1px solid var(--gray-300); border-radius: 8px; padding: 12px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.65em; font-weight: 700; color: var(--navy);">Lending</span>
+          <span class="tag tag-green">Live</span>
+        </div>
+        <div style="font-size: 0.48em; color: var(--gray-500); margin-top: 5px;">Isolated markets (3 pairs)</div>
+      </div>
+      <div style="background: #fff; border: 1px solid var(--gray-300); border-radius: 8px; padding: 12px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.65em; font-weight: 700; color: var(--navy);">DEX</span>
+          <span class="tag tag-green">Live</span>
+        </div>
+        <div style="font-size: 0.48em; color: var(--gray-500); margin-top: 5px;">Concentrated liquidity AMM</div>
+      </div>
+      <div style="background: #fff; border: 1px solid var(--gray-300); border-radius: 8px; padding: 12px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.65em; font-weight: 700; color: var(--navy);">Yield Vault</span>
+          <span class="tag tag-green">Live</span>
+        </div>
+        <div style="font-size: 0.48em; color: var(--gray-500); margin-top: 5px;">Auto-compounding (6 vaults)</div>
+      </div>
+      <div style="background: #fff; border: 1px solid var(--gray-300); border-radius: 8px; padding: 12px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.65em; font-weight: 700; color: var(--navy);">AI Agent</span>
+          <span class="tag tag-green">Live</span>
+        </div>
+        <div style="font-size: 0.48em; color: var(--gray-500); margin-top: 5px;">Harvest, rebalance, optimize</div>
+      </div>
+      <div style="background: #fff; border: 1px solid var(--accent); border-radius: 8px; padding: 12px 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.65em; font-weight: 700; color: var(--accent);">USC Bridge</span>
+          <span class="tag tag-blue">Verified</span>
+        </div>
+        <div style="font-size: 0.48em; color: var(--gray-500); margin-top: 5px;">Cross-chain via USC proof</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 5. PROTOCOL ARCHITECTURE ========== -->
+<section data-background-color="#ffffff">
+  <h2>Protocol Architecture</h2>
+
+  <!-- Architecture: main stack + AI Agent sidebar -->
+  <div style="display: flex; gap: 0; margin-top: 14px;">
+
+    <!-- Left: main vertical stack -->
+    <div style="flex: 1; display: flex; flex-direction: column; gap: 0; border: 2px solid var(--navy); border-radius: 12px 0 0 12px; overflow: hidden;">
+
+      <!-- User layer -->
+      <div style="background: var(--navy); color: #fff; padding: 16px 24px; text-align: center;">
+        <div style="font-size: 0.6em; font-weight: 700; letter-spacing: 0.04em;">USER</div>
+        <div style="font-size: 0.48em; opacity: 0.8; margin-top: 4px;">Deposit CTC &rarr; Mint sbUSD &rarr; Earn Yield &rarr; Full Custody</div>
+      </div>
+
+      <!-- Core DeFi layer -->
+      <div style="background: #f0f7ff; padding: 18px 20px; flex: 1;">
+        <div style="font-size: 0.5em; font-weight: 700; color: var(--navy); margin-bottom: 10px; text-align: center;">CORE DEFI</div>
+        <div style="display: flex; gap: 8px; justify-content: center;">
+          <div style="flex: 1; background: #fff; border: 1px solid var(--gray-300); border-radius: 6px; padding: 10px 6px; text-align: center;">
+            <div style="font-size: 0.5em; font-weight: 700; color: var(--navy);">CDP</div>
+            <div style="font-size: 0.4em; color: var(--gray-500);">CTC&rarr;sbUSD</div>
+          </div>
+          <div style="flex: 1; background: #fff; border: 1px solid var(--gray-300); border-radius: 6px; padding: 10px 6px; text-align: center;">
+            <div style="font-size: 0.5em; font-weight: 700; color: var(--navy);">Lending</div>
+            <div style="font-size: 0.4em; color: var(--gray-500);">Isolated</div>
+          </div>
+          <div style="flex: 1; background: #fff; border: 1px solid var(--gray-300); border-radius: 6px; padding: 10px 6px; text-align: center;">
+            <div style="font-size: 0.5em; font-weight: 700; color: var(--navy);">DEX</div>
+            <div style="font-size: 0.4em; color: var(--gray-500);">CL-AMM</div>
+          </div>
+          <div style="flex: 1; background: #fff; border: 1px solid var(--gray-300); border-radius: 6px; padding: 10px 6px; text-align: center;">
+            <div style="font-size: 0.5em; font-weight: 700; color: var(--navy);">Yield</div>
+            <div style="font-size: 0.4em; color: var(--gray-500);">Auto-compound</div>
+          </div>
+          <div style="flex: 1; background: #fff; border: 1px solid var(--accent); border-radius: 6px; padding: 10px 6px; text-align: center;">
+            <div style="font-size: 0.5em; font-weight: 700; color: var(--accent);">USC Yield</div>
+            <div style="font-size: 0.4em; color: var(--gray-500);">Hyperliquid DN</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Infra layer -->
+      <div style="background: #f5f5f5; padding: 12px 24px; display: flex; align-items: center; justify-content: center; gap: 20px;">
+        <span style="font-size: 0.46em; font-weight: 700; color: var(--gray-500);">INFRA</span>
+        <span style="font-size: 0.44em; color: var(--gray-500);">Oracle</span>
+        <span style="font-size: 0.44em; color: var(--gray-500);">&bull;</span>
+        <span style="font-size: 0.44em; color: var(--gray-500);">Interest Router</span>
+        <span style="font-size: 0.44em; color: var(--gray-500);">&bull;</span>
+        <span style="font-size: 0.44em; color: var(--gray-500);">ERC-8004</span>
+      </div>
+
+      <!-- USC Bridge layer -->
+      <div style="background: var(--accent); color: #fff; padding: 14px 24px; text-align: center;">
+        <div style="font-size: 0.55em; font-weight: 700;">USC BRIDGE</div>
+        <div style="font-size: 0.44em; opacity: 0.85; margin-top: 4px;">Ethereum / Hyperliquid &harr; Creditcoin</div>
+      </div>
+
+    </div>
+
+    <!-- Right: AI Agent sidebar (horizontal text) -->
+    <div style="width: 130px; background: var(--green); color: #fff; border: 2px solid var(--green); border-radius: 0 12px 12px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 12px; text-align: center; gap: 12px;">
+      <div style="font-size: 0.55em; font-weight: 700; letter-spacing: 0.04em;">AI<br>AGENT</div>
+      <div style="width: 30px; border-top: 2px solid rgba(255,255,255,0.4);"></div>
+      <div style="font-size: 0.38em; opacity: 0.9; line-height: 1.9;">Monitor<br>Rebalance<br>Harvest<br>Optimize</div>
+    </div>
+
+  </div>
+
+  <!-- Value flow - horizontal under the stack -->
+  <div style="display: flex; gap: 12px; margin-top: 16px;">
+    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+      <div style="min-width: 22px; height: 22px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.42em; font-weight: 700;">1</div>
+      <div style="font-size: 0.44em; color: var(--gray-700);">Bridge via USC</div>
+    </div>
+    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+      <div style="min-width: 22px; height: 22px; background: var(--navy); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.42em; font-weight: 700;">2</div>
+      <div style="font-size: 0.44em; color: var(--gray-700);">Deposit &rarr; Mint &rarr; Supply</div>
+    </div>
+    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+      <div style="min-width: 22px; height: 22px; background: var(--green); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.42em; font-weight: 700;">3</div>
+      <div style="font-size: 0.44em; color: var(--gray-700);">AI auto-compounds</div>
+    </div>
+    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+      <div style="min-width: 22px; height: 22px; background: var(--orange); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.42em; font-weight: 700;">4</div>
+      <div style="font-size: 0.44em; color: var(--gray-700);">Interest recycled, no leaks</div>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- ========== 8. COMPETITIVE ========== -->
+<section data-background-color="#ffffff">
+  <h2>Competitive Advantage</h2>
+
+  <table style="margin-top: 16px;">
+    <thead>
+      <tr><th style="width: 18%;"></th><th style="width: 38%;">Traditional DeFi on New L1s</th><th style="width: 44%;">Snowball</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Approach</strong></td><td>&#10007; Single product (DEX or lending)</td><td style="color: var(--navy);">&#10003; <strong>Full stack</strong> CDP+Lending+DEX+Yield+AI</td></tr>
+      <tr><td><strong>Stablecoin</strong></td><td>&#10007; Bridge USDC/USDT</td><td style="color: var(--navy);">&#10003; <strong>Native sbUSD</strong> backed by CTC</td></tr>
+      <tr><td><strong>Capital</strong></td><td>&#10007; Liquidity scattered</td><td style="color: var(--navy);">&#10003; <strong>InterestRouter</strong> 100% recycled</td></tr>
+      <tr><td><strong>Bridge</strong></td><td>&#10007; Third-party (trust assumptions)</td><td style="color: var(--navy);">&#10003; <strong>USC</strong> trustless verification</td></tr>
+      <tr><td><strong>Risk</strong></td><td>&#10007; Manual monitoring</td><td style="color: var(--navy);">&#10003; <strong>AI agents</strong> on-chain (ERC-8004)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-bar" style="margin-top: 20px;">
+    Only full-stack DeFi protocol on Creditcoin &mdash; no competitor, winner takes all
+  </div>
+
+</section>
+
+<!-- ========== 9. MARKET ========== -->
+<section data-background-color="#ffffff">
+  <h2>Market Opportunity</h2>
+
+  <div class="grid-2">
+    <div>
+      <h3 style="border-bottom: 1.5px solid var(--navy); padding-bottom: 4px;">Market Sizing</h3>
+      <table style="margin-top: 8px;">
+        <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>CTC Market Cap</td><td><strong>$80M+</strong></td></tr>
+          <tr><td>Current DeFi TVL on Creditcoin</td><td><strong>$0</strong></td></tr>
+          <tr><td>Typical DeFi TVL / L1 Market Cap</td><td>5&ndash;15%</td></tr>
+          <tr><td>Conservative TVL target (5%)</td><td><strong>$4M+</strong></td></tr>
+          <tr><td>Projected annual revenue at 5%</td><td><strong>$200K+</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3 style="border-bottom: 1.5px solid var(--navy); padding-bottom: 4px;">Growth Catalysts</h3>
+      <table style="margin-top: 8px; white-space: nowrap;">
+        <thead><tr><th>Catalyst</th><th>Impact</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Creditcoin community</strong></td><td>holders want DeFi</td></tr>
+          <tr><td><strong>USC mainnet</strong></td><td>multi-chain inflow</td></tr>
+          <tr><td><strong>RWA narrative</strong></td><td>institutional interest</td></tr>
+          <tr><td><strong>CTC staking</strong></td><td>lstCTC demand</td></tr>
+          <tr><td><strong>Zero competition</strong></td><td>first mover</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Revenue Model -->
+  <div style="margin-top: 18px;">
+    <h3 style="border-bottom: 1.5px solid var(--navy); padding-bottom: 4px;">Revenue Model</h3>
+    <div style="display: flex; gap: 12px; margin-top: 10px;">
+      <div style="flex: 1; background: rgba(0,58,112,0.03); border: 1px solid rgba(0,58,112,0.12); border-radius: 8px; padding: 12px 16px; text-align: center;">
+        <div style="font-size: 0.75em; font-weight: 700; color: var(--navy);">CDP</div>
+        <div style="font-size: 0.45em; color: var(--gray-500); margin-top: 4px;">Minting &amp; redemption fees</div>
+      </div>
+      <div style="flex: 1; background: rgba(0,58,112,0.03); border: 1px solid rgba(0,58,112,0.12); border-radius: 8px; padding: 12px 16px; text-align: center;">
+        <div style="font-size: 0.75em; font-weight: 700; color: var(--navy);">Lending</div>
+        <div style="font-size: 0.45em; color: var(--gray-500); margin-top: 4px;">Interest rate spread</div>
+      </div>
+      <div style="flex: 1; background: rgba(0,58,112,0.03); border: 1px solid rgba(0,58,112,0.12); border-radius: 8px; padding: 12px 16px; text-align: center;">
+        <div style="font-size: 0.75em; font-weight: 700; color: var(--navy);">DEX</div>
+        <div style="font-size: 0.45em; color: var(--gray-500); margin-top: 4px;">Swap fees (0.3%)</div>
+      </div>
+      <div style="flex: 1; background: rgba(0,58,112,0.03); border: 1px solid rgba(0,58,112,0.12); border-radius: 8px; padding: 12px 16px; text-align: center;">
+        <div style="font-size: 0.75em; font-weight: 700; color: var(--navy);">Yield Vault</div>
+        <div style="font-size: 0.45em; color: var(--gray-500); margin-top: 4px;">Performance fee (10%)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-bar">
+    TAM = entire Creditcoin DeFi market &mdash; zero competitors, 100% capture opportunity
+  </div>
+</section>
+
+<!-- ========== 10. ROADMAP ========== -->
+<section data-background-color="#ffffff">
+  <h2>Roadmap</h2>
+
+  <table style="margin-top: 12px;">
+    <thead><tr><th style="width: 30%;">Phase</th><th>Deliverables</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Phase 0: Foundation</strong></td>
+        <td>CDP, Lending, DEX, Oracle, InterestRouter, testnet deploy</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 1: Yield Infra</strong></td>
+        <td>Yield Vaults, AI Keeper, leverage loop, USC bridge</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 2: Security + Mainnet</strong></td>
+        <td>Security audit, mainnet deploy, SNOW token, buyback &amp; burn</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 3: AI + Governance</strong></td>
+        <td>AgentVault, ERC-8004 marketplace, on-chain governance</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 4: USC Expansion</strong></td>
+        <td>Multi-chain USC, credit scoring, RWA data integration</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="divider" style="margin-top: 16px;"></div>
+  <p style="font-size: 0.55em; text-align: center; margin-top: 8px;">
+    <strong>Phase 0&ndash;1 complete</strong> &mdash; full protocol live on testnet, ready for mainnet
+  </p>
+</section>
+
+<!-- ========== 11. TEAM ========== -->
+<section data-background-color="#ffffff">
+  <h2>Team</h2>
+
+  <!-- Person cards -->
+  <div style="display: flex; gap: 16px; margin-top: 14px;">
+    <div style="flex: 1; border: 1.5px solid var(--navy); border-radius: 8px; padding: 16px 20px; background: rgba(0,58,112,0.02);">
+      <div style="font-size: 0.78em; font-weight: 700; color: var(--navy);">Kim HuiSang (HIK)</div>
+      <div style="font-size: 0.55em; color: var(--accent); font-weight: 600; margin-top: 3px;">Co-Founder / CEO</div>
+      <div style="font-size: 0.5em; color: var(--gray-500); margin-top: 8px;">Financial Math &middot; DeFi-native &middot; HypurrQuant</div>
+    </div>
+    <div style="flex: 1; border: 1.5px solid var(--green); border-radius: 8px; padding: 16px 20px; background: rgba(0,135,90,0.02);">
+      <div style="font-size: 0.78em; font-weight: 700; color: var(--navy);">Noh Yuseong (NOYU)</div>
+      <div style="font-size: 0.55em; color: var(--green); font-weight: 600; margin-top: 3px;">Co-Founder / CTO</div>
+      <div style="font-size: 0.5em; color: var(--gray-500); margin-top: 8px;">SW Engineering &middot; HypurrQuant &middot; Infra at scale</div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div style="background: var(--gray-50); border-radius: 10px; padding: 14px 18px; margin-top: 16px; border: 1px solid var(--gray-300);">
+    <div style="font-size: 0.55em; font-weight: 700; color: var(--navy); margin-bottom: 14px;">DeFi-native builders since 2024</div>
+
+    <div style="display: flex; position: relative; padding: 0 16px;">
+      <!-- Horizontal line -->
+      <div style="position: absolute; top: 8px; left: 32px; right: 32px; height: 3px; background: linear-gradient(90deg, var(--navy), var(--green), #7c3aed, var(--green), var(--navy)); border-radius: 2px;"></div>
+
+      <div style="flex: 1; text-align: center; position: relative;">
+        <div style="width: 18px; height: 18px; background: var(--navy); border-radius: 50%; margin: 0 auto; position: relative; z-index: 1; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--navy);"></div>
+        <div style="font-size: 0.44em; font-weight: 700; color: var(--navy); margin-top: 8px;">2024 Q1</div>
+        <div style="font-size: 0.42em; font-weight: 600; color: var(--gray-700); margin-top: 2px;">Team Formed</div>
+        <div style="font-size: 0.36em; color: var(--gray-500); margin-top: 1px;">AI research lab &rarr; on-chain</div>
+      </div>
+      <div style="flex: 1; text-align: center; position: relative;">
+        <div style="width: 18px; height: 18px; background: var(--green); border-radius: 50%; margin: 0 auto; position: relative; z-index: 1; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--green);"></div>
+        <div style="font-size: 0.44em; font-weight: 700; color: var(--green); margin-top: 8px;">2024 Q3</div>
+        <div style="font-size: 0.42em; font-weight: 600; color: var(--gray-700); margin-top: 2px;">HypurrQuant</div>
+        <div style="font-size: 0.36em; color: var(--gray-500); margin-top: 1px;">DEX LP mgmt + trading bots</div>
+      </div>
+      <div style="flex: 1; text-align: center; position: relative;">
+        <div style="width: 18px; height: 18px; background: #7c3aed; border-radius: 50%; margin: 0 auto; position: relative; z-index: 1; border: 3px solid #fff; box-shadow: 0 0 0 1px #7c3aed;"></div>
+        <div style="font-size: 0.44em; font-weight: 700; color: #7c3aed; margin-top: 8px;">2025 Q1</div>
+        <div style="font-size: 0.42em; font-weight: 600; color: var(--gray-700); margin-top: 2px;">HypurrQuant V2</div>
+        <div style="font-size: 0.36em; color: var(--gray-500); margin-top: 1px;">Multi-chain, non-custodial</div>
+      </div>
+      <div style="flex: 1; text-align: center; position: relative;">
+        <div style="width: 18px; height: 18px; background: var(--green); border-radius: 50%; margin: 0 auto; position: relative; z-index: 1; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--green);"></div>
+        <div style="font-size: 0.44em; font-weight: 700; color: var(--green); margin-top: 8px;">2025 Q4</div>
+        <div style="font-size: 0.42em; font-weight: 600; color: var(--gray-700); margin-top: 2px;">ForwardX</div>
+        <div style="font-size: 0.36em; color: var(--gray-500); margin-top: 1px;">Cross-currency DeFi ops</div>
+      </div>
+      <div style="flex: 1; text-align: center; position: relative;">
+        <div style="width: 18px; height: 18px; background: var(--navy); border-radius: 50%; margin: 0 auto; position: relative; z-index: 1; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--navy);"></div>
+        <div style="font-size: 0.44em; font-weight: 700; color: var(--navy); margin-top: 8px;">2026 Q1</div>
+        <div style="font-size: 0.42em; font-weight: 600; color: var(--gray-700); margin-top: 2px;">BUIDL CTC</div>
+        <div style="font-size: 0.36em; color: var(--gray-500); margin-top: 1px;">Snowball</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-bar" style="margin-top: 16px;">
+    We will build the entire DeFi infrastructure Creditcoin needs
+  </div>
+</section>
+
+<!-- ========== 12. APPENDIX ========== -->
+<section data-background-color="#ffffff">
+  <h2>Appendix</h2>
+
+  <!-- Protocol images go here -->
+  <div style="display: flex; align-items: center; justify-content: center; margin-top: 20px; min-height: 360px; border: 2px dashed var(--gray-300); border-radius: 12px; color: var(--gray-500); font-size: 0.6em;">
+    Protocol screenshots / images
+  </div>
+
+  <div style="margin-top: 20px; text-align: center; font-size: 0.5em; color: var(--gray-500);">
+    <a href="https://github.com/hypurrquant/snowball" style="color: var(--accent); text-decoration: none; font-weight: 600;">github.com/hypurrquant/snowball</a>
+  </div>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  slideNumber: 'c/t',
+  width: 1280,
+  height: 720,
+  margin: 0.04,
+  transition: 'none',
+  backgroundTransition: 'none',
+  center: false,
+  controls: true,
+  progress: true,
+});
+</script>
+</body>
+</html>
