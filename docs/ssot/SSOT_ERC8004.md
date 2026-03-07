@@ -33,7 +33,7 @@
 
 | 컨트랙트 | 주소 | 역할 |
 |----------|------|------|
-| **AgentVault** | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` | Agent 권한 관리 + 자산 보관 (Liquity 패키지) |
+| **AgentVault** | `0x7bca6fb903cc564d92ed5384512976c94f2730d7` | Agent 권한 관리 + 자산 보관 (Liquity 패키지) |
 
 ---
 
@@ -278,7 +278,7 @@ import {
 const IDENTITY_REGISTRY   = "0x993C9150f074435BA79033300834FcE06897de9B";
 const REPUTATION_REGISTRY = "0x3E5E194e39b777F568c9a261f46a5DCC43840726";
 const VALIDATION_REGISTRY = "0x84b9B2121187155C1c85bA6EA34e35c981BbA023";
-const AGENT_VAULT         = "0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed";
+const AGENT_VAULT         = "0x7bca6fb903cc564d92ed5384512976c94f2730d7";
 ```
 
 ---

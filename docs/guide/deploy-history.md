@@ -88,13 +88,13 @@
 | MultiTroveGetter | `0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6` |
 | RedemptionHelper | `0x8baf58113f968b4dfb2916290b57ce3ae114fb77` |
 | DebtInFrontHelper | `0x9fd6116fc1d006fa1d8993746ac1924f16d722bb` |
-| AgentVault | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` |
+| AgentVault | `0x7bca6fb903cc564d92ed5384512976c94f2730d7` |
 
 #### AgentVault Provenance
 
 | Field | Value |
 |-------|-------|
-| Contract Address | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` |
+| Contract Address | `0x7bca6fb903cc564d92ed5384512976c94f2730d7` |
 | Deploy Tx Hash | `0x967780ad89bbad8117f23e21a1200e9a02b807b832a7c1481afdcaa37cad3ede` |
 | Block Number | `4382959` |
 | Confirmed At | 2026-03-07 02:16:30 KST (2026-03-06T17:16:30Z) |

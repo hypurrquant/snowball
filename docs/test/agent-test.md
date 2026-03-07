@@ -66,7 +66,7 @@
 
 | 컨트랙트 | 주소 | 용도 |
 |----------|------|------|
-| AgentVault | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` | executeOnBehalf |
+| AgentVault | `0x7bca6fb903cc564d92ed5384512976c94f2730d7` | executeOnBehalf |
 | BorrowerOperations (wCTC) | `0xb637f375cbbd278ace5fdba53ad868ae7cb186ea` | adjustTroveInterestRate |
 | TroveManager (wCTC) | `0xa20f9dfeb110e11c89147b9db5adb98a7d91e70e` | getLatestTroveData |
 | ActivePool (wCTC) | `0xa7f0600a023cf6076f5d8dc51b46b91bafe095e5` | aggWeightedDebtSum, aggRecordedDebt |

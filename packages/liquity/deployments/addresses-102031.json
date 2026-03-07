@@ -42,6 +42,6 @@
     "collateralRegistry": "0xb18f7a1944e905739e18f96d6e60427aab93c23d",
     "hintHelpers": "0x7e8fa8852b0c1d697905fd7594d30afe693c76bb",
     "multiTroveGetter": "0x8376dfa413a536075e23c706affbd6370ec7d380",
-    "agentVault": "0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed"
+    "agentVault": "0x7bca6fb903cc564d92ed5384512976c94f2730d7"
   }
 }

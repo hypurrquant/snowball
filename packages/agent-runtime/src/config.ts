@@ -13,7 +13,7 @@ export function loadConfig(): AgentConfig {
   return {
     chainId: 102031,
     rpcUrl: process.env.RPC_URL || "https://rpc.cc3-testnet.creditcoin.network",
-    agentVault: "0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed" as Address,
+    agentVault: "0x7bca6fb903cc564d92ed5384512976c94f2730d7" as Address,
     agentPrivateKey: requireEnv("AGENT_PRIVATE_KEY") as `0x${string}`,
 
     morpho: {

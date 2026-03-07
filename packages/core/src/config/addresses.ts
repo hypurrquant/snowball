@@ -64,7 +64,7 @@ export const LIQUITY = {
     multiTroveGetter: "0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6" as Address,
     redemptionHelper: "0x8baf58113f968b4dfb2916290b57ce3ae114fb77" as Address,
     debtInFrontHelper: "0x9fd6116fc1d006fa1d8993746ac1924f16d722bb" as Address,
-    agentVault: "0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed" as Address,
+    agentVault: "0x7bca6fb903cc564d92ed5384512976c94f2730d7" as Address,
   },
 } as const;
 
@@ -177,7 +177,7 @@ export const ERC8004 = {
   identityRegistry: "0x993C9150f074435BA79033300834FcE06897de9B" as Address,
   reputationRegistry: "0x3E5E194e39b777F568c9a261f46a5DCC43840726" as Address,
   validationRegistry: "0x84b9B2121187155C1c85bA6EA34e35c981BbA023" as Address,
-  agentVault: "0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed" as Address,
+  agentVault: "0x7bca6fb903cc564d92ed5384512976c94f2730d7" as Address,
 } as const;
 
 // Backend API constants are in apps/web (process.env is Next.js-specific)

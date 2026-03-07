@@ -27,7 +27,7 @@ const wallet = createWalletClient({ account, chain: cc3, transport });
 // Read compiled artifact from forge output
 const artifactPath = path.join(
   __dirname,
-  "../packages/liquity/out/AgentVault.sol/AgentVault.json"
+  "../../packages/liquity/out/AgentVault.sol/AgentVault.json"
 );
 
 async function main() {
