@@ -1,6 +1,6 @@
 # Deployment History
 
-> Creditcoin Testnet (Chain ID: 102031) 배포 이력
+> 멀티체인 배포 이력 (CC Testnet, Sepolia, USC Testnet)
 
 ## Deployer
 
@@ -34,7 +34,7 @@
 | lstCTC/sbUSD | 77% | `0x2eea8a6ba032c2af6adef715c6f9ed1068e77782c7d8e127a3975389e8bedd0e` |
 | sbUSD/USDC | 90% | `0x3a94c96ec40aa5fe54bcd20ecbcd733497e4f4f2c8d31ae4862951b20f992a0c` |
 
-배포 스크립트: `scripts/deploy-morpho-fresh.ts`
+배포 스크립트: `scripts/deploy/deploy-morpho-fresh.ts`
 
 ### Tokens
 
@@ -95,10 +95,13 @@
 | Field | Value |
 |-------|-------|
 | Contract Address | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` |
-| Deploy Tx Hash | v0.12.0 phase에서 `scripts/deploy-agent-vault-v2.ts`로 배포 |
-| Block Number | Creditcoin Testnet (확인: `scripts/verify-agent-vault.ts` 실행) |
-| Confirmed At | 2026-03-07 (v0.18.0 SoT 검증) |
+| Deploy Tx Hash | `0x967780ad89bbad8117f23e21a1200e9a02b807b832a7c1481afdcaa37cad3ede` |
+| Block Number | `4382959` |
+| Confirmed At | 2026-03-07 02:16:30 KST (2026-03-06T17:16:30Z) |
 | ABI Version | V3 (getDelegatedUsers + getPermNonce 포함) |
+| Deploy Script | `scripts/deploy/deploy-agent-vault-v2.ts` |
+
+> Tx hash/block은 `eth_getCode` 바이너리 서치로 확보. 재검증: `scripts/deploy/verify-agent-vault.ts`
 
 ### DEX (Uniswap V3)
 
@@ -119,4 +122,32 @@
 | sbUSD/USDC | 500 | `0xe70647BF2baB8282B65f674b0DF8B7f0bb658859` |
 | lstCTC/wCTC | 3000 | `0xee0AF4a1Aa3ce7447248f87c384b8bE7de302DA5` |
 
-배포 스크립트: `scripts/deploy-full.ts`
+배포 스크립트: `scripts/deploy/deploy-full.ts`
+
+---
+
+## Bridge (DN Crosschain) — v0.17.0 (2026-03-07)
+
+> 3개 체인에 걸친 크로스체인 브릿지. USDC(CC) → DN(Sepolia) → DN(USC)
+
+### v2 (현재)
+
+| Contract | Chain | Chain ID | Address |
+|----------|-------|----------|---------|
+| BridgeVault | CC Testnet | 102031 | `0x06961ab735f87486c538d840d0f54d3f6518cd78` |
+| DN Token v2 | Sepolia | 11155111 | `0xa6722586d0f1cfb2a66725717ed3b99f609cb39b` |
+| EvmV1Decoder | USC Testnet | 102036 | `0xa6722586d0f1cFB2a66725717ed3b99F609cb39B` |
+| DNBridgeUSC v2 | USC Testnet | 102036 | `0x4fE881D69fB10b8bcd2009D1BC9684a609B29270` |
+
+배포 스크립트: `scripts/deploy/deploy-dn-bridge.ts`
+배포 기록: `deployments/bridge-deploy.json`
+E2E 테스트: `scripts/sim/simulate-dn-bridge.ts`
+
+### v1 (deprecated)
+
+> v0.11.1-usc-worker에서 배포. v2에서 destinationChainKey 검증 + EvmV1Decoder 분리로 대체됨.
+
+| Contract | Chain | Address | 상태 |
+|----------|-------|---------|------|
+| DN Token v1 | Sepolia | `0xE964cb9cc1C8DA4847C24E3960aDa2F8Ff12C380` | **DEPRECATED** |
+| DNBridgeUSC v1 | USC Testnet | `0x23E741a87ad9567Dff27eb34FaABa1444154D458` | **DEPRECATED** |

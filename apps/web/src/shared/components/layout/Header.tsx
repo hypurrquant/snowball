@@ -46,7 +46,7 @@ export function Header() {
           >
             <Menu className="w-5 h-5 text-text-secondary" />
           </button>
-          <Image src="/snowball-logo.png" alt="Snowball" width={28} height={28} className="rounded-lg" />
+          <Image src="/snowball-logo.png" alt="Snowball" width={28} height={28} className="rounded-lg brightness-0 invert" />
         </div>
 
         {/* Desktop: breadcrumb area */}

@@ -31,7 +31,7 @@ export function MobileNav({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <Image src="/snowball-logo.png" alt="Snowball" width={32} height={32} className="rounded-lg" />
+            <Image src="/snowball-logo.png" alt="Snowball" width={32} height={32} className="rounded-lg brightness-0 invert" />
             <span className="text-lg font-bold text-gradient-ice">Snowball</span>
           </div>
           <button

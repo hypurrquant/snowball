@@ -13,7 +13,7 @@ export function Sidebar() {
     <aside className="hidden lg:flex flex-col w-60 h-screen border-r border-white/[0.06] sticky top-0 backdrop-blur-xl bg-[rgba(10,11,20,0.55)]">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2.5 px-5 py-4 border-b border-white/[0.06]">
-        <Image src="/snowball-logo.png" alt="Snowball" width={32} height={32} className="rounded-lg" />
+        <Image src="/snowball-logo.png" alt="Snowball" width={32} height={32} className="rounded-lg brightness-0 invert" />
         <span className="text-lg font-bold text-gradient-ice">Snowball</span>
       </Link>
 
