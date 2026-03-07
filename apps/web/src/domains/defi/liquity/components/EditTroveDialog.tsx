@@ -176,6 +176,7 @@ export function EditTroveDialog({
             onSuccess?.();
           }
         }}
+        onRetry={edit.handleEditTrove}
         steps={edit.txSteps}
         phase={edit.txPhase}
         title="Edit Trove"

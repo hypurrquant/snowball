@@ -1,5 +1,24 @@
 export type TxStepStatus = "pending" | "executing" | "done" | "error";
-export type TxStepType = "approve" | "mint" | "openTrove" | "adjustTrove" | "adjustRate";
+export type TxStepType =
+  | "approve"
+  | "mint"
+  | "openTrove"
+  | "adjustTrove"
+  | "adjustRate"
+  | "closeTrove"
+  | "supply"
+  | "withdraw"
+  | "supplyCollateral"
+  | "borrow"
+  | "repay"
+  | "withdrawCollateral"
+  | "deposit"
+  | "swap"
+  | "claim"
+  | "vaultDeposit"
+  | "bridgeBurn"
+  | "attestWait"
+  | "uscMint";
 export type TxPhase = "idle" | "executing" | "complete" | "error";
 
 export interface TxStep {
@@ -9,4 +28,5 @@ export interface TxStep {
   status: TxStepStatus;
   txHash?: `0x${string}`;
   error?: string;
+  chainId?: number;
 }

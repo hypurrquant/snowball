@@ -13,6 +13,8 @@ import { formatTokenAmount } from "@/shared/lib/utils";
 import { ArrowDownUp, Settings, Loader2 } from "lucide-react";
 import { TokenSelector } from "@/shared/components/common/TokenSelector";
 import { PriceChart } from "@/domains/trade/components/PriceChart";
+import { TxPipelineModal } from "@/shared/components/ui/tx-pipeline-modal";
+import { useTxPipeline } from "@/shared/hooks/useTxPipeline";
 
 const TOKEN_LIST = Object.entries(TOKENS) as [string, Address][];
 
@@ -49,6 +51,7 @@ export default function SwapPage() {
     swap,
     isSwapPending,
   } = useSwap(tokenIn, tokenOut, amountIn);
+  const pipeline = useTxPipeline();
 
   const flipTokens = () => {
     setTokenIn(tokenOut);
@@ -60,15 +63,26 @@ export default function SwapPage() {
   const tokenOutInfo = TOKEN_INFO[tokenOut];
 
   const handleSwap = async () => {
-    try {
-      if (isApprovalNeeded) {
-        await approve();
-      }
-      await swap(slippage * 100);
-      setAmountInStr("");
-    } catch (err) {
-      console.error("Swap failed:", err);
+    const steps = [];
+    if (isApprovalNeeded) {
+      steps.push({ id: "approve", type: "approve" as const, label: `Approve ${tokenInInfo?.symbol ?? "Token"}` });
     }
+    steps.push({ id: "swap", type: "swap" as const, label: "Swap" });
+
+    const executors: Record<string, () => Promise<`0x${string}` | undefined>> = {};
+    if (isApprovalNeeded) {
+      executors.approve = async () => {
+        const h = await approve();
+        return h as `0x${string}` | undefined;
+      };
+    }
+    executors.swap = async () => {
+      const h = await swap(slippage * 100);
+      return h as `0x${string}` | undefined;
+    };
+
+    await pipeline.run(steps, executors);
+    setAmountInStr("");
   };
 
   return (
@@ -170,27 +184,12 @@ export default function SwapPage() {
               <Button className="w-full" variant="secondary" disabled>
                 Enter an amount
               </Button>
-            ) : isApprovalNeeded ? (
-              <Button
-                className="w-full"
-                variant="warning"
-                onClick={() => approve()}
-                disabled={isApprovePending}
-              >
-                {isApprovePending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : null}
-                Approve {tokenInInfo?.symbol}
-              </Button>
             ) : (
               <Button
                 className="w-full"
                 onClick={handleSwap}
-                disabled={isSwapPending || !expectedAmountOut}
+                disabled={isSwapPending || isApprovePending || !expectedAmountOut}
               >
-                {isSwapPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : null}
                 Swap
               </Button>
             )}
@@ -202,6 +201,14 @@ export default function SwapPage() {
           <PriceChart tokenIn={tokenIn} tokenOut={tokenOut} />
         </div>
       </div>
+
+      <TxPipelineModal
+        open={pipeline.showTxModal}
+        onClose={() => pipeline.reset()}
+        steps={pipeline.txSteps}
+        phase={pipeline.txPhase}
+        title="Swap"
+      />
     </div>
   );
 }

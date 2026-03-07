@@ -2,6 +2,7 @@
 
 import { Loader2, Check, X, Circle } from "lucide-react";
 import { EXPLORER_URL } from "@/core/config/addresses";
+import { CHAIN_EXPLORERS } from "@/core/config/chain";
 import type { TxStep, TxStepStatus } from "@/shared/types/tx";
 
 const STATUS_ICONS: Record<TxStepStatus, React.ReactNode> = {
@@ -74,7 +75,7 @@ export function TxStepItem({ step, stepNumber, isLast }: TxStepItemProps) {
 
         {step.status === "done" && step.txHash && (
           <a
-            href={`${EXPLORER_URL}/tx/${step.txHash}`}
+            href={`${step.chainId ? CHAIN_EXPLORERS[step.chainId] ?? EXPLORER_URL : EXPLORER_URL}/tx/${step.txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1 inline-block text-xs text-ice-400 hover:text-ice-300"
@@ -84,7 +85,11 @@ export function TxStepItem({ step, stepNumber, isLast }: TxStepItemProps) {
         )}
 
         {step.status === "error" && step.error && (
-          <p className="mt-1 text-xs text-red-400">{step.error}</p>
+          <p className="mt-1 text-xs text-red-400">
+            {step.error.includes("User rejected") || step.error.includes("User denied")
+              ? "Cancelled by user"
+              : step.error}
+          </p>
         )}
       </div>
     </div>

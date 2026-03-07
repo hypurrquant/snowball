@@ -4,18 +4,19 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useConnection } from "wagmi";
 import { parseEther } from "viem";
-import { toast } from "sonner";
 import {
   Card, CardHeader, CardTitle, CardContent, CardDescription,
 } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { StatCard } from "@/shared/components/common/StatCard";
+import { TxPipelineModal } from "@/shared/components/ui/tx-pipeline-modal";
+import { useTxPipeline } from "@/shared/hooks/useTxPipeline";
 import { useStabilityPool } from "@/domains/defi/liquity/hooks/useStabilityPool";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { TOKENS } from "@/core/config/addresses";
 import { formatTokenAmount } from "@/shared/lib/utils";
-import { DollarSign, Percent, Gift, Loader2 } from "lucide-react";
+import { DollarSign, Percent, Gift } from "lucide-react";
 
 export default function LiquityEarnPage() {
   const searchParams = useSearchParams();
@@ -25,39 +26,36 @@ export default function LiquityEarnPage() {
   const { position, isLoading, deposit, withdraw, claimRewards, isPending } =
     useStabilityPool(branch);
   const { data: sbUSDBalance, refetch: refetchBalance } = useTokenBalance({ address, token: TOKENS.sbUSD });
+  const pipeline = useTxPipeline();
 
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
   const handleDeposit = async () => {
     if (!depositAmount) return;
-    try {
-      await deposit(parseEther(depositAmount));
-      setDepositAmount("");
-      refetchBalance();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Deposit failed");
-    }
+    const amount = parseEther(depositAmount);
+    await pipeline.run(
+      [{ id: "deposit", type: "deposit", label: "Deposit sbUSD" }],
+      { deposit: async () => { const h = await deposit(amount); refetchBalance(); return h as `0x${string}` | undefined; } },
+    );
+    setDepositAmount("");
   };
 
   const handleWithdraw = async () => {
     if (!withdrawAmount) return;
-    try {
-      await withdraw(parseEther(withdrawAmount));
-      setWithdrawAmount("");
-      refetchBalance();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Withdraw failed");
-    }
+    const amount = parseEther(withdrawAmount);
+    await pipeline.run(
+      [{ id: "withdraw", type: "withdraw", label: "Withdraw sbUSD" }],
+      { withdraw: async () => { const h = await withdraw(amount); refetchBalance(); return h as `0x${string}` | undefined; } },
+    );
+    setWithdrawAmount("");
   };
 
   const handleClaim = async () => {
-    try {
-      await claimRewards();
-      refetchBalance();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Claim failed");
-    }
+    await pipeline.run(
+      [{ id: "claim", type: "claim", label: `Claim ${branch}` }],
+      { claim: async () => { const h = await claimRewards(); refetchBalance(); return h as `0x${string}` | undefined; } },
+    );
   };
 
   return (
@@ -125,7 +123,6 @@ export default function LiquityEarnPage() {
               onClick={handleDeposit}
               disabled={!isConnected || !depositAmount || isPending}
             >
-              {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               {!isConnected ? "Connect Wallet" : "Deposit"}
             </Button>
           </CardContent>
@@ -169,7 +166,6 @@ export default function LiquityEarnPage() {
                 onClick={handleWithdraw}
                 disabled={!isConnected || !withdrawAmount || isPending}
               >
-                {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Withdraw
               </Button>
               <Button
@@ -179,13 +175,20 @@ export default function LiquityEarnPage() {
                   !isConnected || !position.collGain || position.collGain === 0n || isPending
                 }
               >
-                {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Claim
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      <TxPipelineModal
+        open={pipeline.showTxModal}
+        onClose={() => pipeline.reset()}
+        steps={pipeline.txSteps}
+        phase={pipeline.txPhase}
+        title="Stability Pool"
+      />
     </div>
   );
 }

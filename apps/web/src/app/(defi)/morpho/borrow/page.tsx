@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useConnection } from "wagmi";
 import { parseEther } from "viem";
-import { toast } from "sonner";
 import {
   Card, CardContent,
 } from "@/shared/components/ui/card";
@@ -12,7 +11,8 @@ import { Input } from "@/shared/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/shared/components/ui/dialog";
-import { StatCard } from "@/shared/components/common/StatCard";
+import { TxPipelineModal } from "@/shared/components/ui/tx-pipeline-modal";
+import { useTxPipeline } from "@/shared/hooks/useTxPipeline";
 import { useMorphoMarkets } from "@/domains/defi/morpho/hooks/useMorphoMarkets";
 import { useMorphoPosition } from "@/domains/defi/morpho/hooks/useMorphoPosition";
 import { useMorphoActions } from "@/domains/defi/morpho/hooks/useMorphoActions";
@@ -21,7 +21,7 @@ import { DEMO_POSITIONS } from "@/domains/defi/morpho/data/fixtures";
 import type { MorphoMarket } from "@/domains/defi/morpho/types";
 import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
 import { calculateHealthFactor } from "@/domains/defi/morpho/lib/morphoMath";
-import { Landmark, TrendingUp, Percent, Loader2 } from "lucide-react";
+import { Landmark } from "lucide-react";
 
 const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
 
@@ -37,6 +37,7 @@ function MarketBorrowCard({
   const { data: collBalance, refetch: refetchCollBalance } = useTokenBalance({ address, token: market.collateralToken });
   const { refetch: refetchLoanBalance } = useTokenBalance({ address, token: market.loanToken });
   const actions = useMorphoActions(market, () => { refetchPosition(); refetchCollBalance(); refetchLoanBalance(); });
+  const pipeline = useTxPipeline();
 
   const [collAmount, setCollAmount] = useState("");
   const [borrowAmount, setBorrowAmount] = useState("");
@@ -48,7 +49,6 @@ function MarketBorrowCard({
   const displayPosition = position ?? demoPosition;
   const isDemo = !position && !!demoPosition;
 
-  // Health factor warning for borrow
   const parsedBorrow = borrowAmount ? parseEther(borrowAmount) : 0n;
   const currentCollateral = displayPosition?.collateral ?? 0n;
   const currentBorrow = displayPosition?.borrowAssets ?? 0n;
@@ -59,42 +59,54 @@ function MarketBorrowCard({
 
   const handleSupplyCollateral = async () => {
     if (!collAmount) return;
-    try {
-      await actions.supplyCollateral(parseEther(collAmount));
-      setCollAmount("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Supply collateral failed");
-    }
+    const amount = parseEther(collAmount);
+    await pipeline.run(
+      [
+        { id: "approve", type: "approve" as const, label: `Approve ${market.collSymbol}` },
+        { id: "supplyCollateral", type: "supplyCollateral" as const, label: `Supply ${market.collSymbol}` },
+      ],
+      {
+        approve: async () => { const h = await actions.approveColl(amount); return h as `0x${string}` | undefined; },
+        supplyCollateral: async () => { const h = await actions.supplyCollateral(amount); return h as `0x${string}` | undefined; },
+      },
+    );
+    setCollAmount("");
   };
 
   const handleBorrow = async () => {
     if (!borrowAmount) return;
-    try {
-      await actions.borrow(parseEther(borrowAmount));
-      setBorrowAmount("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Borrow failed");
-    }
+    const amount = parseEther(borrowAmount);
+    await pipeline.run(
+      [{ id: "borrow", type: "borrow" as const, label: `Borrow ${market.loanSymbol}` }],
+      { borrow: async () => { const h = await actions.borrow(amount); return h as `0x${string}` | undefined; } },
+    );
+    setBorrowAmount("");
   };
 
   const handleRepay = async () => {
     if (!repayAmount) return;
-    try {
-      await actions.repay(parseEther(repayAmount));
-      setRepayAmount("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Repay failed");
-    }
+    const amount = parseEther(repayAmount);
+    await pipeline.run(
+      [
+        { id: "approve", type: "approve" as const, label: `Approve ${market.loanSymbol}` },
+        { id: "repay", type: "repay" as const, label: `Repay ${market.loanSymbol}` },
+      ],
+      {
+        approve: async () => { const h = await actions.approveLoan(amount); return h as `0x${string}` | undefined; },
+        repay: async () => { const h = await actions.repay(amount); return h as `0x${string}` | undefined; },
+      },
+    );
+    setRepayAmount("");
   };
 
   const handleWithdrawCollateral = async () => {
     if (!withdrawCollAmount) return;
-    try {
-      await actions.withdrawCollateral(parseEther(withdrawCollAmount));
-      setWithdrawCollAmount("");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Withdraw collateral failed");
-    }
+    const amount = parseEther(withdrawCollAmount);
+    await pipeline.run(
+      [{ id: "withdrawCollateral", type: "withdrawCollateral" as const, label: `Withdraw ${market.collSymbol}` }],
+      { withdrawCollateral: async () => { const h = await actions.withdrawCollateral(amount); return h as `0x${string}` | undefined; } },
+    );
+    setWithdrawCollAmount("");
   };
 
   return (
@@ -155,7 +167,6 @@ function MarketBorrowCard({
               <DialogTitle>{market.name} - Borrow Position</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
-              {/* Supply Collateral */}
               <div className="space-y-2">
                 <label className="text-sm text-text-secondary font-medium">Supply Collateral ({market.collSymbol})</label>
                 <Input placeholder="0.00" className="font-mono" value={collAmount} onChange={(e) => setCollAmount(e.target.value)} />
@@ -163,14 +174,12 @@ function MarketBorrowCard({
                   <p className="text-xs text-text-tertiary">Balance: {formatTokenAmount(collBalance.value, 18, 4)}</p>
                 )}
                 <Button size="sm" className="w-full" onClick={handleSupplyCollateral} disabled={!collAmount || actions.isPending || isDemo}>
-                  {actions.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   Supply Collateral
                 </Button>
               </div>
 
               <div className="border-t border-border" />
 
-              {/* Borrow */}
               <div className="space-y-2">
                 <label className="text-sm text-text-secondary font-medium">Borrow ({market.loanSymbol})</label>
                 <Input placeholder="0.00" className="font-mono" value={borrowAmount} onChange={(e) => setBorrowAmount(e.target.value)} />
@@ -178,78 +187,56 @@ function MarketBorrowCard({
                   <p className="text-xs text-red-400">Health Factor below 1 - position will be liquidatable</p>
                 )}
                 <Button size="sm" className="w-full" onClick={handleBorrow} disabled={!borrowAmount || actions.isPending || isDemo || hfWarning}>
-                  {actions.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   Borrow
                 </Button>
               </div>
 
               <div className="border-t border-border" />
 
-              {/* Repay */}
               <div className="space-y-2">
                 <label className="text-sm text-text-secondary font-medium">Repay ({market.loanSymbol})</label>
                 <Input placeholder="0.00" className="font-mono" value={repayAmount} onChange={(e) => setRepayAmount(e.target.value)} />
                 <Button size="sm" variant="secondary" className="w-full" onClick={handleRepay} disabled={!repayAmount || actions.isPending || isDemo}>
-                  {actions.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   Repay
                 </Button>
               </div>
 
               <div className="border-t border-border" />
 
-              {/* Withdraw Collateral */}
               <div className="space-y-2">
                 <label className="text-sm text-text-secondary font-medium">Withdraw Collateral ({market.collSymbol})</label>
                 <Input placeholder="0.00" className="font-mono" value={withdrawCollAmount} onChange={(e) => setWithdrawCollAmount(e.target.value)} />
                 <Button size="sm" variant="secondary" className="w-full" onClick={handleWithdrawCollateral} disabled={!withdrawCollAmount || actions.isPending || isDemo}>
-                  {actions.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   Withdraw Collateral
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
+
+        <TxPipelineModal
+          open={pipeline.showTxModal}
+          onClose={() => {
+            if (pipeline.txPhase === "complete") setDialogOpen(false);
+            pipeline.reset();
+          }}
+          steps={pipeline.txSteps}
+          phase={pipeline.txPhase}
+          title={`${market.name} Transaction`}
+        />
       </CardContent>
     </Card>
   );
 }
 
 export default function MorphoBorrowPage() {
-  const { markets, isLoading } = useMorphoMarkets();
-
-  const totalAvailable = markets.reduce((acc, m) => acc + (m.totalSupply - m.totalBorrow), 0n);
-  const avgBorrowAPR = markets.length > 0
-    ? markets.reduce((acc, m) => acc + m.borrowAPR, 0) / markets.length
-    : 0;
+  const { markets } = useMorphoMarkets();
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard
-          label="Available to Borrow"
-          value={formatTokenAmount(totalAvailable, 18, 2)}
-          icon={<TrendingUp className="w-5 h-5 text-ice-400" />}
-          loading={isLoading}
-        />
-        <StatCard
-          label="Avg. Borrow APR"
-          value={`${formatNumber(avgBorrowAPR)}%`}
-          icon={<Percent className="w-5 h-5 text-ice-500" />}
-          loading={isLoading}
-        />
-        <StatCard
-          label="Markets"
-          value={String(markets.length)}
-          icon={<Landmark className="w-5 h-5 text-ice-300" />}
-          loading={isLoading}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {markets.map((m, i) => (
-          <MarketBorrowCard key={m.id} market={m} index={i} />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {markets.map((m, i) => (
+        <MarketBorrowCard key={m.id} market={m} index={i} />
+      ))}
     </div>
   );
 }

@@ -99,6 +99,7 @@ export function useTroveActions(
     isCollIncrease: boolean;
     debtChange: bigint;
     isDebtIncrease: boolean;
+    maxUpfrontFee?: bigint;
   }) => {
     const hash = await writeContractAsync({
       address: b.borrowerOperations,
@@ -110,7 +111,7 @@ export function useTroveActions(
         params.isCollIncrease,
         params.debtChange,
         params.isDebtIncrease,
-        0n,
+        params.maxUpfrontFee ?? 0n,
       ],
     });
     await waitForReceipt(hash);

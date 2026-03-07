@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, Ban, RotateCcw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import type { TxStep, TxPhase } from "@/shared/types/tx";
 interface TxPipelineModalProps {
   open: boolean;
   onClose: () => void;
+  onRetry?: () => void;
   steps: TxStep[];
   phase: TxPhase;
   title?: string;
@@ -22,6 +23,7 @@ interface TxPipelineModalProps {
 export function TxPipelineModal({
   open,
   onClose,
+  onRetry,
   steps,
   phase,
   title = "Executing Transaction",
@@ -31,7 +33,7 @@ export function TxPipelineModal({
   if (phase === "complete") {
     return (
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent>
+        <DialogContent snowfall="heavy">
           <DialogHeader>
             <DialogTitle>
               <span className="flex items-center gap-2">
@@ -68,18 +70,25 @@ export function TxPipelineModal({
 
   if (phase === "error") {
     const errorStep = steps.find((s) => s.status === "error");
+    const isUserRejection = errorStep?.error?.includes("User rejected") || errorStep?.error?.includes("User denied");
     return (
       <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-        <DialogContent>
+        <DialogContent snowfall="heavy">
           <DialogHeader>
             <DialogTitle>
               <span className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-400" />
-                Transaction Failed
+                {isUserRejection ? (
+                  <Ban className="w-5 h-5 text-text-tertiary" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-red-400" />
+                )}
+                {isUserRejection ? "Transaction Cancelled" : "Transaction Failed"}
               </span>
             </DialogTitle>
             <DialogDescription>
-              {errorStep?.error || "An error occurred during execution."}
+              {isUserRejection
+                ? "You cancelled the transaction in your wallet."
+                : errorStep?.error || "An error occurred during execution."}
             </DialogDescription>
           </DialogHeader>
 
@@ -94,12 +103,15 @@ export function TxPipelineModal({
             ))}
           </div>
 
-          <button
-            onClick={onClose}
-            className="w-full py-2.5 rounded-xl text-sm font-medium bg-bg-tertiary text-text-secondary hover:text-text-primary transition-colors"
-          >
-            Close
-          </button>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="w-full py-2.5 rounded-xl text-sm font-medium bg-ice-400 hover:bg-ice-500 text-white transition-colors flex items-center justify-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Retry
+            </button>
+          )}
         </DialogContent>
       </Dialog>
     );
@@ -109,6 +121,7 @@ export function TxPipelineModal({
   return (
     <Dialog open={open} onOpenChange={(v) => !v && !isExecuting && onClose()}>
       <DialogContent
+        snowfall="heavy"
         onInteractOutside={(e) => isExecuting && e.preventDefault()}
         onEscapeKeyDown={(e) => isExecuting && e.preventDefault()}
       >

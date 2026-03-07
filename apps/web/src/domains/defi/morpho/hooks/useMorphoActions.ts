@@ -45,7 +45,6 @@ export function useMorphoActions(market: MorphoMarket, onSuccess?: () => void) {
   };
 
   const supply = async (amount: bigint) => {
-    await approveLoan(amount);
     const hash = await writeContractAsync({
       address: LEND.snowballLend,
       abi: SnowballLendABI,
@@ -66,7 +65,6 @@ export function useMorphoActions(market: MorphoMarket, onSuccess?: () => void) {
   };
 
   const supplyCollateral = async (amount: bigint) => {
-    await approveColl(amount);
     const hash = await writeContractAsync({
       address: LEND.snowballLend,
       abi: SnowballLendABI,
@@ -87,7 +85,6 @@ export function useMorphoActions(market: MorphoMarket, onSuccess?: () => void) {
   };
 
   const repay = async (amount: bigint) => {
-    await approveLoan(amount);
     const hash = await writeContractAsync({
       address: LEND.snowballLend,
       abi: SnowballLendABI,
@@ -108,6 +105,8 @@ export function useMorphoActions(market: MorphoMarket, onSuccess?: () => void) {
   };
 
   return {
+    approveLoan,
+    approveColl,
     supply,
     withdraw,
     supplyCollateral,

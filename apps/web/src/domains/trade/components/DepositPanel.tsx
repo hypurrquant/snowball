@@ -161,6 +161,7 @@ export function DepositPanel({
       <TxPipelineModal
         open={showTxModal}
         onClose={() => setShowTxModal(false)}
+        onRetry={handleAddLiquidity}
         steps={txSteps}
         phase={txPhase}
         title="Add Liquidity"

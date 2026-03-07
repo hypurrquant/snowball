@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useConnection } from "wagmi";
 import { parseEther } from "viem";
-import { toast } from "sonner";
 import {
   Card, CardContent,
 } from "@/shared/components/ui/card";
@@ -12,15 +11,16 @@ import { Input } from "@/shared/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/shared/components/ui/dialog";
-import { StatCard } from "@/shared/components/common/StatCard";
+import { TxPipelineModal } from "@/shared/components/ui/tx-pipeline-modal";
+import { useTxPipeline } from "@/shared/hooks/useTxPipeline";
 import { useMorphoMarkets } from "@/domains/defi/morpho/hooks/useMorphoMarkets";
 import { useMorphoPosition } from "@/domains/defi/morpho/hooks/useMorphoPosition";
 import { useMorphoActions } from "@/domains/defi/morpho/hooks/useMorphoActions";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { DEMO_POSITIONS } from "@/domains/defi/morpho/data/fixtures";
-import type { MorphoMarket, MorphoPosition } from "@/domains/defi/morpho/types";
+import type { MorphoMarket } from "@/domains/defi/morpho/types";
 import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
-import { Landmark, TrendingUp, Percent, DollarSign, Loader2 } from "lucide-react";
+import { Landmark } from "lucide-react";
 
 const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
 
@@ -35,6 +35,7 @@ function MarketSupplyCard({
   const { position, refetch: refetchPosition } = useMorphoPosition(market.id, address, market.oraclePrice);
   const { data: tokenBalance, refetch: refetchBalance } = useTokenBalance({ address, token: market.loanToken });
   const actions = useMorphoActions(market, () => { refetchPosition(); refetchBalance(); });
+  const pipeline = useTxPipeline();
 
   const [supplyAmount, setSupplyAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -46,24 +47,28 @@ function MarketSupplyCard({
 
   const handleSupply = async () => {
     if (!supplyAmount) return;
-    try {
-      await actions.supply(parseEther(supplyAmount));
-      setSupplyAmount("");
-      setDialogOpen(false);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Supply failed");
-    }
+    const amount = parseEther(supplyAmount);
+    await pipeline.run(
+      [
+        { id: "approve", type: "approve" as const, label: `Approve ${market.loanSymbol}` },
+        { id: "supply", type: "supply" as const, label: `Supply ${market.loanSymbol}` },
+      ],
+      {
+        approve: async () => { const h = await actions.approveLoan(amount); return h as `0x${string}` | undefined; },
+        supply: async () => { const h = await actions.supply(amount); return h as `0x${string}` | undefined; },
+      },
+    );
+    setSupplyAmount("");
   };
 
   const handleWithdraw = async () => {
     if (!withdrawAmount) return;
-    try {
-      await actions.withdraw(parseEther(withdrawAmount));
-      setWithdrawAmount("");
-      setDialogOpen(false);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Withdraw failed");
-    }
+    const amount = parseEther(withdrawAmount);
+    await pipeline.run(
+      [{ id: "withdraw", type: "withdraw", label: `Withdraw ${market.loanSymbol}` }],
+      { withdraw: async () => { const h = await actions.withdraw(amount); return h as `0x${string}` | undefined; } },
+    );
+    setWithdrawAmount("");
   };
 
   return (
@@ -133,7 +138,6 @@ function MarketSupplyCard({
                 )}
               </div>
               <Button className="w-full" onClick={handleSupply} disabled={!supplyAmount || actions.isPending || isDemo}>
-                {actions.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Supply
               </Button>
 
@@ -142,61 +146,35 @@ function MarketSupplyCard({
                 <Input placeholder="0.00" className="font-mono" value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} />
               </div>
               <Button className="w-full" variant="secondary" onClick={handleWithdraw} disabled={!withdrawAmount || actions.isPending || isDemo}>
-                {actions.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Withdraw
               </Button>
             </div>
           </DialogContent>
         </Dialog>
+
+        <TxPipelineModal
+          open={pipeline.showTxModal}
+          onClose={() => {
+            if (pipeline.txPhase === "complete") setDialogOpen(false);
+            pipeline.reset();
+          }}
+          steps={pipeline.txSteps}
+          phase={pipeline.txPhase}
+          title={`${market.loanSymbol} Transaction`}
+        />
       </CardContent>
     </Card>
   );
 }
 
 export default function MorphoSupplyPage() {
-  const { markets, isLoading } = useMorphoMarkets();
-
-  const totalSupply = markets.reduce((acc, m) => acc + m.totalSupply, 0n);
-  const totalBorrow = markets.reduce((acc, m) => acc + m.totalBorrow, 0n);
+  const { markets } = useMorphoMarkets();
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Supply"
-          value={formatTokenAmount(totalSupply, 18, 2)}
-          icon={<DollarSign className="w-5 h-5 text-ice-500" />}
-          loading={isLoading}
-        />
-        <StatCard
-          label="Total Borrow"
-          value={formatTokenAmount(totalBorrow, 18, 2)}
-          icon={<TrendingUp className="w-5 h-5 text-ice-400" />}
-          loading={isLoading}
-        />
-        <StatCard
-          label="Markets"
-          value={String(markets.length)}
-          icon={<Landmark className="w-5 h-5 text-ice-300" />}
-          loading={isLoading}
-        />
-        <StatCard
-          label="Avg. Utilization"
-          value={
-            markets.length > 0
-              ? `${formatNumber(markets.reduce((acc, m) => acc + m.utilization, 0) / markets.length)}%`
-              : "\u2014"
-          }
-          icon={<Percent className="w-5 h-5 text-ice-500" />}
-          loading={isLoading}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {markets.map((m, i) => (
-          <MarketSupplyCard key={m.id} market={m} index={i} />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {markets.map((m, i) => (
+        <MarketSupplyCard key={m.id} market={m} index={i} />
+      ))}
     </div>
   );
 }

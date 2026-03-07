@@ -167,6 +167,7 @@ export function useEditTrove(
           isCollIncrease: collDelta.isIncrease,
           debtChange: debtDelta.amount,
           isDebtIncrease: debtDelta.isIncrease,
+          maxUpfrontFee: debtDelta.isIncrease ? parseEther("1") : 0n,
         });
         updateStep("adjust", { status: "done", txHash: hash as `0x${string}` | undefined });
       }

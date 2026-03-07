@@ -7,7 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/compo
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { TxPipelineModal } from "@/shared/components/ui/tx-pipeline-modal";
+import { useTxPipeline } from "@/shared/hooks/useTxPipeline";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
 import { useVaultActions } from "../hooks/useVaultActions";
@@ -49,7 +50,7 @@ export function VaultDepositDialog({
     amount && !isNaN(Number(amount)) ? parseUnits(amount, decimals) : 0n;
 
   const { data: walletBalance } = useTokenBalance({ address, token });
-  const { needsApproval, approve, isApproving } = useTokenApproval({
+  const { needsApproval, approve } = useTokenApproval({
     token,
     spender: ERC8004.agentVault,
     amount: parsedAmount,
@@ -58,42 +59,52 @@ export function VaultDepositDialog({
 
   const { deposit, withdraw, isDepositPending, isWithdrawPending } =
     useVaultActions();
-
-  const handleApprove = async () => {
-    try {
-      await approve(maxUint256);
-    } catch {
-      // handled by wallet
-    }
-  };
+  const pipeline = useTxPipeline();
 
   const handleDeposit = async () => {
     if (!parsedAmount) return;
-    try {
-      await deposit(token, parsedAmount);
-      setAmount("");
-      onSuccess?.();
-      onOpenChange(false);
-    } catch {
-      // handled by wallet
+    const steps = [];
+    if (needsApproval) {
+      steps.push({ id: "approve", type: "approve" as const, label: `Approve ${symbol}` });
     }
+    steps.push({ id: "deposit", type: "deposit" as const, label: "Deposit" });
+
+    const executors: Record<string, () => Promise<`0x${string}` | undefined>> = {};
+    if (needsApproval) {
+      executors.approve = async () => {
+        const h = await approve(maxUint256);
+        return h as `0x${string}` | undefined;
+      };
+    }
+    executors.deposit = async () => {
+      const h = await deposit(token, parsedAmount);
+      onSuccess?.();
+      return h as `0x${string}` | undefined;
+    };
+
+    await pipeline.run(steps, executors);
+    setAmount("");
   };
 
   const handleWithdraw = async () => {
     if (!parsedAmount) return;
-    try {
-      await withdraw(token, parsedAmount);
-      setAmount("");
-      onSuccess?.();
-      onOpenChange(false);
-    } catch {
-      // handled by wallet
-    }
+    await pipeline.run(
+      [{ id: "withdraw", type: "withdraw" as const, label: "Withdraw" }],
+      {
+        withdraw: async () => {
+          const h = await withdraw(token, parsedAmount);
+          onSuccess?.();
+          return h as `0x${string}` | undefined;
+        },
+      },
+    );
+    setAmount("");
   };
 
   const canWithdraw = parsedAmount > 0n && parsedAmount <= vaultBalance;
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-bg-card border-border">
         <DialogHeader>
@@ -141,29 +152,13 @@ export function VaultDepositDialog({
               />
             </div>
 
-            {needsApproval ? (
-              <Button
-                className="w-full"
-                onClick={handleApprove}
-                disabled={isApproving || !parsedAmount}
-              >
-                {isApproving && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Approve {symbol}
-              </Button>
-            ) : (
-              <Button
-                className="w-full"
-                onClick={handleDeposit}
-                disabled={isDepositPending || !parsedAmount}
-              >
-                {isDepositPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
-                Deposit
-              </Button>
-            )}
+            <Button
+              className="w-full"
+              onClick={handleDeposit}
+              disabled={isDepositPending || !parsedAmount}
+            >
+              Deposit
+            </Button>
           </TabsContent>
 
           <TabsContent value="withdraw" className="space-y-4 pt-4">
@@ -210,14 +205,23 @@ export function VaultDepositDialog({
               onClick={handleWithdraw}
               disabled={isWithdrawPending || !canWithdraw}
             >
-              {isWithdrawPending && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
               Withdraw
             </Button>
           </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
+
+    <TxPipelineModal
+      open={pipeline.showTxModal}
+      onClose={() => {
+        if (pipeline.txPhase === "complete") onOpenChange(false);
+        pipeline.reset();
+      }}
+      steps={pipeline.txSteps}
+      phase={pipeline.txPhase}
+      title={`Vault — ${symbol}`}
+    />
+    </>
   );
 }

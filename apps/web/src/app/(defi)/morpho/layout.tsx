@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { MorphoOverview } from "@/domains/defi/morpho/components/MorphoOverview";
+import { Landmark } from "lucide-react";
 
 const TABS = [
   { href: "/morpho/supply", label: "Supply" },
@@ -16,7 +18,18 @@ export default function MorphoLayout({
   const pathname = usePathname();
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-5xl mx-auto px-4 py-8 relative space-y-6">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-[300px] bg-ice-400/5 rounded-[100%] blur-[100px] pointer-events-none -z-10" />
+
+      {/* Header */}
+      <h1 className="text-2xl font-bold flex items-center gap-2 text-white">
+        <Landmark className="w-6 h-6 text-ice-400" />
+        SnowballLend
+      </h1>
+
+      {/* Protocol Overview */}
+      <MorphoOverview />
+
       {/* Tab navigation */}
       <div className="flex gap-1 border-b border-border">
         {TABS.map((tab) => {

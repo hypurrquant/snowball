@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useConnection } from "wagmi";
 import { parseEther, formatEther } from "viem";
-import { toast } from "sonner";
 import {
   Card, CardHeader, CardTitle, CardContent, CardDescription,
 } from "@/shared/components/ui/card";
@@ -29,6 +28,7 @@ import { DEMO_TROVES } from "@/domains/defi/liquity/data/fixtures";
 import type { TroveData } from "@/domains/defi/liquity/types";
 import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
 import { TxPipelineModal } from "@/shared/components/ui/tx-pipeline-modal";
+import { useTxPipeline } from "@/shared/hooks/useTxPipeline";
 import type { TxStep, TxPhase } from "@/shared/types/tx";
 import { Shield, TrendingDown, DollarSign, HandCoins, Loader2, Users, AlertTriangle, Info } from "lucide-react";
 
@@ -64,6 +64,9 @@ export default function LiquityBorrowPage() {
   const updateStep = useCallback((id: string, update: Partial<TxStep>) => {
     setTxSteps((prev) => prev.map((s) => (s.id === id ? { ...s, ...update } : s)));
   }, []);
+
+  // Close Trove pipeline
+  const closePipeline = useTxPipeline();
 
   // Edit Trove
   const [editTroveId, setEditTroveId] = useState<bigint | null>(null);
@@ -158,7 +161,6 @@ export default function LiquityBorrowPage() {
       setCollAmount("");
       setDebtAmount("");
       setRatePercent(5);
-      setOpenDialogOpen(false);
       refetchTroves(); refetchBalance();
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Open trove failed";
@@ -170,12 +172,16 @@ export default function LiquityBorrowPage() {
   };
 
   const handleCloseTrove = async (troveId: bigint) => {
-    try {
-      await closeTrove(troveId);
-      refetchTroves(); refetchBalance();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Close trove failed");
-    }
+    await closePipeline.run(
+      [{ id: "close", type: "closeTrove" as const, label: "Close Trove" }],
+      {
+        close: async () => {
+          const h = await closeTrove(troveId);
+          refetchTroves(); refetchBalance();
+          return h as `0x${string}` | undefined;
+        },
+      },
+    );
   };
 
   // Button text
@@ -480,17 +486,28 @@ export default function LiquityBorrowPage() {
         </CardContent>
       </Card>
 
-      {/* Tx Pipeline Modal */}
+      {/* Tx Pipeline Modal — Open Trove */}
       <TxPipelineModal
         open={showTxModal}
         onClose={() => {
+          if (txPhase === "complete") setOpenDialogOpen(false);
           setShowTxModal(false);
           setTxPhase("idle");
           setTxSteps([]);
         }}
+        onRetry={handleOpenTrove}
         steps={txSteps}
         phase={txPhase}
         title="Open Trove"
+      />
+
+      {/* Tx Pipeline Modal — Close Trove */}
+      <TxPipelineModal
+        open={closePipeline.showTxModal}
+        onClose={() => closePipeline.reset()}
+        steps={closePipeline.txSteps}
+        phase={closePipeline.txPhase}
+        title="Close Trove"
       />
     </div>
   );

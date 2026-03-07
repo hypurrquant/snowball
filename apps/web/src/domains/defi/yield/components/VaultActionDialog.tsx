@@ -8,12 +8,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/compo
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { TxPipelineModal } from "@/shared/components/ui/tx-pipeline-modal";
+import { useTxPipeline } from "@/shared/hooks/useTxPipeline";
 import { VaultData } from "@/domains/defi/yield/hooks/useYieldVaults";
 import { SnowballYieldVaultABI } from "@/core/abis";
 import { formatTokenAmount } from "@/shared/lib/utils";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
+import { waitForTransactionReceipt } from "wagmi/actions";
+import { useConfig } from "wagmi";
 
 interface VaultActionDialogProps {
     vault: VaultData;
@@ -24,8 +27,10 @@ interface VaultActionDialogProps {
 
 export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: VaultActionDialogProps) {
     const { address, isConnected } = useAccount();
+    const config = useConfig();
     const [activeTab, setActiveTab] = useState<"deposit" | "withdraw">(defaultTab);
     const [amount, setAmount] = useState("");
+    const pipeline = useTxPipeline();
 
     const parsedAmountStr = amount.replace(/,/g, "");
 
@@ -43,55 +48,64 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
 
     const depositAmountBigInt = parsedAmountStr && !isNaN(Number(parsedAmountStr)) ? parseEther(parsedAmountStr) : 0n;
 
-    const { needsApproval, approve, isApproving: isApprovePending } = useTokenApproval({
+    const { needsApproval, approve } = useTokenApproval({
         token: vault.want,
         spender: vault.address,
         amount: depositAmountBigInt,
         owner: address,
     });
 
-    const { writeContractAsync: depositAsync, isPending: isDepositPending } = useChainWriteContract();
-    const { writeContractAsync: withdrawAsync, isPending: isWithdrawPending } = useChainWriteContract();
-
-    const handleApprove = async () => {
-        try {
-            if (!depositAmountBigInt) return;
-            await approve(maxUint256);
-        } catch (error) {
-            console.error("Approve failed", error);
-        }
-    };
+    const { writeContractAsync: depositAsync } = useChainWriteContract();
+    const { writeContractAsync: withdrawAsync } = useChainWriteContract();
 
     const handleDeposit = async () => {
-        try {
-            if (!depositAmountBigInt) return;
-            await depositAsync({
+        if (!depositAmountBigInt) return;
+        const steps = [];
+        if (needsApproval) {
+            steps.push({ id: "approve", type: "approve" as const, label: `Approve ${vault.wantSymbol}` });
+        }
+        steps.push({ id: "deposit", type: "deposit" as const, label: "Deposit" });
+
+        const executors: Record<string, () => Promise<`0x${string}` | undefined>> = {};
+        if (needsApproval) {
+            executors.approve = async () => {
+                const h = await approve(maxUint256);
+                return h as `0x${string}` | undefined;
+            };
+        }
+        executors.deposit = async () => {
+            const hash = await depositAsync({
                 address: vault.address,
                 abi: SnowballYieldVaultABI,
                 functionName: "deposit",
                 args: [depositAmountBigInt],
             });
-            setAmount("");
-            onOpenChange(false);
-        } catch (error) {
-            console.error("Deposit failed", error);
-        }
+            await waitForTransactionReceipt(config, { hash });
+            return hash;
+        };
+
+        await pipeline.run(steps, executors);
+        setAmount("");
     };
 
     const handleWithdraw = async () => {
-        try {
-            if (!depositAmountBigInt) return;
-            await withdrawAsync({
-                address: vault.address,
-                abi: SnowballYieldVaultABI,
-                functionName: "withdraw",
-                args: [depositAmountBigInt],
-            });
-            setAmount("");
-            onOpenChange(false);
-        } catch (error) {
-            console.error("Withdraw failed", error);
-        }
+        if (!depositAmountBigInt) return;
+        await pipeline.run(
+            [{ id: "withdraw", type: "withdraw" as const, label: "Withdraw" }],
+            {
+                withdraw: async () => {
+                    const hash = await withdrawAsync({
+                        address: vault.address,
+                        abi: SnowballYieldVaultABI,
+                        functionName: "withdraw",
+                        args: [depositAmountBigInt],
+                    });
+                    await waitForTransactionReceipt(config, { hash });
+                    return hash;
+                },
+            },
+        );
+        setAmount("");
     };
 
     const receiveShareEstimate = vault.pricePerShare && vault.pricePerShare > 0n && depositAmountBigInt > 0n
@@ -105,104 +119,108 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
     const userShareText = vault.userShares ? formatTokenAmount(vault.userShares, 18, 4) : "0.00";
 
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md bg-bg-card border-border">
-                <DialogHeader>
-                    <DialogTitle>{vault.name}</DialogTitle>
-                </DialogHeader>
+        <>
+            <Dialog open={isOpen} onOpenChange={onOpenChange}>
+                <DialogContent className="sm:max-w-md bg-bg-card border-border">
+                    <DialogHeader>
+                        <DialogTitle>{vault.name}</DialogTitle>
+                    </DialogHeader>
 
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "deposit" | "withdraw")}>
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="deposit">Deposit</TabsTrigger>
-                        <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
-                    </TabsList>
+                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "deposit" | "withdraw")}>
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="deposit">Deposit</TabsTrigger>
+                            <TabsTrigger value="withdraw">Withdraw</TabsTrigger>
+                        </TabsList>
 
-                    <TabsContent value="deposit" className="space-y-4 pt-4">
-                        <div className="rounded-xl bg-bg-input p-3">
-                            <div className="flex justify-between mb-1">
-                                <span className="text-xs text-text-tertiary">Amount ({vault.wantSymbol})</span>
-                                {wantBalance && (
-                                    <button
-                                        onClick={() => setAmount(formatTokenAmount(wantBalance.value, 18, 18).replace(/,/g, ""))}
-                                        className="text-xs text-text-secondary hover:text-ice-400"
-                                    >
-                                        Max: {formatTokenAmount(wantBalance.value, 18, 4)}
-                                    </button>
-                                )}
+                        <TabsContent value="deposit" className="space-y-4 pt-4">
+                            <div className="rounded-xl bg-bg-input p-3">
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-xs text-text-tertiary">Amount ({vault.wantSymbol})</span>
+                                    {wantBalance && (
+                                        <button
+                                            onClick={() => setAmount(formatTokenAmount(wantBalance.value, 18, 18).replace(/,/g, ""))}
+                                            className="text-xs text-text-secondary hover:text-ice-400"
+                                        >
+                                            Max: {formatTokenAmount(wantBalance.value, 18, 4)}
+                                        </button>
+                                    )}
+                                </div>
+                                <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="0.0"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    className="border-0 bg-transparent text-lg font-mono p-0 h-auto focus-visible:ring-0"
+                                />
                             </div>
-                            <Input
-                                type="text"
-                                inputMode="decimal"
-                                placeholder="0.0"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="border-0 bg-transparent text-lg font-mono p-0 h-auto focus-visible:ring-0"
-                            />
-                        </div>
 
-                        <div className="p-3 rounded-lg bg-bg-secondary flex justify-between items-center text-sm">
-                            <span className="text-text-secondary">Expected Shares</span>
-                            <span className="font-mono">~{formatTokenAmount(receiveShareEstimate, 18, 4)} moo{vault.wantSymbol}</span>
-                        </div>
+                            <div className="p-3 rounded-lg bg-bg-secondary flex justify-between items-center text-sm">
+                                <span className="text-text-secondary">Expected Shares</span>
+                                <span className="font-mono">~{formatTokenAmount(receiveShareEstimate, 18, 4)} moo{vault.wantSymbol}</span>
+                            </div>
 
-                        {needsApproval ? (
-                            <Button className="w-full" onClick={handleApprove} disabled={isApprovePending || !isConnected}>
-                                {isApprovePending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Approve {vault.wantSymbol}
-                            </Button>
-                        ) : (
-                            <Button className="w-full" onClick={handleDeposit} disabled={isDepositPending || !depositAmountBigInt || !isConnected || vault.paused}>
-                                {isDepositPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <Button className="w-full" onClick={handleDeposit} disabled={!depositAmountBigInt || !isConnected || vault.paused}>
                                 {vault.paused ? "Paused" : "Deposit"}
                             </Button>
-                        )}
-                    </TabsContent>
+                        </TabsContent>
 
-                    <TabsContent value="withdraw" className="space-y-4 pt-4">
-                        <div className="rounded-xl bg-bg-input p-3">
-                            <div className="flex justify-between mb-1">
-                                <span className="text-xs text-text-tertiary">Amount Shares</span>
-                                <button
-                                    onClick={() => {
-                                        if (vault.userShares) setAmount(formatTokenAmount(vault.userShares, 18, 18).replace(/,/g, ""));
-                                    }}
-                                    className="text-xs text-text-secondary hover:text-ice-400"
-                                >
-                                    Max: {userShareText}
-                                </button>
+                        <TabsContent value="withdraw" className="space-y-4 pt-4">
+                            <div className="rounded-xl bg-bg-input p-3">
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-xs text-text-tertiary">Amount Shares</span>
+                                    <button
+                                        onClick={() => {
+                                            if (vault.userShares) setAmount(formatTokenAmount(vault.userShares, 18, 18).replace(/,/g, ""));
+                                        }}
+                                        className="text-xs text-text-secondary hover:text-ice-400"
+                                    >
+                                        Max: {userShareText}
+                                    </button>
+                                </div>
+                                <Input
+                                    type="text"
+                                    inputMode="decimal"
+                                    placeholder="0.0"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value)}
+                                    className="border-0 bg-transparent text-lg font-mono p-0 h-auto focus-visible:ring-0"
+                                />
                             </div>
-                            <Input
-                                type="text"
-                                inputMode="decimal"
-                                placeholder="0.0"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                                className="border-0 bg-transparent text-lg font-mono p-0 h-auto focus-visible:ring-0"
-                            />
-                        </div>
 
-                        <div className="p-3 rounded-lg bg-bg-secondary flex justify-between items-center text-sm mb-2">
-                            <span className="text-text-secondary">Expected Returns</span>
-                            <span className="font-mono">~{formatTokenAmount(receiveWantEstimate, 18, 4)} {vault.wantSymbol}</span>
-                        </div>
+                            <div className="p-3 rounded-lg bg-bg-secondary flex justify-between items-center text-sm mb-2">
+                                <span className="text-text-secondary">Expected Returns</span>
+                                <span className="font-mono">~{formatTokenAmount(receiveWantEstimate, 18, 4)} {vault.wantSymbol}</span>
+                            </div>
 
-                        <div className="flex justify-between text-xs text-text-tertiary px-1 pb-2">
-                            <span>Withdrawal Fee</span>
-                            <span>{vault.withdrawFee !== undefined ? `${(Number(vault.withdrawFee) / 100).toFixed(1)}%` : "0.1%"}</span>
-                        </div>
+                            <div className="flex justify-between text-xs text-text-tertiary px-1 pb-2">
+                                <span>Withdrawal Fee</span>
+                                <span>{vault.withdrawFee !== undefined ? `${(Number(vault.withdrawFee) / 100).toFixed(1)}%` : "0.1%"}</span>
+                            </div>
 
-                        <Button
-                            className="w-full"
-                            variant="secondary"
-                            onClick={handleWithdraw}
-                            disabled={isWithdrawPending || !depositAmountBigInt || !isConnected}
-                        >
-                            {isWithdrawPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Withdraw
-                        </Button>
-                    </TabsContent>
-                </Tabs>
-            </DialogContent>
-        </Dialog>
+                            <Button
+                                className="w-full"
+                                variant="secondary"
+                                onClick={handleWithdraw}
+                                disabled={!depositAmountBigInt || !isConnected}
+                            >
+                                Withdraw
+                            </Button>
+                        </TabsContent>
+                    </Tabs>
+                </DialogContent>
+            </Dialog>
+
+            <TxPipelineModal
+                open={pipeline.showTxModal}
+                onClose={() => {
+                    if (pipeline.txPhase === "complete") onOpenChange(false);
+                    pipeline.reset();
+                }}
+                steps={pipeline.txSteps}
+                phase={pipeline.txPhase}
+                title={vault.name}
+            />
+        </>
     );
 }
