@@ -19,6 +19,7 @@ NODE_PATH=apps/web/node_modules npx tsx scripts/deploy/<script>.ts
 | deploy-phase9-12.ts | CC Testnet | Phase 9~12 증분 배포 (Liquity branches + tokens) | v0.9.0~v0.12.0 |
 | deploy-agent-vault-v2.ts | CC Testnet | AgentVault V3 단독 배포 | v0.12.0 |
 | deploy-dn-bridge.ts | Sepolia + CC + USC | DN Token(Sepolia) + BridgeVault(CC) 자동, DNBridgeUSC(USC) 수동 | v0.17.0 |
+| deploy-yield.ts | CC Testnet | Yield Vault 4개 + Strategy 4개 + wCTC loan market 배포 | v0.20.0 |
 | verify-agent-vault.ts | CC Testnet | AgentVault 온체인 검증 (eth_getCode + ABI 호출) | v0.18.0 |
 
 ## 배포 이력

@@ -124,6 +124,19 @@
 
 배포 스크립트: `scripts/deploy/deploy-full.ts`
 
+### Yield Vaults (Beefy V7 Fork)
+
+| Vault | Want | Vault Address | Strategy Address |
+|-------|------|---------------|------------------|
+| Stability Pool | sbUSD | `0x40a8b5b8a6c1e4236da10da2731944e59444c179` | `0x342c8a3385341b07111bbf1a73aac48cdda32917` |
+| Morpho sbUSD | sbUSD | `0x384ebff116bb8458628b62624ab9535a4636a397` | `0x9176910f4c9dc7a868d5e6261fd651f98d7cc0c3` |
+| Morpho wCTC | wCTC | `0x766c8bf45d7a7356f63e830c134c07911b662757` | `0x241f5661d6db304434dfc48dab75f1c5be63404a` |
+| Morpho USDC | USDC | `0xa6f9c033dba98f2d0fc79522b1b5c5098dc567b7` | `0xcdb7a9fb0040d2631f4cd212601838d195e8d08b` |
+
+추가 Oracle: `0x13c355b49b53c3bdfcba742fd015fe30a39896ca` (sbUSD/wCTC, 0.2e36 — wCTC loan market용)
+
+배포 스크립트: `scripts/deploy/deploy-yield.ts`
+
 ---
 
 ## Bridge (DN Crosschain) — v0.17.0 (2026-03-07)
