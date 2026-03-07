@@ -60,8 +60,10 @@ interface BridgeSession {
     burn?: string;
     uscMint?: string;
   };
-  /** Block number on Sepolia when burn was confirmed — used as polling lower bound */
+  /** @deprecated Block number on Sepolia (wrong chain for USC polling) */
   burnBlock?: string;
+  /** Timestamp (ms) when burn was confirmed — used to compute USC polling lower bound */
+  burnTimestamp?: number;
   /** Step ID that failed — enables retry after page refresh */
   failedStep?: string;
   failedError?: string;
@@ -223,19 +225,24 @@ export function useBridgePipeline() {
 
     const startTime = Date.now();
     const session = sessionRef.current;
-    // Use burn block as lower bound to avoid matching previous bridge events
-    const burnBlock = session?.burnBlock ? BigInt(session.burnBlock) : undefined;
+    // Estimate how far back to search on USC chain based on burn timestamp
+    // USC block time ~2s, search from 5 minutes before burn to be safe
+    const burnTs = session?.burnTimestamp ?? session?.timestamp ?? 0;
+    let cachedFromBlock: bigint | undefined;
 
     const poll = async () => {
       try {
         let fromBlock: bigint;
-        if (burnBlock) {
-          // Only look at events after the burn block
-          fromBlock = burnBlock;
+        if (cachedFromBlock !== undefined) {
+          fromBlock = cachedFromBlock;
         } else {
-          // Fallback: use current block (won't match old events since we start from now)
+          // Estimate: go back enough blocks to cover attestation window
+          // Use elapsed time since burn + 5 min buffer, at ~2s/block
+          const elapsedSec = Math.max(0, Math.floor((Date.now() - burnTs) / 1000)) + 300;
+          const blocksBack = BigInt(Math.ceil(elapsedSec / 2));
           const currentBlock = await uscClient.getBlockNumber();
-          fromBlock = currentBlock > 100n ? currentBlock - 100n : 0n;
+          fromBlock = currentBlock > blocksBack ? currentBlock - blocksBack : 0n;
+          cachedFromBlock = fromBlock;
         }
 
         const logs = await uscClient.getLogs({
@@ -302,10 +309,8 @@ export function useBridgePipeline() {
           } else if (p === "burn") {
             const tx = await actions.burnDN(bridgeAmount);
             updateStep(stepId, { status: "done", txHash: tx });
-            // Save burn block so attestation polling starts from the right point
-            const receipt = await sepoliaClient.getTransactionReceipt({ hash: tx as `0x${string}` }).catch(() => null);
-            const burnBlock = receipt?.blockNumber?.toString() ?? "";
-            persistStep("burn", tx, { burnBlock });
+            // Save burn timestamp so attestation polling starts from the right point on USC chain
+            persistStep("burn", tx, { burnTimestamp: Date.now() });
           } else if (p === "attestWait") {
             // Polling handled by useEffect
             setExecuting(false);
