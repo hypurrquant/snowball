@@ -14,12 +14,13 @@ export async function findHints(
   const numTrials = 15n;
   const randomSeed = BigInt(Math.floor(Math.random() * 1e10));
 
-  // 1. Get approximate hint from HintHelpers
+  // 1. Get approximate hint from HintHelpers (branchIdx 0 = wCTC)
+  const branchIdx = 0n;
   const [approxHint] = await publicClient.readContract({
     address: config.liquity.hintHelpers,
     abi: HintHelpersABI,
     functionName: "getApproxHint",
-    args: [newInterestRate, numTrials, randomSeed],
+    args: [branchIdx, newInterestRate, numTrials, randomSeed],
   }) as readonly [bigint, bigint, bigint];
 
   // 2. Find exact insert position from SortedTroves

@@ -1,6 +1,9 @@
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, toFunctionSelector } from "viem";
 import { AgentVaultABI, BorrowerOperationsABI } from "../abis";
 import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, PermissionSpec } from "../types";
+
+const ADJUST_RATE_SEL = toFunctionSelector("adjustTroveInterestRate(uint256,uint256,uint256,uint256,uint256)");
+const ADD_COLL_SEL = toFunctionSelector("addColl(uint256,uint256)");
 
 function check(ok: boolean, message: string): CheckResult {
   return { ok, message };
@@ -20,7 +23,7 @@ export const liquityAddCollateral: Capability<{ troveId: string; amount: string;
   },
 
   requiredPermissions(config: AgentConfig): PermissionSpec[] {
-    return [{ target: config.liquity.borrowerOperations, selectors: ["adjustTroveInterestRate", "addColl"] }];
+    return [{ target: config.liquity.borrowerOperations, selectors: [ADJUST_RATE_SEL, ADD_COLL_SEL] }];
   },
 
   preconditions(ctx: ExecutionContext, input: { troveId: string; amount: string; reason: string }): CheckResult[] {

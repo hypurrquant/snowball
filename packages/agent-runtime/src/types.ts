@@ -83,6 +83,7 @@ export interface LiquitySnapshot {
   debt: bigint;
   annualInterestRate: bigint;
   lastInterestRateAdjTime: bigint;
+  avgInterestRate: bigint; // debt-weighted average from ActivePool
   isAddManager: boolean;
   isInterestDelegate: boolean;
 }
@@ -117,6 +118,7 @@ export interface AgentConfig {
     sortedTroves: Address;
     hintHelpers: Address;
     collToken: Address;
+    activePool: Address;
   };
 }
 

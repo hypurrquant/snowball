@@ -1,7 +1,10 @@
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, maxUint256, toFunctionSelector } from "viem";
 import { AgentVaultABI, BorrowerOperationsABI } from "../abis";
 import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, PermissionSpec } from "../types";
 import { findHints } from "../utils/liquity-hints";
+
+const ADJUST_RATE_SEL = toFunctionSelector("adjustTroveInterestRate(uint256,uint256,uint256,uint256,uint256)");
+const ADD_COLL_SEL = toFunctionSelector("addColl(uint256,uint256)");
 
 const COOLDOWN_PERIOD = 7n * 24n * 60n * 60n; // 7 days in seconds
 
@@ -23,7 +26,7 @@ export const liquityAdjustInterestRate: Capability<{ troveId: string; newRate: s
   },
 
   requiredPermissions(config: AgentConfig): PermissionSpec[] {
-    return [{ target: config.liquity.borrowerOperations, selectors: ["adjustTroveInterestRate", "addColl"] }];
+    return [{ target: config.liquity.borrowerOperations, selectors: [ADJUST_RATE_SEL, ADD_COLL_SEL] }];
   },
 
   preconditions(ctx: ExecutionContext, input: { troveId: string; newRate: string; reason: string }): CheckResult[] {
@@ -42,12 +45,11 @@ export const liquityAdjustInterestRate: Capability<{ troveId: string; newRate: s
     // The executor should call buildCallsAsync instead for production use.
     const troveId = BigInt(input.troveId);
     const newRate = BigInt(input.newRate);
-    const maxUpfrontFee = 10n ** 18n; // 1 sbUSD max fee
 
     const adjustData = encodeFunctionData({
       abi: BorrowerOperationsABI,
       functionName: "adjustTroveInterestRate",
-      args: [troveId, newRate, 0n, 0n, maxUpfrontFee],
+      args: [troveId, newRate, 0n, 0n, maxUint256],
     });
 
     return [
@@ -73,7 +75,6 @@ export async function buildCallsWithHints(
 ): Promise<PreparedCall[]> {
   const troveId = BigInt(input.troveId);
   const newRate = BigInt(input.newRate);
-  const maxUpfrontFee = 10n ** 18n;
 
   const { upperHint, lowerHint } = await findHints(
     ctx.publicClient,
@@ -84,7 +85,7 @@ export async function buildCallsWithHints(
   const adjustData = encodeFunctionData({
     abi: BorrowerOperationsABI,
     functionName: "adjustTroveInterestRate",
-    args: [troveId, newRate, upperHint, lowerHint, maxUpfrontFee],
+    args: [troveId, newRate, upperHint, lowerHint, maxUint256],
   });
 
   return [

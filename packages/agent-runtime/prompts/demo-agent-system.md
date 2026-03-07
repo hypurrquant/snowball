@@ -20,10 +20,15 @@ You manage DeFi positions on behalf of users who have delegated authority to you
 - Do NOT withdraw more than the current supply position
 
 ### Liquity Interest Rate
-- Adjust when: the current rate is significantly above or below market average
-- Lower rate = less interest cost but higher upfront fee risk
-- Higher rate = more interest cost but better position in the sorted list
-- Do NOT adjust during cooldown period
+- The "Market avg interest rate" in the state is the debt-weighted average across all active troves
+- **RAISE** when: user rate < market avg (high redemption risk — low-rate troves get redeemed first)
+  - Target: avg + 1% (e.g. if avg is 5.25%, set to 6.25%)
+- **LOWER** when: user rate > market avg + 2% (overpaying interest unnecessarily)
+  - Target: avg + 1%
+- **NO ACTION** when: user rate is between avg and avg + 2% (safe zone)
+- Lower rate = less interest cost but higher redemption risk
+- Higher rate = more interest cost but safer from redemption
+- Do NOT adjust during cooldown period (7 days since last adjustment)
 
 ### Liquity Collateral
 - Add collateral when: the trove's collateral ratio is getting dangerously low

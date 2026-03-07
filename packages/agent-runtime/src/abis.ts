@@ -40,7 +40,12 @@ export const SortedTrovesABI = [
 ] as const;
 
 export const HintHelpersABI = [
-  { type: "function", name: "getApproxHint", inputs: [{ name: "_interestRate", type: "uint256" }, { name: "_numTrials", type: "uint256" }, { name: "_inputRandomSeed", type: "uint256" }], outputs: [{ name: "hintId", type: "uint256" }, { name: "diff", type: "uint256" }, { name: "latestRandomSeed", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getApproxHint", inputs: [{ name: "_branchIdx", type: "uint256" }, { name: "_interestRate", type: "uint256" }, { name: "_numTrials", type: "uint256" }, { name: "_inputRandomSeed", type: "uint256" }], outputs: [{ name: "hintId", type: "uint256" }, { name: "diff", type: "uint256" }, { name: "latestRandomSeed", type: "uint256" }], stateMutability: "view" },
+] as const;
+
+export const ActivePoolABI = [
+  { type: "function", name: "aggWeightedDebtSum", inputs: [], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "aggRecordedDebt", inputs: [], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
 ] as const;
 
 export const ERC20ABI = [

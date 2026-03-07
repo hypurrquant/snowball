@@ -120,11 +120,17 @@ function buildStateMessage(snapshot: Snapshot): string {
     `- Has trove: ${snapshot.liquity.hasTrove}`,
     `- Collateral: ${snapshot.liquity.collateral.toString()} wei`,
     `- Debt: ${snapshot.liquity.debt.toString()} wei`,
-    `- Annual interest rate: ${snapshot.liquity.annualInterestRate.toString()}`,
+    `- Annual interest rate: ${snapshot.liquity.annualInterestRate.toString()} (${formatRate(snapshot.liquity.annualInterestRate)})`,
+    `- Market avg interest rate: ${snapshot.liquity.avgInterestRate.toString()} (${formatRate(snapshot.liquity.avgInterestRate)})`,
     `- Add manager set: ${snapshot.liquity.isAddManager}`,
     `- Interest delegate set: ${snapshot.liquity.isInterestDelegate}`,
     "",
     "Based on this state, decide what action to take. If no action is needed, respond without using any tools.",
   ];
   return lines.join("\n");
+}
+
+function formatRate(wei: bigint): string {
+  const pct = Number(wei) / 1e16;
+  return `${pct.toFixed(2)}%`;
 }

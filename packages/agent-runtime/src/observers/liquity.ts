@@ -1,5 +1,5 @@
 import type { Address, PublicClient } from "viem";
-import { TroveManagerABI, AddRemoveManagersABI } from "../abis";
+import { TroveManagerABI, AddRemoveManagersABI, ActivePoolABI } from "../abis";
 import type { AgentConfig, LiquitySnapshot } from "../types";
 
 export async function observeLiquity(
@@ -8,6 +8,9 @@ export async function observeLiquity(
   user: Address,
   troveId: bigint
 ): Promise<LiquitySnapshot> {
+  // Always fetch market avg rate (independent of user trove)
+  const avgInterestRate = await fetchAvgInterestRate(publicClient, config);
+
   if (troveId === 0n) {
     return {
       troveId: 0n,
@@ -16,6 +19,7 @@ export async function observeLiquity(
       debt: 0n,
       annualInterestRate: 0n,
       lastInterestRateAdjTime: 0n,
+      avgInterestRate,
       isAddManager: false,
       isInterestDelegate: false,
     };
@@ -62,7 +66,32 @@ export async function observeLiquity(
     debt: troveData.entireDebt,
     annualInterestRate: troveData.annualInterestRate,
     lastInterestRateAdjTime: troveData.lastInterestRateAdjTime,
+    avgInterestRate,
     isAddManager: addManager.toLowerCase() === config.agentVault.toLowerCase(),
     isInterestDelegate: interestDelegate.toLowerCase() === config.agentVault.toLowerCase(),
   };
+}
+
+async function fetchAvgInterestRate(
+  publicClient: PublicClient,
+  config: AgentConfig,
+): Promise<bigint> {
+  try {
+    const [weightedSum, recordedDebt] = await Promise.all([
+      publicClient.readContract({
+        address: config.liquity.activePool,
+        abi: ActivePoolABI,
+        functionName: "aggWeightedDebtSum",
+      }) as Promise<bigint>,
+      publicClient.readContract({
+        address: config.liquity.activePool,
+        abi: ActivePoolABI,
+        functionName: "aggRecordedDebt",
+      }) as Promise<bigint>,
+    ]);
+    if (recordedDebt === 0n) return 0n;
+    return weightedSum / recordedDebt; // 1e18 scale (same as annualInterestRate)
+  } catch {
+    return 0n;
+  }
 }

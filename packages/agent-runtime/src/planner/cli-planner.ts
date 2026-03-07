@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as http from "http";
 
-const DEFAULT_PROXY_URL = "http://host.docker.internal:3002";
+const DEFAULT_PROXY_URL = "http://host.docker.internal:3003";
 
 interface CliPlanResponse {
   actions: Array<{
@@ -135,7 +135,8 @@ function buildStateMessage(snapshot: Snapshot): string {
     `- Has trove: ${snapshot.liquity.hasTrove}`,
     `- Collateral: ${snapshot.liquity.collateral.toString()} wei`,
     `- Debt: ${snapshot.liquity.debt.toString()} wei`,
-    `- Annual interest rate: ${snapshot.liquity.annualInterestRate.toString()}`,
+    `- Annual interest rate: ${snapshot.liquity.annualInterestRate.toString()} (${formatRate(snapshot.liquity.annualInterestRate)})`,
+    `- Market avg interest rate: ${snapshot.liquity.avgInterestRate.toString()} (${formatRate(snapshot.liquity.avgInterestRate)})`,
   ].join("\n");
 }
 
@@ -159,6 +160,12 @@ function extractJson(raw: string): CliPlanResponse {
     console.warn(`[CliPlanner] JSON parse failed: ${err}`);
     return { actions: [], reasoning: raw.slice(0, 200) };
   }
+}
+
+function formatRate(wei: bigint): string {
+  // 1e18 = 100%, so divide by 1e16 to get percentage
+  const pct = Number(wei) / 1e16;
+  return `${pct.toFixed(2)}%`;
 }
 
 function callProxy(baseUrl: string, prompt: string): Promise<string> {
