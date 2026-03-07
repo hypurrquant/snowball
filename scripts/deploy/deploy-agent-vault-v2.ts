@@ -18,7 +18,7 @@ const cc3 = defineChain({
   rpcUrls: { default: { http: ["https://rpc.cc3-testnet.creditcoin.network"] } },
 });
 
-const accts = JSON.parse(fs.readFileSync(path.join(__dirname, "simulation-accounts.json"), "utf8"));
+const accts = JSON.parse(fs.readFileSync(path.join(__dirname, "../simulation-accounts.json"), "utf8"));
 const account = privateKeyToAccount(accts.deployer.privateKey as `0x${string}`);
 const transport = http("https://rpc.cc3-testnet.creditcoin.network");
 const pub = createPublicClient({ chain: cc3, transport });

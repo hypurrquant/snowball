@@ -4,9 +4,26 @@
  * Tests the full bridge pipeline:
  * 1. CC Testnet: USDC approve + BridgeVault deposit
  * 2. Sepolia: DN Token mint + bridgeBurn
- * 3. (Manual) USC Worker detects burn → processBridgeMint
+ * 3. USC Worker detects burn → processBridgeMint (docker로 상시 운영)
  *
  * Usage: NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-dn-bridge.ts
+ *
+ * ── Test Results (2026-03-07) ──
+ *
+ * Run 1: 10 DN (worker 시작 직후, 밀린 burn 처리)
+ *   - CC Approve:  0x46e88327293b4511c9fd0c8994ad2a3c958c5d3dfcfef9505405811b8d009f57
+ *   - CC Deposit:  0xdb3c09215ad026a4eef912bdbdd56f672e032ffbf5595fa3af7f196947be8ce0
+ *   - Sep Mint:    0x274b42de513063202a9e4b9231ce32acf08ec7eba66f54c5f5bd8059af3d1b0d
+ *   - Sep Burn:    0xedfdd42335d80107f2a7be74ce64bf4316f3cc56c553e817e9abc2af8bea0f8f
+ *   - USC Mint:    0x7ebaba561ba22cc1aa466194aa68c88230c1f344a7178941b68a548a463d20d4 (block 294319)
+ *   - Attestation: ~4m30s (attested 10401090 → need 10401097)
+ *   - USC DN balance: 10 → 15 (+5 DN verified)
+ *
+ * Run 0: 10 DN (이전 세션에서 burn만 완료, worker 미운영 상태였음)
+ *   - Sep Burn:    0xb500a00d0128e48007e5a30d0017ba0d85574422fc8775a34469d348e960afd7
+ *   - USC Mint:    0xbfb851466b6aba21e2bbff953c010d4dfa1fb71aa33f86d27354525660c93d4b (block 294277)
+ *   - 즉시 처리 (이미 attested 상태)
+ *   - USC DN balance: 0 → 10
  */
 import {
   createPublicClient,
@@ -21,7 +38,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
-import accounts from "./simulation-accounts.json";
+import accounts from "../simulation-accounts.json";
 
 // ──── Config ────
 const BRIDGE_AMOUNT = parseEther("10"); // 10 USDC / 10 DN

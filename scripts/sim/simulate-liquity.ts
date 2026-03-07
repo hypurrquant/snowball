@@ -20,7 +20,7 @@ import {
   type PublicClient,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import accounts from "./simulation-accounts.json";
+import accounts from "../simulation-accounts.json";
 
 // ─── Chain ───
 const cc3Testnet = defineChain({

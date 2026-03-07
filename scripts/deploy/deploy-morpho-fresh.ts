@@ -20,7 +20,7 @@ const cc3 = defineChain({
   rpcUrls: { default: { http: ["https://rpc.cc3-testnet.creditcoin.network"] } },
 });
 
-const accts = JSON.parse(fs.readFileSync(path.join(__dirname, "simulation-accounts.json"), "utf8"));
+const accts = JSON.parse(fs.readFileSync(path.join(__dirname, "../simulation-accounts.json"), "utf8"));
 const account = privateKeyToAccount(accts.deployer.privateKey as `0x${string}`);
 const transport = http("https://rpc.cc3-testnet.creditcoin.network");
 const pub = createPublicClient({ chain: cc3, transport });
@@ -34,7 +34,7 @@ const TOKENS = {
   USDC: "0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9" as Address,
 };
 
-const MORPHO_OUT = path.join(__dirname, "../packages/morpho/out");
+const MORPHO_OUT = path.join(__dirname, "../../packages/morpho/out");
 
 function loadArtifact(name: string, subdir: string): { abi: Abi; bytecode: `0x${string}` } {
   const p = path.join(MORPHO_OUT, `${subdir}/${name}.json`);
@@ -155,7 +155,7 @@ async function main() {
   console.log("\n=== RESULT ===");
   console.log(JSON.stringify(result, null, 2));
 
-  const outPath = path.join(__dirname, "morpho-deploy-result.json");
+  const outPath = path.join(__dirname, "../morpho-deploy-result.json");
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
   console.log(`\nSaved to: ${outPath}`);
 }

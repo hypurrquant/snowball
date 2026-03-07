@@ -13,7 +13,7 @@ import {
   formatEther,
   type Address,
 } from "viem";
-import accounts from "./simulation-accounts.json";
+import accounts from "../simulation-accounts.json";
 
 const RPC = "https://rpc.cc3-testnet.creditcoin.network";
 const client = createPublicClient({ transport: http(RPC) });

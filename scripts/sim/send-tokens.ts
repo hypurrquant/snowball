@@ -8,7 +8,7 @@ import {
   defineChain, type Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import accounts from "./simulation-accounts.json";
+import accounts from "../simulation-accounts.json";
 
 const TARGET = "0x11f13a0DA33AC58E45cbfC35bE2E65BdA004dF92" as Address;
 const AMOUNT = parseEther("100000");

@@ -54,6 +54,41 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 - **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.19.0-dex-position-dashboard`
 - **시작일**: 2026-03-07
 
+## Scripts 구조
+
+```
+scripts/
+├── simulation-accounts.json     # 8 페르소나 + deployer 계정 (공유)
+├── morpho-deploy-result.json    # Morpho 배포 결과
+├── deploy/                      # 컨트랙트 배포 스크립트
+│   └── README.md                # 각 스크립트 상세 설명
+└── sim/                         # 시뮬레이션 + 테스트 스크립트
+    └── README.md                # 각 스크립트 상세 설명
+```
+
+### 실행 방법
+
+```bash
+NODE_PATH=apps/web/node_modules npx tsx scripts/deploy/<script>.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/sim/<script>.ts
+```
+
+`NODE_PATH`는 필수 — viem 등 의존성이 `apps/web/node_modules`에 있음.
+
+### 새 스크립트 추가 규칙
+
+1. **배포 스크립트** → `scripts/deploy/`에 생성, `deploy-<대상>.ts` 네이밍
+2. **시뮬레이션/테스트** → `scripts/sim/`에 생성, `simulate-<프로토콜>-<액션>.ts` 또는 `test-<대상>.ts` 네이밍
+3. **계정 참조**: `import accounts from "../simulation-accounts.json"` (한 단계 위)
+4. **파일 경로**: `__dirname` 기반 상대 경로 사용 시 `scripts/deploy/` 또는 `scripts/sim/`에서 시작하므로 `../../`로 프로젝트 루트 접근
+5. **README 업데이트**: 스크립트 추가 시 해당 디렉토리의 `README.md` 테이블에 파일명, 설명, Phase 추가
+6. **배포 결과**: 배포 주소는 `docs/guide/deploy-history.md`에 기록, 배포 JSON은 `deployments/`에 저장
+7. **테스트 결과**: E2E 스크립트는 파일 상단 주석에 TX hash, 소요시간, 결과 기록
+
+### 유동성 제한 (시뮬레이션)
+
+한 번의 액션에 각 토큰 보유량의 **최대 5%**까지만 사용.
+
 ## 문서 구조
 
 - `docs/phases/` — 페이즈별 PRD, 설계, DoD, 티켓

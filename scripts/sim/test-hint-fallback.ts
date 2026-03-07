@@ -3,7 +3,7 @@
  * Run: npx tsx scripts/test-hint-fallback.ts
  */
 
-import { getInsertPosition } from "../apps/web/src/domains/defi/liquity/lib/liquityMath";
+import { getInsertPosition } from "../../apps/web/src/domains/defi/liquity/lib/liquityMath";
 
 async function main() {
   // Mock readContract that always throws

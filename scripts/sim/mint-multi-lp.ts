@@ -1,6 +1,6 @@
 import { createPublicClient, createWalletClient, http, parseEther, formatEther, defineChain } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import accounts from "./simulation-accounts.json";
+import accounts from "../simulation-accounts.json";
 
 const cc3Testnet = defineChain({
   id: 102031,

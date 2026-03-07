@@ -23,7 +23,7 @@ const cc3 = defineChain({
   rpcUrls: { default: { http: ["https://rpc.cc3-testnet.creditcoin.network"] } },
 });
 
-const accts = JSON.parse(fs.readFileSync(path.join(__dirname, "simulation-accounts.json"), "utf8"));
+const accts = JSON.parse(fs.readFileSync(path.join(__dirname, "../simulation-accounts.json"), "utf8"));
 const account = privateKeyToAccount(accts.deployer.privateKey as `0x${string}`);
 const transport = http("https://rpc.cc3-testnet.creditcoin.network");
 const pub = createPublicClient({ chain: cc3, transport });
@@ -38,7 +38,7 @@ const EXISTING = {
   adaptiveCurveIRM: "0xc4c694089af9bab4c6151663ae8424523fce32a8" as Address,
 };
 
-const OUT = path.join(__dirname, "../packages/liquity/out");
+const OUT = path.join(__dirname, "../../packages/liquity/out");
 function loadArtifact(name: string): { abi: Abi; bytecode: `0x${string}` } {
   const p = path.join(OUT, `${name}.sol`, `${name}.json`);
   if (!fs.existsSync(p)) throw new Error(`Artifact not found: ${p}`);
@@ -438,7 +438,7 @@ async function main() {
     dex: { ...EXISTING, pools: poolAddrs },
   };
 
-  const outPath = path.join(__dirname, "../deployments/creditcoin-testnet/full-redeploy.json");
+  const outPath = path.join(__dirname, "../../deployments/creditcoin-testnet/full-redeploy.json");
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2));
 

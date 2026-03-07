@@ -29,7 +29,7 @@ const creditcoinTestnet = {
 
 // ─── Accounts ───
 const accounts = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "simulation-accounts.json"), "utf8")
+  fs.readFileSync(path.join(__dirname, "../simulation-accounts.json"), "utf8")
 );
 const PK = accounts.deployer.privateKey as `0x${string}`;
 const account = privateKeyToAccount(PK);
@@ -57,7 +57,7 @@ const WETH9 = TOKENS.wCTC;
 
 // ─── Artifact loader ───
 function loadArtifact(pkgPath: string, contractName: string): { abi: Abi; bytecode: `0x${string}` } {
-  const p = path.join(__dirname, `../node_modules/${pkgPath}`);
+  const p = path.join(__dirname, `../../node_modules/${pkgPath}`);
   const data = JSON.parse(fs.readFileSync(p, "utf8"));
   return { abi: data.abi, bytecode: data.bytecode as `0x${string}` };
 }
@@ -300,7 +300,7 @@ async function main() {
     tokens: TOKENS,
   };
 
-  const deployDir = path.join(__dirname, "../deployments/creditcoin-testnet");
+  const deployDir = path.join(__dirname, "../../deployments/creditcoin-testnet");
   fs.mkdirSync(deployDir, { recursive: true });
   fs.writeFileSync(
     path.join(deployDir, "uniswap-v3.json"),

@@ -21,7 +21,7 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
-import accounts from "./simulation-accounts.json";
+import accounts from "../simulation-accounts.json";
 
 // ──── Chains ────
 const cc3Testnet = defineChain({
