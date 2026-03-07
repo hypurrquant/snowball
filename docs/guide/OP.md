@@ -463,15 +463,15 @@ ps aux | grep -E "(agent-consumer|agent-cdp-provider|agent-chatbot)" | grep -v g
 
 | 토큰/컨트랙트 | 주소 |
 |--------------|------|
-| wCTC (Mock) | `0x8f7f60a0f615d828eafcbbf6121f73efcfb56969` |
-| lstCTC (Mock) | `0x72968ff9203dc5f352c5e42477b84d11c8c8f153` |
-| sbUSD | `0x5772f9415b75ecca00e7667e0c7d730db3b29fbd` |
-| BorrowerOps (wCTC) | `0xe8285b406dc77d16c193e6a1a2b8ecc1f386602c` |
-| BorrowerOps (lstCTC) | `0x34f36f41f912e29c600733d90a4d210a49718a5d` |
-| TroveManager (wCTC) | `0x30ef6615f01be4c9fea06c33b07432b40cab7bdc` |
-| TroveManager (lstCTC) | `0xda7b322d26b3477161dc80282d1ea4d486528232` |
-| CollateralRegistry | `0xb18f7a1944e905739e18f96d6e60427aab93c23d` |
-| HintHelpers | `0x7e8fa8852b0c1d697905fd7594d30afe693c76bb` |
+| wCTC (Mock) | `0xca69344e2917f026ef4a5ace5d7b122343fc8528` |
+| lstCTC (Mock) | `0xa768d376272f9216c8c4aa3063391bdafbcad4c2` |
+| sbUSD | `0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5` |
+| BorrowerOps (wCTC) | `0xb637f375cbbd278ace5fdba53ad868ae7cb186ea` |
+| BorrowerOps (lstCTC) | `0x8700ed43989e2f935ab8477dd8b2822cae7f60ca` |
+| TroveManager (wCTC) | `0xa20f9dfeb110e11c89147b9db5adb98a7d91e70e` |
+| TroveManager (lstCTC) | `0x83715c7e9873b0b8208adbbf8e07f31e83b94aed` |
+| CollateralRegistry | `0x5c1683f9d8a8d77de48b380a15b623cf5d91bb59` |
+| HintHelpers | `0x6ee9850b0915763bdc0c7edca8b66189449a447f` |
 
 > 전체 주소는 `/SSOT.md` 참조
 

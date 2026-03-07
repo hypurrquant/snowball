@@ -2,7 +2,7 @@
 
 > Single Source of Truth for contract addresses, tokens, branches, and integration config.
 > Creditcoin Testnet deployment.
-> Version: v1.0.0 | Status: Active
+> Version: v2.0.0 | Status: Active | Updated: 2026-03-07
 > [INDEX](../INDEX.md)
 
 ---
@@ -24,9 +24,9 @@
 | Symbol | Name | Decimals | Address |
 |--------|------|----------|---------|
 | CTC | Creditcoin (native) | 18 | — (native) |
-| wCTC | Wrapped CTC | 18 | `0x8f7f60a0f615d828eafcbbf6121f73efcfb56969` |
-| lstCTC | Liquid Staked CTC | 18 | `0x72968ff9203dc5f352c5e42477b84d11c8c8f153` |
-| sbUSD | Snowball USD (stablecoin) | 18 | `0x5772f9415b75ecca00e7667e0c7d730db3b29fbd` |
+| wCTC | Wrapped CTC | 18 | `0xca69344e2917f026ef4a5ace5d7b122343fc8528` |
+| lstCTC | Liquid Staked CTC | 18 | `0xa768d376272f9216c8c4aa3063391bdafbcad4c2` |
+| sbUSD | Snowball USD (stablecoin) | 18 | `0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5` |
 
 > 모든 토큰은 Mock (테스트넷 전용). `mint(address, uint256)` 또는 `faucet(uint256)` 호출로 발행 가능.
 
@@ -45,17 +45,17 @@ Snowball Protocol은 **2개 담보 Branch**로 구성. 각 Branch는 독립적�
 
 | 컨트랙트 | 주소 |
 |----------|------|
-| AddressesRegistry | `0xd5bd51f411e8472ddc3632e7d9bf3ddff44225ce` |
-| BorrowerOperations | `0xe8285b406dc77d16c193e6a1a2b8ecc1f386602c` |
-| TroveManager | `0x30ef6615f01be4c9fea06c33b07432b40cab7bdc` |
-| StabilityPool | `0x91c9983499f257015597d756108efdf26746db81` |
-| ActivePool | `0xad3a046f1db8f648d2641c34a2dfff72b9c39bde` |
-| DefaultPool | `0x9edc874320a806eeaf228d26db22c25e30df84d7` |
-| GasPool | `0xb63801de6786adf227b134abb6dda6eef2e0b4f0` |
-| CollSurplusPool | `0x8b3d20b841861978cba49fdea9aa59c4626d1c83` |
-| SortedTroves | `0x749f4111b67b7f770d2e43187d6433b470c2b3ad` |
-| TroveNFT | `0x51b7b40ded97cffd01b448402c8802b839942e9b` |
-| PriceFeed | `0x17a36a4d4dbda9aa3f9ba3d12e0a4bfc9533c96c` |
+| AddressesRegistry | `0x7cfed108ed84194cf37f93d47268fbdd14da73d2` |
+| BorrowerOperations | `0xb637f375cbbd278ace5fdba53ad868ae7cb186ea` |
+| TroveManager | `0xa20f9dfeb110e11c89147b9db5adb98a7d91e70e` |
+| StabilityPool | `0xf1654541efb7a3c34a9255464ebb2294fa1a43f3` |
+| ActivePool | `0xa7f0600a023cf6076f5d8dc51b46b91bafe095e5` |
+| DefaultPool | `0x201ff7ec1a9ceaf1396ea6d90cd24ac6b757e404` |
+| GasPool | `0x4aa86795705a604e3dac4cfe45c375976eca3189` |
+| CollSurplusPool | `0x0dc9642129470d6a0ac0bac2a5d1b18a2ea09111` |
+| SortedTroves | `0xf5ef344759df7786cda9d2133e4d1e10e3b43f9f` |
+| TroveNFT | `0x72e383eff50893e2b2edeb711a81c3a812dcd2f9` |
+| PriceFeed | `0xca9341894230b84fdff429ff43e83cc8f8990342` |
 
 ### Branch 1: lstCTC
 
@@ -66,17 +66,17 @@ Snowball Protocol은 **2개 담보 Branch**로 구성. 각 Branch는 독립적�
 
 | 컨트랙트 | 주소 |
 |----------|------|
-| AddressesRegistry | `0x5f407d42b3cd83a5bbb70c09726d8a8ebd2c866c` |
-| BorrowerOperations | `0x34f36f41f912e29c600733d90a4d210a49718a5d` |
-| TroveManager | `0xda7b322d26b3477161dc80282d1ea4d486528232` |
-| StabilityPool | `0x353f40353453f123f9073f117956e8fdf324e977` |
-| ActivePool | `0x94e0d44e8b03782f7616a3488b4f973d7f76b6a4` |
-| DefaultPool | `0x6fdf2d2f519cd5a53d458bb330adb14aeaee56ac` |
-| GasPool | `0xe16e3e476f25ab1eab5da592c042e3bb8f5a118d` |
-| CollSurplusPool | `0x5723805320cb998deef674bedd4208e9a0ed7c9e` |
-| SortedTroves | `0x645b38f477ea61bd71072face0892021208b8d49` |
-| TroveNFT | `0x32da60f2b720e67889c4a2722ae881c99c2dc281` |
-| PriceFeed | `0x702121516551b72f7f1ee77906b2488bd8d2eb0a` |
+| AddressesRegistry | `0x0afe1c58a76c49d62bd7331f309aa14731efb1fc` |
+| BorrowerOperations | `0x8700ed43989e2f935ab8477dd8b2822cae7f60ca` |
+| TroveManager | `0x83715c7e9873b0b8208adbbf8e07f31e83b94aed` |
+| StabilityPool | `0xec700d805b5de3bf988401af44b1b384b136c41b` |
+| ActivePool | `0xa57cca34198bf262a278da3b2b7a8a5f032cb835` |
+| DefaultPool | `0x6ed045c0cadc55755dc09f1bfee0f964baf1f859` |
+| GasPool | `0x31d560b7a74b179dce8a8017a1de707c32dd67da` |
+| CollSurplusPool | `0xa287db89e552698a118c89d8bbee25bf51a0ec33` |
+| SortedTroves | `0x25aa78c7b0dbc736ae23a316ab44579467ba9507` |
+| TroveNFT | `0x51a90151e0dd1348e77ee6bcc30278ee311f29a8` |
+| PriceFeed | `0xa12ed39d24d4bbc100d310ae1cbf10b4c67e4a08` |
 
 ---
 
@@ -84,10 +84,12 @@ Snowball Protocol은 **2개 담보 Branch**로 구성. 각 Branch는 독립적�
 
 | 컨트랙트 | 주소 | 역할 |
 |----------|------|------|
-| CollateralRegistry | `0xb18f7a1944e905739e18f96d6e60427aab93c23d` | 담보 Branch 통합 레지스트리, 리뎀션 처리 |
-| HintHelpers | `0x7e8fa8852b0c1d697905fd7594d30afe693c76bb` | 수수료 예측, 삽입 위치 힌트 |
-| MultiTroveGetter | `0x8376dfa413a536075e23c706affbd6370ec7d380` | 배치 Trove 조회 |
-| AgentVault | `0xb944c1fdc2bd1232d490dd03ab5129ab15ccbc40` | AI Agent 권한 관리 + 자산 보관 |
+| CollateralRegistry | `0x5c1683f9d8a8d77de48b380a15b623cf5d91bb59` | 담보 Branch 통합 레지스트리, 리뎀션 처리 |
+| HintHelpers | `0x6ee9850b0915763bdc0c7edca8b66189449a447f` | 수수료 예측, 삽입 위치 힌트 |
+| MultiTroveGetter | `0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6` | 배치 Trove 조회 |
+| AgentVault | `0xf8e322c36485fa4c3971f75819c5de5a9be2b870` | AI Agent 권한 관리 + 자산 보관 |
+| RedemptionHelper | `0x8baf58113f968b4dfb2916290b57ce3ae114fb77` | 리뎀션 헬퍼 |
+| DebtInFrontHelper | `0x9fd6116fc1d006fa1d8993746ac1924f16d722bb` | 선순위 부채 조회 헬퍼 |
 
 ---
 
@@ -110,8 +112,8 @@ Snowball Protocol은 **2개 담보 Branch**로 구성. 각 Branch는 독립적�
 | DECIMAL_PRECISION | `1e18` | 기본 정밀도 |
 | MIN_ANNUAL_INTEREST_RATE | `0.5%` (`5e15`) | 최소 연이율 |
 | MAX_ANNUAL_INTEREST_RATE | `25%` (`25e16`) | 최대 연이율 |
-| MIN_DEBT | `200 sbUSD` (`200e18`) | 최소 차입 |
-| GAS_COMPENSATION | `200 sbUSD` (`200e18`) | 청산 가스 보상 |
+| MIN_DEBT | `10 sbUSD` (`10e18`) | 최소 차입 |
+| GAS_COMPENSATION | `0.2 CTC` (`0.2 ether`) | 청산 가스 보상 |
 
 ---
 
@@ -274,27 +276,43 @@ import {
 
 ```typescript
 // ─── Tokens ───
-const WCTC   = "0x8f7f60a0f615d828eafcbbf6121f73efcfb56969";
-const LSTCTC = "0x72968ff9203dc5f352c5e42477b84d11c8c8f153";
-const SBUSD  = "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd";
+const WCTC   = "0xca69344e2917f026ef4a5ace5d7b122343fc8528";
+const LSTCTC = "0xa768d376272f9216c8c4aa3063391bdafbcad4c2";
+const SBUSD  = "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5";
 
 // ─── Shared ───
-const COLLATERAL_REGISTRY = "0xb18f7a1944e905739e18f96d6e60427aab93c23d";
-const HINT_HELPERS        = "0x7e8fa8852b0c1d697905fd7594d30afe693c76bb";
-const MULTI_TROVE_GETTER  = "0x8376dfa413a536075e23c706affbd6370ec7d380";
-const AGENT_VAULT         = "0xb944c1fdc2bd1232d490dd03ab5129ab15ccbc40";
+const COLLATERAL_REGISTRY = "0x5c1683f9d8a8d77de48b380a15b623cf5d91bb59";
+const HINT_HELPERS        = "0x6ee9850b0915763bdc0c7edca8b66189449a447f";
+const MULTI_TROVE_GETTER  = "0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6";
+const AGENT_VAULT         = "0xf8e322c36485fa4c3971f75819c5de5a9be2b870";
+const REDEMPTION_HELPER   = "0x8baf58113f968b4dfb2916290b57ce3ae114fb77";
+const DEBT_IN_FRONT_HELPER = "0x9fd6116fc1d006fa1d8993746ac1924f16d722bb";
 
 // ─── Branch 0 (wCTC) ───
-const WCTC_BORROWER_OPS   = "0xe8285b406dc77d16c193e6a1a2b8ecc1f386602c";
-const WCTC_TROVE_MANAGER  = "0x30ef6615f01be4c9fea06c33b07432b40cab7bdc";
-const WCTC_STABILITY_POOL = "0x91c9983499f257015597d756108efdf26746db81";
-const WCTC_PRICE_FEED     = "0x17a36a4d4dbda9aa3f9ba3d12e0a4bfc9533c96c";
+const WCTC_ADDR_REGISTRY  = "0x7cfed108ed84194cf37f93d47268fbdd14da73d2";
+const WCTC_BORROWER_OPS   = "0xb637f375cbbd278ace5fdba53ad868ae7cb186ea";
+const WCTC_TROVE_MANAGER  = "0xa20f9dfeb110e11c89147b9db5adb98a7d91e70e";
+const WCTC_STABILITY_POOL = "0xf1654541efb7a3c34a9255464ebb2294fa1a43f3";
+const WCTC_ACTIVE_POOL    = "0xa7f0600a023cf6076f5d8dc51b46b91bafe095e5";
+const WCTC_DEFAULT_POOL   = "0x201ff7ec1a9ceaf1396ea6d90cd24ac6b757e404";
+const WCTC_GAS_POOL       = "0x4aa86795705a604e3dac4cfe45c375976eca3189";
+const WCTC_COLL_SURPLUS   = "0x0dc9642129470d6a0ac0bac2a5d1b18a2ea09111";
+const WCTC_SORTED_TROVES  = "0xf5ef344759df7786cda9d2133e4d1e10e3b43f9f";
+const WCTC_TROVE_NFT      = "0x72e383eff50893e2b2edeb711a81c3a812dcd2f9";
+const WCTC_PRICE_FEED     = "0xca9341894230b84fdff429ff43e83cc8f8990342";
 
 // ─── Branch 1 (lstCTC) ───
-const LSTCTC_BORROWER_OPS   = "0x34f36f41f912e29c600733d90a4d210a49718a5d";
-const LSTCTC_TROVE_MANAGER  = "0xda7b322d26b3477161dc80282d1ea4d486528232";
-const LSTCTC_STABILITY_POOL = "0x353f40353453f123f9073f117956e8fdf324e977";
-const LSTCTC_PRICE_FEED     = "0x702121516551b72f7f1ee77906b2488bd8d2eb0a";
+const LSTCTC_ADDR_REGISTRY  = "0x0afe1c58a76c49d62bd7331f309aa14731efb1fc";
+const LSTCTC_BORROWER_OPS   = "0x8700ed43989e2f935ab8477dd8b2822cae7f60ca";
+const LSTCTC_TROVE_MANAGER  = "0x83715c7e9873b0b8208adbbf8e07f31e83b94aed";
+const LSTCTC_STABILITY_POOL = "0xec700d805b5de3bf988401af44b1b384b136c41b";
+const LSTCTC_ACTIVE_POOL    = "0xa57cca34198bf262a278da3b2b7a8a5f032cb835";
+const LSTCTC_DEFAULT_POOL   = "0x6ed045c0cadc55755dc09f1bfee0f964baf1f859";
+const LSTCTC_GAS_POOL       = "0x31d560b7a74b179dce8a8017a1de707c32dd67da";
+const LSTCTC_COLL_SURPLUS   = "0xa287db89e552698a118c89d8bbee25bf51a0ec33";
+const LSTCTC_SORTED_TROVES  = "0x25aa78c7b0dbc736ae23a316ab44579467ba9507";
+const LSTCTC_TROVE_NFT      = "0x51a90151e0dd1348e77ee6bcc30278ee311f29a8";
+const LSTCTC_PRICE_FEED     = "0xa12ed39d24d4bbc100d310ae1cbf10b4c67e4a08";
 ```
 
 ---

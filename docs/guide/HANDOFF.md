@@ -96,10 +96,10 @@ snowball/
 
 | 토큰 | 주소 |
 |------|------|
-| wCTC | `0xdb5c8e9d0827c474342bea03e0e35a60d621afea` |
-| lstCTC | `0x47ad69498520edb2e1e9464fedf5309504e26207` |
-| sbUSD | `0xa3f694307f500fe5cb7b6fb8e758e43f96ffb027` |
-| MockUSDC | `0x3e31b08651644b9e6535f5bf0c7a9e7e6ad92e02` |
+| wCTC | `0xca69344e2917f026ef4a5ace5d7b122343fc8528` |
+| lstCTC | `0xa768d376272f9216c8c4aa3063391bdafbcad4c2` |
+| sbUSD | `0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5` |
+| MockUSDC | `0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9` |
 
 ### 통합 오라클
 
@@ -196,7 +196,7 @@ SnowballOracle (단일 가격 소스)
 
 ### Liquity Gas Compensation
 
-**중요**: `ETH_GAS_COMPENSATION = 200 ether`는 **항상 WETH(=wCTC)**로 지불됩니다.
+**중요**: `ETH_GAS_COMPENSATION = 0.2 ether`는 **항상 WETH(=wCTC)**로 지불됩니다.
 lstCTC 브랜치에서 트로브를 열 때도 wCTC가 gasPool로 전송됩니다.
 → lstCTC BO에 대해서도 반드시 wCTC approve가 필요합니다.
 

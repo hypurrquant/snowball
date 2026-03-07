@@ -46,10 +46,11 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 현재 페이즈
 
-- **버전**: v0.13.1
-- **기능**: Liquity Borrow UX 복원 + 온체인 데이터 연동
-- **상태**: 완료
-- **문서**: [docs/phases/v0.13.1-liquity-borrow-ux/](docs/phases/v0.13.1-liquity-borrow-ux/)
+- **버전**: v0.17.0
+- **기능**: DN Crosschain Bridge Pipeline (USDC → DN → USC trustless bridge 데모)
+- **상태**: Step 1 - PRD
+- **문서**: [docs/phases/v0.17.0-dn-crosschain-bridge/](docs/phases/v0.17.0-dn-crosschain-bridge/)
+- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.17.0-dn-crosschain-bridge`
 - **시작일**: 2026-03-07
 
 ## 문서 구조

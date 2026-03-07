@@ -5,6 +5,32 @@
 
 ---
 
+## 2026-03-07 — v0.14.0
+
+### AgentVault Permission Refactor — 관심사 분리 + 토큰별 cap
+
+- **관심사 분리**: `Permission` struct를 `ExecutionPermission` (target+function whitelist) + `TokenAllowance` (토큰별 cap/spent) 로 분리
+- **토큰별 cap**: 각 ERC-20 토큰에 대해 개별 spendingCap/spent 관리 (nonce 기반 stale allowance 방지)
+- **보안 강화**: `approveFromVault` → `approveAndExecute` (atomic approve-execute-cleanup), `transferFromVault` 목적지 검증 추가
+- **신규 함수**: `setTokenAllowances`, `getTokenAllowance`, `getPermNonce`, `approveAndExecute`
+- **전체 스택 연동**: Solidity → ABI 3곳 → agent-runtime → 프론트엔드 6파일, 15파일 +625/-222 lines
+- 📝 [Phase 문서](archive/v0.14.0-agentvault-permission-refactor/README.md)
+
+---
+
+## 2026-03-07 — v0.12.0
+
+### Agent Production Scheduler — 멀티유저 자동 실행
+
+- **AgentVault V2 컨트랙트**: `getDelegatedUsers(agent)` view 함수 추가 — 특정 에이전트에게 active 권한을 부여한 유저 목록 온체인 조회
+- **스케줄러 멀티유저 루프**: `AGENT_CRON_USER` 단일유저 하드코딩 제거, 온체인 유저 목록 기반 유저별 순차 실행
+- **troveId 자동 탐색**: `TroveManager.getTroveIdsCount()` → `TroveNFT.ownerOf()` 조합으로 user→troveId 매핑 자동 구축
+- **vault.ts expiry 정렬**: observer의 expiry 체크를 컨트랙트와 동일한 `>=` semantics로 통일
+- **컨트랙트 재배포**: AgentVault V2 (`0x7d3f7e6b...`) Creditcoin 테스트넷 배포 완료
+- 📝 [Phase 문서](archive/v0.12.0-agent-production-scheduler/README.md)
+
+---
+
 ## 2026-03-07 — v0.11.0
 
 ### Agent Delegation Demo — 확장 가능한 DeFi AI 에이전트 런타임
