@@ -9,8 +9,8 @@ import {
   Copy,
   Check,
   Menu,
-  Snowflake,
 } from "lucide-react";
+import Image from "next/image";
 import { useState, useCallback } from "react";
 import { MobileNav } from "./MobileNav";
 
@@ -46,9 +46,7 @@ export function Header() {
           >
             <Menu className="w-5 h-5 text-text-secondary" />
           </button>
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-ice-400 to-ice-600 flex items-center justify-center">
-            <Snowflake className="w-3.5 h-3.5 text-white" />
-          </div>
+          <Image src="/snowball-logo.png" alt="Snowball" width={28} height={28} className="rounded-lg" />
         </div>
 
         {/* Desktop: breadcrumb area */}

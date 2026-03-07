@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
-import { Snowflake } from "lucide-react";
+import Image from "next/image";
 import { NAV_GROUPS } from "@/shared/config/nav";
 
 export function Sidebar() {
@@ -13,9 +13,7 @@ export function Sidebar() {
     <aside className="hidden lg:flex flex-col w-60 h-screen border-r border-white/[0.06] sticky top-0 backdrop-blur-xl bg-[rgba(10,11,20,0.55)]">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2.5 px-5 py-4 border-b border-white/[0.06]">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-ice-400 to-ice-600 flex items-center justify-center">
-          <Snowflake className="w-4 h-4 text-white" />
-        </div>
+        <Image src="/snowball-logo.png" alt="Snowball" width={32} height={32} className="rounded-lg" />
         <span className="text-lg font-bold text-gradient-ice">Snowball</span>
       </Link>
 

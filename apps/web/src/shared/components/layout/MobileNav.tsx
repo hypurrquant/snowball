@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
-import { X, Snowflake } from "lucide-react";
+import { X } from "lucide-react";
+import Image from "next/image";
 import { NAV_GROUPS } from "@/shared/config/nav";
 
 export function MobileNav({
@@ -30,9 +31,7 @@ export function MobileNav({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-ice-400 to-ice-600 flex items-center justify-center">
-              <Snowflake className="w-4 h-4 text-white" />
-            </div>
+            <Image src="/snowball-logo.png" alt="Snowball" width={32} height={32} className="rounded-lg" />
             <span className="text-lg font-bold text-gradient-ice">Snowball</span>
           </div>
           <button
