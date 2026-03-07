@@ -25,12 +25,20 @@ export function useEditTrove(
 
   const { stats, isLoading: statsLoading } = useLiquityBranch(branch);
   const marketStats = useMarketRateStats(branch);
+  const collDeltaForApproval = useMemo(() => {
+    try {
+      const parsed = collAmount ? parseEther(collAmount) : 0n;
+      const diff = parsed - trove.coll;
+      return diff > 0n ? diff : undefined;
+    } catch { return undefined; }
+  }, [collAmount, trove.coll]);
+
   const {
     approveCollateral,
     adjustTrove,
     adjustInterestRate,
     needsApproval,
-  } = useTroveActions(branch, address);
+  } = useTroveActions(branch, address, collDeltaForApproval);
 
   // Pre-fill from existing trove
   const existingCollStr = Number(formatEther(trove.coll)).toFixed(6);

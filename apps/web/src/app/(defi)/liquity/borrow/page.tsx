@@ -45,8 +45,6 @@ export default function LiquityBorrowPage() {
   const { stats, isLoading: statsLoading } = useLiquityBranch(branch);
   const { troves, troveCount, isLoading: trovesLoading, refetch: refetchTroves, nextOwnerIndex } = useTroves(branch, address);
   const { troves: allTroves, totalCount: systemTroveCount, isLoading: allTrovesLoading } = useAllTroves(branch);
-  const { approveCollateral, openTrove, closeTrove, isPending, needsApproval } =
-    useTroveActions(branch, address);
   const collToken = branch === "wCTC" ? TOKENS.wCTC : TOKENS.lstCTC;
   const { data: collBalance, refetch: refetchBalance } = useTokenBalance({ address, token: collToken });
   const marketStats = useMarketRateStats(branch);
@@ -54,6 +52,13 @@ export default function LiquityBorrowPage() {
   // Open Trove form
   const [collAmount, setCollAmount] = useState("");
   const [debtAmount, setDebtAmount] = useState("");
+
+  const parsedColl = collAmount ? parseEther(collAmount) : 0n;
+
+  const {
+    approveCollateral, approveGasComp, openTrove, closeTrove, isPending,
+    needsCollApproval, needsGasApproval, needsApproval,
+  } = useTroveActions(branch, address, parsedColl);
   const [ratePercent, setRatePercent] = useState(5);
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
 
@@ -73,7 +78,6 @@ export default function LiquityBorrowPage() {
   const [editTroveId, setEditTroveId] = useState<bigint | null>(null);
 
   const collBalanceValue = collBalance?.value ?? 0n;
-  const parsedColl = collAmount ? parseEther(collAmount) : 0n;
   const parsedDebt = debtAmount ? parseEther(debtAmount) : 0n;
   const parsedRate = parseEther(String(ratePercent / 100));
   const insufficientBalance = parsedColl > 0n && parsedColl > collBalanceValue;
@@ -137,8 +141,11 @@ export default function LiquityBorrowPage() {
     if (!canOpen) return;
 
     const steps: TxStep[] = [];
-    if (needsApproval) {
-      steps.push({ id: "approve", type: "approve", label: `Approve ${branch}`, status: "pending" });
+    if (needsCollApproval) {
+      steps.push({ id: "approve-coll", type: "approve", label: `Approve ${branch}`, status: "pending" });
+    }
+    if (needsGasApproval) {
+      steps.push({ id: "approve-gas", type: "approve", label: "Approve wCTC (gas)", status: "pending" });
     }
     steps.push({ id: "open", type: "openTrove", label: "Open Trove", status: "pending" });
 
@@ -147,10 +154,16 @@ export default function LiquityBorrowPage() {
     setShowTxModal(true);
 
     try {
-      if (needsApproval) {
-        updateStep("approve", { status: "executing" });
-        const hash = await approveCollateral(parsedColl + ETH_GAS_COMPENSATION);
-        updateStep("approve", { status: "done", txHash: hash as `0x${string}` | undefined });
+      if (needsCollApproval) {
+        updateStep("approve-coll", { status: "executing" });
+        const approveAmt = branch === "wCTC" ? parsedColl + ETH_GAS_COMPENSATION : parsedColl;
+        const hash = await approveCollateral(approveAmt);
+        updateStep("approve-coll", { status: "done", txHash: hash as `0x${string}` | undefined });
+      }
+      if (needsGasApproval) {
+        updateStep("approve-gas", { status: "executing" });
+        const hash = await approveGasComp(ETH_GAS_COMPENSATION);
+        updateStep("approve-gas", { status: "done", txHash: hash as `0x${string}` | undefined });
       }
 
       updateStep("open", { status: "executing" });

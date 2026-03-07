@@ -17,22 +17,42 @@ import { encodePacked, keccak256 } from "viem";
 const BRANCH_INDEX: Record<string, bigint> = { wCTC: 0n, lstCTC: 1n };
 
 /** Liquity V2: gas compensation deposited to GasPool on openTrove, returned on closeTrove */
-export const ETH_GAS_COMPENSATION = 200n * 10n ** 18n;
+export const ETH_GAS_COMPENSATION = 2n * 10n ** 17n; // 0.2 wCTC
 
 export function useTroveActions(
   branch: "wCTC" | "lstCTC",
   owner?: Address,
+  collAmount?: bigint,
 ) {
   const config = useConfig();
   const b = LIQUITY.branches[branch];
   const collToken = branch === "wCTC" ? TOKENS.wCTC : TOKENS.lstCTC;
 
-  const { needsApproval, approve, isApproving } = useTokenApproval({
-    token: collToken,
-    spender: b.borrowerOperations,
-    amount: undefined,
-    owner,
-  });
+  // wCTC branch: approve collAmount + gasComp (same token)
+  // lstCTC branch: approve collAmount only (gas comp is separate wCTC approval)
+  const collApprovalAmount =
+    collAmount && collAmount > 0n
+      ? branch === "wCTC"
+        ? collAmount + ETH_GAS_COMPENSATION
+        : collAmount
+      : undefined;
+
+  const { needsApproval: needsCollApproval, approve: approveColl, isApproving: isApprovingColl } =
+    useTokenApproval({
+      token: collToken,
+      spender: b.borrowerOperations,
+      amount: collApprovalAmount,
+      owner,
+    });
+
+  // lstCTC branch needs separate wCTC approval for gas compensation
+  const { needsApproval: needsGasApproval, approve: approveGas, isApproving: isApprovingGas } =
+    useTokenApproval({
+      token: TOKENS.wCTC,
+      spender: b.borrowerOperations,
+      amount: branch === "lstCTC" ? ETH_GAS_COMPENSATION : undefined,
+      owner,
+    });
 
   const { writeContractAsync, isPending } = useChainWriteContract();
 
@@ -161,12 +181,15 @@ export function useTroveActions(
   };
 
   return {
-    approveCollateral: approve,
+    approveCollateral: approveColl,
+    approveGasComp: approveGas,
     openTrove,
     adjustTrove,
     adjustInterestRate,
     closeTrove,
-    isPending: isPending || isApproving,
-    needsApproval,
+    isPending: isPending || isApprovingColl || isApprovingGas,
+    needsCollApproval,
+    needsGasApproval,
+    needsApproval: needsCollApproval || needsGasApproval,
   };
 }
