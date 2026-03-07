@@ -1,31 +1,33 @@
-import { Injectable, ConflictException } from "@nestjs/common";
+import { Injectable, Inject, ConflictException, InternalServerErrorException, Logger } from "@nestjs/common";
 import { AgentRuntime } from "@snowball/agent-runtime";
 import type { AgentManifest, RunResult } from "@snowball/agent-runtime";
+import { RunStoreService } from "./run-store.service";
+import { randomUUID } from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 
 @Injectable()
 export class AgentService {
-  private runtime = new AgentRuntime();
-  private runHistory: RunResult[] = [];
+  private readonly logger = new Logger(AgentService.name);
   private activeRuns = new Set<string>(); // "user:manifestId"
 
   private manifests: Map<string, AgentManifest> = new Map();
   private startTime = Date.now();
   private lastRunTime: number | null = null;
 
-  constructor() {
+  constructor(
+    @Inject("AGENT_RUNTIME") private readonly runtime: AgentRuntime,
+    private readonly runStore: RunStoreService,
+  ) {
     this.loadManifests();
   }
 
   private loadManifests(): void {
-    // Resolve agent-runtime package root via require.resolve, then find manifests/
     let manifestDir: string;
     try {
       const runtimeEntry = require.resolve("@snowball/agent-runtime");
       manifestDir = path.resolve(path.dirname(runtimeEntry), "../../manifests");
     } catch {
-      // Fallback: relative from project root
       manifestDir = path.resolve(__dirname, "../../../../packages/agent-runtime/manifests");
     }
 
@@ -38,7 +40,7 @@ export class AgentService {
         this.manifests.set(manifest.id, manifest);
       }
     } catch {
-      console.warn("[AgentService] Failed to load manifests from", manifestDir);
+      this.logger.warn(`Failed to load manifests from ${manifestDir}`);
     }
   }
 
@@ -56,6 +58,17 @@ export class AgentService {
       throw new ConflictException("Agent is already running for this user and manifest");
     }
 
+    const runId = randomUUID();
+
+    // Phase 1: pre-insert started record (E1: fail → 500, runtime not called)
+    try {
+      this.runStore.insertStarted(runId, user, manifestId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Phase 1 DB insert failed: ${message}`);
+      throw new InternalServerErrorException("Failed to initialize run record");
+    }
+
     this.activeRuns.add(lockKey);
     try {
       const manifest = this.manifests.get(manifestId);
@@ -63,40 +76,52 @@ export class AgentService {
         throw new Error(`Manifest not found: ${manifestId}`);
       }
 
-      // Not used by runtime directly, but available if needed
-      const manifestFile = `${manifestId.replace(/[^a-zA-Z0-9-]/g, "_")}.json`;
       try {
+        process.env.MANIFEST_PATH = undefined;
         const runtimeEntry = require.resolve("@snowball/agent-runtime");
+        const manifestFile = `${manifestId.replace(/[^a-zA-Z0-9-]/g, "_")}.json`;
         process.env.MANIFEST_PATH = path.resolve(path.dirname(runtimeEntry), "../../manifests", manifestFile);
       } catch {
         // skip if resolution fails
       }
 
-      const result = await this.runtime.run(manifest, user, troveId);
-      this.runHistory.unshift(result);
-      this.lastRunTime = Date.now();
+      const result = await this.runtime.run(manifest, user, troveId, runId);
 
-      // Keep last 100 runs
-      if (this.runHistory.length > 100) {
-        this.runHistory = this.runHistory.slice(0, 100);
+      // Phase 2: terminal update
+      try {
+        this.runStore.updateTerminal(runId, result);
+      } catch (err) {
+        // Fallback: mark as error (E2)
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(`Phase 2 terminal update failed: ${message}`);
+        try {
+          this.runStore.updateError(runId);
+        } catch (fallbackErr) {
+          this.logger.error(`Phase 2 fallback also failed: ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`);
+        }
       }
 
+      this.lastRunTime = Date.now();
       return result;
+    } catch (err) {
+      // Runtime error — try to update DB to error status
+      try {
+        this.runStore.updateError(runId);
+      } catch {
+        // already have started record, crash recovery will handle it
+      }
+      throw err;
     } finally {
       this.activeRuns.delete(lockKey);
     }
   }
 
   getRuns(user?: string, limit = 20): RunResult[] {
-    let results = this.runHistory;
-    if (user) {
-      results = results.filter((r) => r.user.toLowerCase() === user.toLowerCase());
-    }
-    return results.slice(0, limit);
+    return this.runStore.findByUser(user, limit);
   }
 
   getRun(runId: string): RunResult | undefined {
-    return this.runHistory.find((r) => r.runId === runId);
+    return this.runStore.findById(runId);
   }
 
   getStatus() {
@@ -104,7 +129,6 @@ export class AgentService {
       uptime: Date.now() - this.startTime,
       lastRun: this.lastRunTime,
       registeredAgents: this.manifests.size,
-      totalRuns: this.runHistory.length,
     };
   }
 }

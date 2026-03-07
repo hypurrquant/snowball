@@ -26,8 +26,7 @@ export class AgentRuntime {
     this.registry = registry ?? buildDemoRegistry();
   }
 
-  async run(manifest: AgentManifest, user: Address, troveId: bigint = 0n): Promise<RunResult> {
-    const runId = `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  async run(manifest: AgentManifest, user: Address, troveId: bigint, runId: string): Promise<RunResult> {
     const logs: string[] = [];
 
     try {

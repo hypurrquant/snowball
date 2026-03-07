@@ -13,7 +13,7 @@ export async function plan(
   config: AgentConfig
 ): Promise<{ plan: StrategyPlan; reasoning: string }> {
   const apiKey = loadAnthropicApiKey();
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, timeout: 60_000 });
 
   // 1. Filter capabilities by current permission/authorization
   const executableCaps = registry.listExecutable(manifest, snapshot, config);

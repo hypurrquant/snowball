@@ -9,6 +9,7 @@ import {
   HttpCode,
   NotFoundException,
 } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { AgentService } from "./agent.service";
 import { RunAgentDto } from "./dto/run-agent.dto";
 import { ApiKeyGuard } from "../common/guards/api-key.guard";
@@ -20,6 +21,7 @@ export class AgentController {
 
   @Post("run")
   @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async run(@Body() dto: RunAgentDto) {
     const troveId = dto.troveId ? BigInt(dto.troveId) : 0n;
     return this.agentService.runAgent(dto.user as `0x${string}`, dto.manifestId, troveId);
