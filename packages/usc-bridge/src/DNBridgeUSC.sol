@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {EvmV1Decoder} from "./EvmV1Decoder.sol";
+
 interface INativeQueryVerifier {
     struct MerkleProofEntry {
         bytes32 hash;
@@ -142,10 +144,13 @@ contract DNBridgeUSC {
         );
         require(verified, "DNBridge: proof verification failed");
 
-        // 3. Mark as processed (replay protection)
+        // 3. Decode and verify burn data from encodedTransaction
+        _verifyBurnData(encodedTransaction, recipient, amount);
+
+        // 4. Mark as processed (replay protection)
         processedTxKeys[txKey] = true;
 
-        // 4. Mint DN tokens
+        // 5. Mint DN tokens
         _mint(recipient, amount);
         totalBridgeMinted += amount;
 
@@ -184,6 +189,44 @@ contract DNBridgeUSC {
             allowance[from][msg.sender] = allowed - amount;
         }
         return _transfer(from, to, amount);
+    }
+
+    // ============ Burn Verification ============
+
+    /// @notice BridgeBurn(address indexed from, uint256 amount, uint64 destinationChainKey)
+    bytes32 public constant BRIDGE_BURN_SIG = keccak256("BridgeBurn(address,uint256,uint64)");
+
+    /**
+     * @notice Verify that encodedTransaction contains a valid BridgeBurn event
+     *         matching the submitted recipient and amount.
+     */
+    function _verifyBurnData(
+        bytes memory encodedTransaction,
+        address recipient,
+        uint256 amount
+    ) internal view {
+        EvmV1Decoder.ReceiptFields memory receipt = EvmV1Decoder.decodeReceiptFields(encodedTransaction);
+        require(receipt.receiptStatus == 1, "DNBridge: tx did not succeed");
+
+        EvmV1Decoder.LogEntry[] memory burnLogs = EvmV1Decoder.getLogsByEventSignature(receipt, BRIDGE_BURN_SIG);
+        require(burnLogs.length > 0, "DNBridge: no BridgeBurn event found");
+
+        bool found = false;
+        for (uint256 i = 0; i < burnLogs.length; i++) {
+            EvmV1Decoder.LogEntry memory log = burnLogs[i];
+            // Verify log emitted by Sepolia DN Token
+            if (log.address_ != sepoliaDNToken) continue;
+            // topics[0] = event sig (already filtered), topics[1] = from (indexed)
+            if (log.topics.length < 2) continue;
+            address burnFrom = address(uint160(uint256(log.topics[1])));
+            // Decode data: (uint256 amount, uint64 destinationChainKey)
+            (uint256 burnAmount, uint64 burnChainKey) = abi.decode(log.data, (uint256, uint64));
+            if (burnFrom == recipient && burnAmount == amount && burnChainKey == SEPOLIA_CHAIN_KEY) {
+                found = true;
+                break;
+            }
+        }
+        require(found, "DNBridge: burn data mismatch");
     }
 
     // ============ Internal Functions ============

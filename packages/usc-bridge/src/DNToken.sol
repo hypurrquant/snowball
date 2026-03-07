@@ -54,6 +54,15 @@ contract DNToken {
      * @param amount Amount to burn and bridge
      * @param destinationChainKey USC chain key for the destination (unused on-chain, for indexing)
      */
+    /**
+     * @notice Mint new DN tokens (testnet only, no access control)
+     */
+    function mint(address to, uint256 amount) external {
+        totalSupply += amount;
+        balanceOf[to] += amount;
+        emit Transfer(address(0), to, amount);
+    }
+
     function bridgeBurn(uint256 amount, uint64 destinationChainKey) external returns (bool) {
         _transfer(msg.sender, BURN_ADDRESS, amount);
         emit BridgeBurn(msg.sender, amount, destinationChainKey);

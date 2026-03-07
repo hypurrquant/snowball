@@ -155,6 +155,16 @@ export const YIELD = {
   ],
 } as const;
 
+// ─── Bridge (DN Crosschain) ───
+export const BRIDGE = {
+  // CC Testnet (102031)
+  bridgeVault: "0x06961ab735f87486c538d840d0f54d3f6518cd78" as Address,
+  // Sepolia (11155111)
+  sepoliaDNToken: "0xa6722586d0f1cfb2a66725717ed3b99f609cb39b" as Address,
+  // USC Testnet (102036)
+  dnBridgeUSC: "0x4fE881D69fB10b8bcd2009D1BC9684a609B29270" as Address,
+} as const;
+
 // ─── ERC-8004 (Agent) ───
 export const ERC8004 = {
   identityRegistry: "0x993C9150f074435BA79033300834FcE06897de9B" as Address,

@@ -13,8 +13,8 @@ export const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY;
 
 // ============ Contract Addresses ============
 
-export const DN_TOKEN_SEPOLIA = "0xCc5154b7ECB8164966106Ea1d75ce0CEe198D844";
-export const DN_BRIDGE_USC = "0xCc5154b7ECB8164966106Ea1d75ce0CEe198D844";
+export const DN_TOKEN_SEPOLIA = "0xa6722586d0f1cfb2a66725717ed3b99f609cb39b";
+export const DN_BRIDGE_USC = "0x4fE881D69fB10b8bcd2009D1BC9684a609B29270";
 export const CHAIN_INFO = "0x0000000000000000000000000000000000000fd3";
 export const VERIFIER = "0x0000000000000000000000000000000000000FD2";
 
@@ -24,7 +24,7 @@ export const SEPOLIA_CHAIN_KEY = 1;
 
 // ============ DN Token Deploy Block (Sepolia) ============
 // Exact deploy block of DN Token on Sepolia (verified via eth_getCode binary search)
-export const DN_TOKEN_DEPLOY_BLOCK = 10_386_931;
+export const DN_TOKEN_DEPLOY_BLOCK = 10_400_785;
 
 export const START_BLOCK = process.env.START_BLOCK
   ? parseInt(process.env.START_BLOCK, 10)

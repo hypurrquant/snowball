@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-07T00:00:00.000Z",
+  "deployer": "0xE550Afa5f8C81D7c3219a4Ece9c2e58618C125c6",
+  "contracts": {
+    "dnTokenSepolia": {
+      "chain": "Sepolia (11155111)",
+      "address": "0xa6722586d0f1cfb2a66725717ed3b99f609cb39b",
+      "blockNumber": 10400785,
+      "txHash": "0xb82e3cab2903ae09e85d73b0805fd6af68519cb405bab9e727412912992c3cac"
+    },
+    "bridgeVaultCC": {
+      "chain": "CC Testnet (102031)",
+      "address": "0x06961ab735f87486c538d840d0f54d3f6518cd78",
+      "blockNumber": 4386034,
+      "txHash": "0x5dbd6e9f4c7d8a301855363b9ad441b04d3cc7ff7b39d8b40850d97805fa4fc6"
+    },
+    "evmV1DecoderUSC": {
+      "chain": "USC Testnet (102036)",
+      "address": "0xa6722586d0f1cFB2a66725717ed3b99F609cb39B",
+      "txHash": "0xe4e8037afa20190b2a3834db65d980d95cffe54624c0b1dce4687fa0934481d8"
+    },
+    "dnBridgeUSC": {
+      "chain": "USC Testnet (102036)",
+      "address": "0x4fE881D69fB10b8bcd2009D1BC9684a609B29270",
+      "txHash": "0xd1363fb52b74c438b9e67f65f95ccbc007737d64a46188234e7b06ed25804edf",
+      "constructorArgs": {
+        "sepoliaDNToken": "0xa6722586d0f1cfb2a66725717ed3b99f609cb39b"
+      }
+    }
+  }
+}
