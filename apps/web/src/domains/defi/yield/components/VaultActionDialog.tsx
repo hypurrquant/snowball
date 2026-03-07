@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { parseEther, maxUint256 } from "viem";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui/tabs";
@@ -49,8 +50,8 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
         owner: address,
     });
 
-    const { writeContractAsync: depositAsync, isPending: isDepositPending } = useWriteContract();
-    const { writeContractAsync: withdrawAsync, isPending: isWithdrawPending } = useWriteContract();
+    const { writeContractAsync: depositAsync, isPending: isDepositPending } = useChainWriteContract();
+    const { writeContractAsync: withdrawAsync, isPending: isWithdrawPending } = useChainWriteContract();
 
     const handleApprove = async () => {
         try {

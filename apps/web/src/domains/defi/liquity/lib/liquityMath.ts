@@ -5,7 +5,9 @@ const WAD = 10n ** 18n;
  */
 export function computeCR(coll: bigint, debt: bigint, price: bigint): number {
   if (debt === 0n) return Infinity;
-  return Number(((coll * price) / debt) * 100n / WAD) / 100;
+  // Returns percentage: e.g. 1228 means 1228% CR
+  // (coll * price / WAD) = collateral value, / debt * 100 = percentage
+  return Number((coll * price * 100n) / (debt * WAD));
 }
 
 /**

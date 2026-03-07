@@ -42,7 +42,7 @@ export function useMorphoPosition(
     const lltv = marketConfig?.lltv ?? 0n;
 
     // Convert collateral amount to value using oracle price (18 decimals, MockOracle)
-    const ORACLE_SCALE = 10n ** 18n;
+    const ORACLE_SCALE = 10n ** 36n;
     const collateralValue = oraclePrice && oraclePrice > 0n
       ? (collateral * oraclePrice) / ORACLE_SCALE
       : collateral;

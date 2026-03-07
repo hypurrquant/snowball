@@ -1,6 +1,7 @@
 "use client";
 
-import { useWriteContract, useConfig } from "wagmi";
+import { useConfig } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { readContract, waitForTransactionReceipt } from "wagmi/actions";
 import { LIQUITY } from "@/core/config/addresses";
 import { AddRemoveManagersABI, InterestDelegateABI } from "@/core/abis";
@@ -9,7 +10,7 @@ import type { Address } from "viem";
 export function useTroveDelegate(branch: "wCTC" | "lstCTC") {
   const config = useConfig();
   const b = LIQUITY.branches[branch];
-  const { writeContractAsync, isPending } = useWriteContract();
+  const { writeContractAsync, isPending } = useChainWriteContract();
 
   const waitForReceipt = (hash: `0x${string}`) =>
     waitForTransactionReceipt(config, { hash });

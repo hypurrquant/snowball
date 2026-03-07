@@ -1,6 +1,7 @@
 "use client";
 
-import { useWriteContract, useConnection, useConfig } from "wagmi";
+import { useConnection, useConfig } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import { LEND } from "@/core/config/addresses";
 import { SnowballLendABI } from "@/core/abis";
@@ -35,7 +36,7 @@ export function useMorphoActions(market: MorphoMarket, onSuccess?: () => void) {
     owner: address,
   });
 
-  const { writeContractAsync, isPending } = useWriteContract();
+  const { writeContractAsync, isPending } = useChainWriteContract();
 
   const waitAndCallback = async (hash: `0x${string}`) => {
     await waitForTransactionReceipt(config, { hash });

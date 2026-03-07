@@ -1,6 +1,7 @@
 "use client";
 
-import { useWriteContract, useConfig } from "wagmi";
+import { useConfig } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { readContract, waitForTransactionReceipt } from "wagmi/actions";
 import { LIQUITY, TOKENS } from "@/core/config/addresses";
 import {
@@ -15,8 +16,8 @@ import { encodePacked, keccak256 } from "viem";
 
 const BRANCH_INDEX: Record<string, bigint> = { wCTC: 0n, lstCTC: 1n };
 
-// Liquity V2: gas compensation deposited to GasPool on openTrove, returned on closeTrove
-const ETH_GAS_COMPENSATION = 200n * 10n ** 18n;
+/** Liquity V2: gas compensation deposited to GasPool on openTrove, returned on closeTrove */
+export const ETH_GAS_COMPENSATION = 200n * 10n ** 18n;
 
 export function useTroveActions(
   branch: "wCTC" | "lstCTC",
@@ -33,7 +34,7 @@ export function useTroveActions(
     owner,
   });
 
-  const { writeContractAsync, isPending } = useWriteContract();
+  const { writeContractAsync, isPending } = useChainWriteContract();
 
   const readContractFn = (args: {
     address: `0x${string}`;
@@ -59,8 +60,6 @@ export function useTroveActions(
     ownerIndex?: bigint;
   }) => {
     const ownerIndex = params.ownerIndex ?? 0n;
-    // Approve coll + gas compensation (200 CTC WETH deposited to GasPool)
-    await approve(params.coll + ETH_GAS_COMPENSATION);
 
     const [upperHint, lowerHint] = await getInsertPosition(
       readContractFn,
@@ -165,6 +164,7 @@ export function useTroveActions(
   };
 
   return {
+    approveCollateral: approve,
     openTrove,
     adjustTrove,
     adjustInterestRate,

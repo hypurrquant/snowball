@@ -1,6 +1,7 @@
 "use client";
 
-import { useWriteContract, useConfig } from "wagmi";
+import { useConfig } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { readContract, waitForTransactionReceipt } from "wagmi/actions";
 import { LEND } from "@/core/config/addresses";
 import { MorphoAuthorizationABI } from "@/core/abis";
@@ -8,7 +9,7 @@ import type { Address } from "viem";
 
 export function useMorphoAuthorization() {
   const config = useConfig();
-  const { writeContractAsync, isPending } = useWriteContract();
+  const { writeContractAsync, isPending } = useChainWriteContract();
 
   const setAuthorization = async (authorized: Address, newIsAuthorized: boolean) => {
     const hash = await writeContractAsync({

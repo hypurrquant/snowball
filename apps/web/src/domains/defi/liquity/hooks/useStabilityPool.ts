@@ -1,6 +1,7 @@
 "use client";
 
-import { useReadContracts, useWriteContract, useConnection, useConfig } from "wagmi";
+import { useReadContracts, useConnection, useConfig } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import { LIQUITY } from "@/core/config/addresses";
 import { StabilityPoolABI } from "@/core/abis";
@@ -43,7 +44,7 @@ export function useStabilityPool(branch: "wCTC" | "lstCTC") {
     yieldGain: data?.[3]?.status === "success" ? (data[3].result as bigint) : 0n,
   };
 
-  const { writeContractAsync, isPending } = useWriteContract();
+  const { writeContractAsync, isPending } = useChainWriteContract();
 
   const waitAndRefetch = async (hash: `0x${string}`) => {
     await waitForTransactionReceipt(config, { hash });
