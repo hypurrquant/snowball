@@ -26,7 +26,9 @@ export const liquityAdjustInterestRate: Capability<{ troveId: string; newRate: s
   },
 
   requiredPermissions(config: AgentConfig): PermissionSpec[] {
-    return [{ target: config.liquity.borrowerOperations, selectors: [ADJUST_RATE_SEL, ADD_COLL_SEL] }];
+    // Check all branches — the actual branch is determined at runtime
+    const branches = Object.values(config.liquityBranches);
+    return branches.map((b) => ({ target: b.borrowerOperations, selectors: [ADJUST_RATE_SEL, ADD_COLL_SEL] }));
   },
 
   preconditions(ctx: ExecutionContext, input: { troveId: string; newRate: string; reason: string }): CheckResult[] {
@@ -41,8 +43,6 @@ export const liquityAdjustInterestRate: Capability<{ troveId: string; newRate: s
   },
 
   buildCalls(ctx: ExecutionContext, input: { troveId: string; newRate: string; reason: string }): PreparedCall[] {
-    // Note: hints must be pre-computed async. For buildCalls (sync), we use 0/0 as placeholder.
-    // The executor should call buildCallsAsync instead for production use.
     const troveId = BigInt(input.troveId);
     const newRate = BigInt(input.newRate);
 
@@ -57,7 +57,7 @@ export const liquityAdjustInterestRate: Capability<{ troveId: string; newRate: s
         to: ctx.config.agentVault,
         abi: AgentVaultABI,
         functionName: "executeOnBehalf",
-        args: [ctx.user, ctx.config.liquity.borrowerOperations, adjustData],
+        args: [ctx.user, ctx.liquityBranch.borrowerOperations, adjustData],
       },
     ];
   },
@@ -75,11 +75,13 @@ export async function buildCallsWithHints(
 ): Promise<PreparedCall[]> {
   const troveId = BigInt(input.troveId);
   const newRate = BigInt(input.newRate);
+  const branchIdx = ctx.branchName === "lstCTC" ? 1n : 0n;
 
   const { upperHint, lowerHint } = await findHints(
     ctx.publicClient,
-    ctx.config,
-    newRate
+    ctx.liquityBranch,
+    newRate,
+    branchIdx
   );
 
   const adjustData = encodeFunctionData({
@@ -93,7 +95,7 @@ export async function buildCallsWithHints(
       to: ctx.config.agentVault,
       abi: AgentVaultABI,
       functionName: "executeOnBehalf",
-      args: [ctx.user, ctx.config.liquity.borrowerOperations, adjustData],
+      args: [ctx.user, ctx.liquityBranch.borrowerOperations, adjustData],
     },
   ];
 }

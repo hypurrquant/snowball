@@ -1,15 +1,15 @@
 import type { Address, PublicClient } from "viem";
 import { TroveManagerABI, AddRemoveManagersABI, ActivePoolABI } from "../abis";
-import type { AgentConfig, LiquitySnapshot } from "../types";
+import type { LiquityBranchConfig, LiquitySnapshot } from "../types";
 
 export async function observeLiquity(
   publicClient: PublicClient,
-  config: AgentConfig,
+  branchConfig: LiquityBranchConfig,
+  agentVault: Address,
   user: Address,
   troveId: bigint
 ): Promise<LiquitySnapshot> {
-  // Always fetch market avg rate (independent of user trove)
-  const avgInterestRate = await fetchAvgInterestRate(publicClient, config);
+  const avgInterestRate = await fetchAvgInterestRate(publicClient, branchConfig);
 
   if (troveId === 0n) {
     return {
@@ -27,7 +27,7 @@ export async function observeLiquity(
 
   const [troveData, troveStatus, addManager, interestDelegate] = await Promise.all([
     publicClient.readContract({
-      address: config.liquity.troveManager,
+      address: branchConfig.troveManager,
       abi: TroveManagerABI,
       functionName: "getLatestTroveData",
       args: [troveId],
@@ -38,26 +38,26 @@ export async function observeLiquity(
       lastInterestRateAdjTime: bigint;
     }>,
     publicClient.readContract({
-      address: config.liquity.troveManager,
+      address: branchConfig.troveManager,
       abi: TroveManagerABI,
       functionName: "getTroveStatus",
       args: [troveId],
     }) as Promise<number>,
     publicClient.readContract({
-      address: config.liquity.borrowerOperations,
+      address: branchConfig.borrowerOperations,
       abi: AddRemoveManagersABI,
       functionName: "addManagerOf",
       args: [troveId],
     }) as Promise<Address>,
     publicClient.readContract({
-      address: config.liquity.borrowerOperations,
+      address: branchConfig.borrowerOperations,
       abi: AddRemoveManagersABI,
       functionName: "getInterestIndividualDelegateOf",
       args: [troveId],
     }) as Promise<Address>,
   ]);
 
-  const hasTrove = troveStatus === 1; // 1 = active
+  const hasTrove = troveStatus === 1;
 
   return {
     troveId,
@@ -67,30 +67,30 @@ export async function observeLiquity(
     annualInterestRate: troveData.annualInterestRate,
     lastInterestRateAdjTime: troveData.lastInterestRateAdjTime,
     avgInterestRate,
-    isAddManager: addManager.toLowerCase() === config.agentVault.toLowerCase(),
-    isInterestDelegate: interestDelegate.toLowerCase() === config.agentVault.toLowerCase(),
+    isAddManager: addManager.toLowerCase() === agentVault.toLowerCase(),
+    isInterestDelegate: interestDelegate.toLowerCase() === agentVault.toLowerCase(),
   };
 }
 
 async function fetchAvgInterestRate(
   publicClient: PublicClient,
-  config: AgentConfig,
+  branchConfig: LiquityBranchConfig,
 ): Promise<bigint> {
   try {
     const [weightedSum, recordedDebt] = await Promise.all([
       publicClient.readContract({
-        address: config.liquity.activePool,
+        address: branchConfig.activePool,
         abi: ActivePoolABI,
         functionName: "aggWeightedDebtSum",
       }) as Promise<bigint>,
       publicClient.readContract({
-        address: config.liquity.activePool,
+        address: branchConfig.activePool,
         abi: ActivePoolABI,
         functionName: "aggRecordedDebt",
       }) as Promise<bigint>,
     ]);
     if (recordedDebt === 0n) return 0n;
-    return weightedSum / recordedDebt; // 1e18 scale (same as annualInterestRate)
+    return weightedSum / recordedDebt;
   } catch {
     return 0n;
   }

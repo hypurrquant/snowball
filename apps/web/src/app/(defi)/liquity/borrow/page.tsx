@@ -31,7 +31,11 @@ import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
 import { TxPipelineModal } from "@/shared/components/ui/tx-pipeline-modal";
 import { useTxPipeline } from "@/shared/hooks/useTxPipeline";
 import type { TxStep, TxPhase } from "@/shared/types/tx";
-import { Shield, TrendingDown, DollarSign, HandCoins, Loader2, Users, AlertTriangle, Info } from "lucide-react";
+import { Shield, TrendingDown, DollarSign, HandCoins, Loader2, Users, AlertTriangle, Info, Bot } from "lucide-react";
+import { useTroveDelegationStatus } from "@/domains/defi/liquity/hooks/useTroveDelegationStatus";
+import { useTroveDelegate } from "@/domains/defi/liquity/hooks/useTroveDelegate";
+import { ERC8004 } from "@snowball/core/src/config/addresses";
+import Link from "next/link";
 
 const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
 // Matches on-chain Constants.sol MIN_DEBT = 10e18
@@ -73,6 +77,22 @@ export default function LiquityBorrowPage() {
 
   // Close Trove pipeline
   const closePipeline = useTxPipeline();
+
+  // Delegation
+  const troveIds = useMemo(() => troves.map((t) => t.id), [troves]);
+  const { delegationMap } = useTroveDelegationStatus(branch, troveIds);
+  const { fullUndelegate, isPending: isDelegatePending } = useTroveDelegate(branch);
+  const [undelegateTarget, setUndelegateTarget] = useState<bigint | null>(null);
+
+  const handleUndelegate = async (troveId: bigint) => {
+    if (!address) return;
+    try {
+      await fullUndelegate(troveId, address, ERC8004.agentVault);
+      setUndelegateTarget(null);
+    } catch {
+      // error visible to user through isPending state reset
+    }
+  };
 
   // Edit Trove
   const [editTroveId, setEditTroveId] = useState<bigint | null>(null);
@@ -421,28 +441,74 @@ export default function LiquityBorrowPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex gap-2 items-center flex-wrap">
                     {t.isDemo && (
                       <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">[Demo]</span>
                     )}
-                    {!t.isDemo && (
-                      <>
-                        <Button size="sm" variant="secondary" onClick={() => setEditTroveId(t.id)}>
-                          Edit
-                        </Button>
-                        <EditTroveDialog
-                          open={editTroveId === t.id}
-                          onOpenChange={(open) => setEditTroveId(open ? t.id : null)}
-                          trove={t}
-                          branch={branch}
-                          address={address}
-                          onSuccess={() => { refetchTroves(); refetchBalance(); }}
-                        />
-                        <Button size="sm" variant="destructive" onClick={() => handleCloseTrove(t.id)} disabled={isPending}>
-                          Close
-                        </Button>
-                      </>
-                    )}
+                    {!t.isDemo && (() => {
+                      const info = delegationMap.get(t.id.toString());
+                      const isDelegated = info?.isDelegated ?? false;
+                      return (
+                        <>
+                          {isDelegated && (
+                            <span className="text-xs bg-ice-400/20 text-ice-300 px-2 py-0.5 rounded flex items-center gap-1">
+                              <Bot className="w-3 h-3" /> Agent Delegated
+                            </span>
+                          )}
+                          {isDelegated ? (
+                            <Dialog open={undelegateTarget === t.id} onOpenChange={(open) => setUndelegateTarget(open ? t.id : null)}>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline" disabled={!isConnected || isDelegatePending}>
+                                  Undelegate
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>Undelegate Trove</DialogTitle>
+                                  <DialogDescription>
+                                    Remove agent delegation from this trove. The agent will no longer manage interest rates or collateral.
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="flex gap-2 pt-4">
+                                  <Button variant="outline" onClick={() => setUndelegateTarget(null)} className="flex-1">
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    onClick={() => handleUndelegate(t.id)}
+                                    disabled={isDelegatePending}
+                                    className="flex-1"
+                                  >
+                                    {isDelegatePending && <Loader2 className="w-3 h-3 animate-spin mr-1" />}
+                                    Confirm Undelegate
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          ) : (
+                            <Button size="sm" variant="outline" disabled={!isConnected} asChild>
+                              <Link href={`/agent/delegate/${ERC8004.defaultAgentId}?scenario=liquity&troveId=${t.id}&branch=${branch}`}>
+                                <Bot className="w-3 h-3 mr-1" /> Delegate
+                              </Link>
+                            </Button>
+                          )}
+                          <Button size="sm" variant="secondary" onClick={() => setEditTroveId(t.id)}>
+                            Edit
+                          </Button>
+                          <EditTroveDialog
+                            open={editTroveId === t.id}
+                            onOpenChange={(open) => setEditTroveId(open ? t.id : null)}
+                            trove={t}
+                            branch={branch}
+                            address={address}
+                            onSuccess={() => { refetchTroves(); refetchBalance(); }}
+                          />
+                          <Button size="sm" variant="destructive" onClick={() => handleCloseTrove(t.id)} disabled={isPending}>
+                            Close
+                          </Button>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

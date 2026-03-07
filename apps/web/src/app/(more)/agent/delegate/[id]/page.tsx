@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import Link from "next/link";
@@ -17,10 +17,20 @@ import { useTroveDelegate } from "@/domains/defi/liquity/hooks/useTroveDelegate"
 export default function DelegatePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const agentId = params.id ? BigInt(params.id as string) : undefined;
   const { address } = useAccount();
-  const [scenario, setScenario] = useState<"morpho" | "liquity">("morpho");
-  const [troveId, setTroveId] = useState("");
+
+  const qScenario = searchParams.get("scenario");
+  const qTroveId = searchParams.get("troveId");
+  const qBranch = searchParams.get("branch");
+
+  const [scenario, setScenario] = useState<"morpho" | "liquity">(
+    qScenario === "liquity" ? "liquity" : "morpho",
+  );
+  const [troveId, setTroveId] = useState(qTroveId ?? "");
+  const branch: "wCTC" | "lstCTC" =
+    qBranch === "lstCTC" ? "lstCTC" : "wCTC";
 
   const { agent, owner, isValidated, validation, isLoading } =
     useAgentProfile(agentId);
@@ -35,7 +45,7 @@ export default function DelegatePage() {
   }, [address, checkIsAuthorized]);
 
   // Check Liquity delegation state (both addManager AND interestDelegate must be set)
-  const { getAddManagerOf, getInterestIndividualDelegateOf } = useTroveDelegate("wCTC");
+  const { getAddManagerOf, getInterestIndividualDelegateOf } = useTroveDelegate(branch);
   const [liquityDelegated, setLiquityDelegated] = useState(false);
 
   useEffect(() => {
@@ -108,6 +118,7 @@ export default function DelegatePage() {
             agentAddress={agent.endpoint}
             agentVaultAddress={ERC8004.agentVault}
             scenario={scenario}
+            branch={branch}
             troveId={troveId}
             onTroveIdChange={setTroveId}
             onComplete={() => router.push(`/agent/${agentId}`)}

@@ -45,11 +45,16 @@ export class AgentRuntime {
 
       logs.push(`[Runtime] Starting run ${runId} for user ${user}`);
 
+      // Resolve liquity branch from manifest
+      const branchName = (manifest.scope.liquityBranch === "lstCTC" ? "lstCTC" : "wCTC") as "wCTC" | "lstCTC";
+      const branchConfig = this.config.liquityBranches[branchName];
+
       // 2. Observer: build snapshot
-      logs.push("[Runtime] Building snapshot...");
+      logs.push(`[Runtime] Building snapshot (branch=${branchName})...`);
       const snapshot = await buildSnapshot(
         publicClient,
         this.config,
+        branchConfig,
         user,
         account.address,
         troveId
@@ -78,7 +83,7 @@ export class AgentRuntime {
 
       // 4. Executor: execute plan
       logs.push("[Runtime] Executing plan...");
-      const ctx = { config: this.config, user, snapshot, walletClient, publicClient };
+      const ctx = { config: this.config, liquityBranch: branchConfig, branchName, user, snapshot, walletClient, publicClient };
       const result = await executePlan(
         plan, ctx, this.registry, manifest, account.address, troveId
       );

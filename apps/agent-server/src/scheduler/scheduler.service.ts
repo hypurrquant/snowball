@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { AgentService } from "../agent/agent.service";
 import { loadConfig, AgentVaultABI, TroveManagerABI, TroveNFTABI } from "@snowball/agent-runtime";
+import type { LiquityBranchConfig } from "@snowball/agent-runtime";
 import { createPublicClient, http, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -26,6 +27,9 @@ export class SchedulerService {
       return;
     }
 
+    // Support comma-separated manifest IDs
+    const manifestIds = cronManifest.split(",").map((s) => s.trim()).filter(Boolean);
+
     // 1. Get delegated users from on-chain
     let users: Address[];
     try {
@@ -46,63 +50,85 @@ export class SchedulerService {
       return;
     }
 
+    // 2. Build trove maps for both branches (once per tick)
+    const troveMaps = await this.buildTroveMaps();
+
     this.logger.log(
-      `Cron triggered: ${users.length} users, manifest=${cronManifest}`,
+      `Cron triggered: ${users.length} users, manifests=[${manifestIds.join(",")}]`,
     );
 
-    // 2. Build trove map (once per tick)
-    const troveMap = await this.buildTroveMap();
+    // 3. Execute per manifest, per user
+    for (const manifestId of manifestIds) {
+      const manifest = this.agentService.getManifest(manifestId);
+      if (!manifest) {
+        this.logger.warn(`Manifest not found: ${manifestId}, skipping`);
+        continue;
+      }
 
-    // 3. Execute per user
-    for (const user of users) {
-      const troveId = troveMap.get(user.toLowerCase()) ?? 0n;
-      try {
-        const result = await this.agentService.runAgent(
-          user,
-          cronManifest,
-          troveId,
-        );
-        this.logger.log(
-          `User ${user}: ${result.runId} — ${result.status}`,
-        );
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        this.logger.error(`User ${user} failed: ${message}`);
+      const branch = (manifest.scope.liquityBranch === "lstCTC" ? "lstCTC" : "wCTC") as "wCTC" | "lstCTC";
+      const troveMap = troveMaps.get(branch) ?? new Map<string, bigint>();
+
+      for (const user of users) {
+        const troveId = troveMap.get(user.toLowerCase()) ?? 0n;
+        try {
+          const result = await this.agentService.runAgent(
+            user,
+            manifestId,
+            troveId,
+          );
+          this.logger.log(
+            `User ${user} [${branch}]: ${result.runId} — ${result.status}`,
+          );
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.error(`User ${user} [${branch}] failed: ${message}`);
+        }
       }
     }
   }
 
-  private async buildTroveMap(): Promise<Map<string, bigint>> {
-    try {
-      const count = (await this.publicClient.readContract({
-        address: this.config.liquity.troveManager,
+  private async buildTroveMaps(): Promise<Map<"wCTC" | "lstCTC", Map<string, bigint>>> {
+    const result = new Map<"wCTC" | "lstCTC", Map<string, bigint>>();
+
+    for (const [branchName, branchConfig] of Object.entries(this.config.liquityBranches) as ["wCTC" | "lstCTC", LiquityBranchConfig][]) {
+      try {
+        const map = await this.buildBranchTroveMap(branchConfig);
+        result.set(branchName, map);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(`buildTroveMap(${branchName}) failed: ${message}`);
+        result.set(branchName, new Map());
+      }
+    }
+
+    return result;
+  }
+
+  private async buildBranchTroveMap(branchConfig: LiquityBranchConfig): Promise<Map<string, bigint>> {
+    const count = (await this.publicClient.readContract({
+      address: branchConfig.troveManager,
+      abi: TroveManagerABI,
+      functionName: "getTroveIdsCount",
+    })) as bigint;
+
+    const map = new Map<string, bigint>();
+    for (let i = 0n; i < count; i++) {
+      const troveId = (await this.publicClient.readContract({
+        address: branchConfig.troveManager,
         abi: TroveManagerABI,
-        functionName: "getTroveIdsCount",
+        functionName: "getTroveFromTroveIdsArray",
+        args: [i],
       })) as bigint;
 
-      const map = new Map<string, bigint>();
-      for (let i = 0n; i < count; i++) {
-        const troveId = (await this.publicClient.readContract({
-          address: this.config.liquity.troveManager,
-          abi: TroveManagerABI,
-          functionName: "getTroveFromTroveIdsArray",
-          args: [i],
-        })) as bigint;
+      const owner = (await this.publicClient.readContract({
+        address: branchConfig.troveNFT,
+        abi: TroveNFTABI,
+        functionName: "ownerOf",
+        args: [troveId],
+      })) as Address;
 
-        const owner = (await this.publicClient.readContract({
-          address: this.config.liquity.troveNFT,
-          abi: TroveNFTABI,
-          functionName: "ownerOf",
-          args: [troveId],
-        })) as Address;
-
-        map.set(owner.toLowerCase(), troveId);
-      }
-      return map;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      this.logger.error(`buildTroveMap failed: ${message}`);
-      return new Map();
+      map.set(owner.toLowerCase(), troveId);
     }
+    return map;
   }
 }

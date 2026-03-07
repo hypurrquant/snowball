@@ -1,0 +1,27 @@
+{
+  "id": "snowball-demo-defi-manager-lstctc",
+  "version": "0.23.0",
+  "name": "Snowball Demo DeFi Manager (lstCTC)",
+  "network": { "chainId": 102031 },
+  "llm": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-20250514",
+    "systemPromptFile": "../prompts/demo-agent-system.md"
+  },
+  "scope": {
+    "singleUser": true,
+    "morphoMarket": "lstCTC/sbUSD",
+    "liquityBranch": "lstCTC",
+    "maxSteps": 1
+  },
+  "allowedCapabilities": [
+    "morpho.supply",
+    "morpho.withdraw",
+    "liquity.adjustInterestRate",
+    "liquity.addCollateral"
+  ],
+  "riskPolicy": {
+    "abortOnFailedPrecondition": true,
+    "cleanupAllowanceAfterUse": true
+  }
+}

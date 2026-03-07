@@ -87,6 +87,22 @@ export function useTroveDelegate(branch: "wCTC" | "lstCTC") {
     };
   };
 
+  const removeInterestIndividualDelegate = async (troveId: bigint) => {
+    const hash = await writeContractAsync({
+      address: b.borrowerOperations,
+      abi: InterestDelegateABI,
+      functionName: "removeInterestIndividualDelegate",
+      args: [troveId],
+    });
+    await waitForReceipt(hash);
+    return hash;
+  };
+
+  const fullUndelegate = async (troveId: bigint, receiver: Address, manager: Address) => {
+    await setRemoveManagerWithReceiver(troveId, manager, receiver);
+    await removeInterestIndividualDelegate(troveId);
+  };
+
   const getAddManagerOf = async (troveId: bigint) => {
     const result = await readContract(config, {
       address: b.borrowerOperations,
@@ -101,6 +117,8 @@ export function useTroveDelegate(branch: "wCTC" | "lstCTC") {
     setAddManager,
     setRemoveManagerWithReceiver,
     setInterestIndividualDelegate,
+    removeInterestIndividualDelegate,
+    fullUndelegate,
     getInterestIndividualDelegateOf,
     getAddManagerOf,
     isPending,

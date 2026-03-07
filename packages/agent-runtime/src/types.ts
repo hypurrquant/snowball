@@ -97,6 +97,16 @@ export interface Snapshot {
 
 // ─── Execution Context ───
 
+export interface LiquityBranchConfig {
+  borrowerOperations: Address;
+  troveManager: Address;
+  troveNFT: Address;
+  sortedTroves: Address;
+  hintHelpers: Address;
+  collToken: Address;
+  activePool: Address;
+}
+
 export interface AgentConfig {
   chainId: number;
   rpcUrl: string;
@@ -111,19 +121,13 @@ export interface AgentConfig {
     irm: Address;
     lltv: bigint;
   };
-  liquity: {
-    borrowerOperations: Address;
-    troveManager: Address;
-    troveNFT: Address;
-    sortedTroves: Address;
-    hintHelpers: Address;
-    collToken: Address;
-    activePool: Address;
-  };
+  liquityBranches: Record<"wCTC" | "lstCTC", LiquityBranchConfig>;
 }
 
 export interface ExecutionContext {
   config: AgentConfig;
+  liquityBranch: LiquityBranchConfig;
+  branchName: "wCTC" | "lstCTC";
   user: Address;
   snapshot: Snapshot;
   walletClient: WalletClient;

@@ -11,7 +11,7 @@ function check(ok: boolean, message: string): CheckResult {
 
 export const liquityAddCollateral: Capability<{ troveId: string; amount: string; reason: string }> = {
   id: "liquity.addCollateral",
-  description: "Liquity trove에 담보(wCTC)를 추가한다. vault에서 wCTC를 approve 후 addColl 실행.",
+  description: "Liquity trove에 담보를 추가한다. vault에서 collateral token을 approve 후 addColl 실행.",
   inputSchema: {
     type: "object",
     properties: {
@@ -23,17 +23,18 @@ export const liquityAddCollateral: Capability<{ troveId: string; amount: string;
   },
 
   requiredPermissions(config: AgentConfig): PermissionSpec[] {
-    return [{ target: config.liquity.borrowerOperations, selectors: [ADJUST_RATE_SEL, ADD_COLL_SEL] }];
+    const branches = Object.values(config.liquityBranches);
+    return branches.map((b) => ({ target: b.borrowerOperations, selectors: [ADJUST_RATE_SEL, ADD_COLL_SEL] }));
   },
 
   preconditions(ctx: ExecutionContext, input: { troveId: string; amount: string; reason: string }): CheckResult[] {
     const amt = BigInt(input.amount);
-    const collBalance = ctx.snapshot.vault.balances[ctx.config.liquity.collToken.toLowerCase()] ?? 0n;
+    const collBalance = ctx.snapshot.vault.balances[ctx.liquityBranch.collToken.toLowerCase()] ?? 0n;
     return [
       check(ctx.snapshot.liquity.hasTrove, "user has no active trove"),
       check(ctx.snapshot.liquity.isAddManager, "AgentVault is not set as addManager"),
       check(amt > 0n, "amount must be > 0"),
-      check(collBalance >= amt, `insufficient vault wCTC balance: have ${collBalance}, need ${amt}`),
+      check(collBalance >= amt, `insufficient vault collateral balance: have ${collBalance}, need ${amt}`),
     ];
   },
 
@@ -52,7 +53,7 @@ export const liquityAddCollateral: Capability<{ troveId: string; amount: string;
         to: ctx.config.agentVault,
         abi: AgentVaultABI,
         functionName: "approveAndExecute",
-        args: [ctx.user, ctx.config.liquity.collToken, amt, ctx.config.liquity.borrowerOperations, addCollData],
+        args: [ctx.user, ctx.liquityBranch.collToken, amt, ctx.liquityBranch.borrowerOperations, addCollData],
       },
     ];
   },

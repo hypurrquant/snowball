@@ -1,6 +1,6 @@
 import type { PublicClient } from "viem";
 import { HintHelpersABI, SortedTrovesABI } from "../abis";
-import type { AgentConfig } from "../types";
+import type { LiquityBranchConfig } from "../types";
 
 /**
  * Calculate upperHint and lowerHint for adjustTroveInterestRate.
@@ -8,16 +8,16 @@ import type { AgentConfig } from "../types";
  */
 export async function findHints(
   publicClient: PublicClient,
-  config: AgentConfig,
-  newInterestRate: bigint
+  branchConfig: LiquityBranchConfig,
+  newInterestRate: bigint,
+  branchIdx: bigint = 0n
 ): Promise<{ upperHint: bigint; lowerHint: bigint }> {
   const numTrials = 15n;
   const randomSeed = BigInt(Math.floor(Math.random() * 1e10));
 
-  // 1. Get approximate hint from HintHelpers (branchIdx 0 = wCTC)
-  const branchIdx = 0n;
+  // 1. Get approximate hint from HintHelpers
   const [approxHint] = await publicClient.readContract({
-    address: config.liquity.hintHelpers,
+    address: branchConfig.hintHelpers,
     abi: HintHelpersABI,
     functionName: "getApproxHint",
     args: [branchIdx, newInterestRate, numTrials, randomSeed],
@@ -25,7 +25,7 @@ export async function findHints(
 
   // 2. Find exact insert position from SortedTroves
   const [upperHint, lowerHint] = await publicClient.readContract({
-    address: config.liquity.sortedTroves,
+    address: branchConfig.sortedTroves,
     abi: SortedTrovesABI,
     functionName: "findInsertPosition",
     args: [newInterestRate, approxHint, approxHint],

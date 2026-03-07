@@ -26,14 +26,25 @@ export function loadConfig(): AgentConfig {
       lltv: 770000000000000000n,
     },
 
-    liquity: {
-      borrowerOperations: "0xb637f375cbbd278ace5fdba53ad868ae7cb186ea" as Address,
-      troveManager: "0xa20f9dfeb110e11c89147b9db5adb98a7d91e70e" as Address,
-      troveNFT: "0x72e383eff50893e2b2edeb711a81c3a812dcd2f9" as Address,
-      sortedTroves: "0xf5ef344759df7786cda9d2133e4d1e10e3b43f9f" as Address,
-      hintHelpers: "0x6ee9850b0915763bdc0c7edca8b66189449a447f" as Address,
-      collToken: "0xca69344e2917f026ef4a5ace5d7b122343fc8528" as Address,   // wCTC
-      activePool: "0xa7f0600a023cf6076f5d8dc51b46b91bafe095e5" as Address,
+    liquityBranches: {
+      wCTC: {
+        borrowerOperations: "0xb637f375cbbd278ace5fdba53ad868ae7cb186ea" as Address,
+        troveManager: "0xa20f9dfeb110e11c89147b9db5adb98a7d91e70e" as Address,
+        troveNFT: "0x72e383eff50893e2b2edeb711a81c3a812dcd2f9" as Address,
+        sortedTroves: "0xf5ef344759df7786cda9d2133e4d1e10e3b43f9f" as Address,
+        hintHelpers: "0x6ee9850b0915763bdc0c7edca8b66189449a447f" as Address,
+        collToken: "0xca69344e2917f026ef4a5ace5d7b122343fc8528" as Address,   // wCTC
+        activePool: "0xa7f0600a023cf6076f5d8dc51b46b91bafe095e5" as Address,
+      },
+      lstCTC: {
+        borrowerOperations: "0x8700ed43989e2f935ab8477dd8b2822cae7f60ca" as Address,
+        troveManager: "0x83715c7e9873b0b8208adbbf8e07f31e83b94aed" as Address,
+        troveNFT: "0x51a90151e0dd1348e77ee6bcc30278ee311f29a8" as Address,
+        sortedTroves: "0x25aa78c7b0dbc736ae23a316ab44579467ba9507" as Address,
+        hintHelpers: "0x6ee9850b0915763bdc0c7edca8b66189449a447f" as Address,
+        collToken: "0xa768d376272f9216c8c4aa3063391bdafbcad4c2" as Address,   // lstCTC
+        activePool: "0xa57cca34198bf262a278da3b2b7a8a5f032cb835" as Address,
+      },
     },
   };
 }

@@ -80,6 +80,7 @@ export async function executePlan(
       ctx.snapshot = await buildSnapshot(
         ctx.publicClient,
         ctx.config,
+        ctx.liquityBranch,
         ctx.user,
         agentAddress,
         troveId

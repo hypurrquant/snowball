@@ -66,6 +66,7 @@ export const AddRemoveManagersABI = [
 // BorrowerOperations — interest delegate
 export const InterestDelegateABI = [
   { type: "function", name: "setInterestIndividualDelegate", inputs: [{ name: "_troveId", type: "uint256" }, { name: "_delegate", type: "address" }, { name: "_minInterestRate", type: "uint128" }, { name: "_maxInterestRate", type: "uint128" }, { name: "_newAnnualInterestRate", type: "uint256" }, { name: "_upperHint", type: "uint256" }, { name: "_lowerHint", type: "uint256" }, { name: "_maxUpfrontFee", type: "uint256" }, { name: "_minInterestRateChangePeriod", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "removeInterestIndividualDelegate", inputs: [{ name: "_troveId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "getInterestIndividualDelegateOf", inputs: [{ name: "_troveId", type: "uint256" }], outputs: [{ name: "", type: "tuple", components: [{ name: "account", type: "address" }, { name: "minInterestRate", type: "uint128" }, { name: "maxInterestRate", type: "uint128" }, { name: "minInterestRateChangePeriod", type: "uint256" }] }], stateMutability: "view" },
 ] as const;
 

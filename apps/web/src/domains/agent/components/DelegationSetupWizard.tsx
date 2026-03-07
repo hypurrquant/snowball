@@ -20,6 +20,7 @@ interface DelegationSetupWizardProps {
   agentAddress: Address;
   agentVaultAddress: Address;
   scenario: Scenario;
+  branch?: "wCTC" | "lstCTC";
   troveId?: string;
   onTroveIdChange?: (troveId: string) => void;
   onComplete?: () => void;
@@ -33,18 +34,21 @@ const MORPHO_PERMISSION = {
   ] as `0x${string}`[],
 };
 
-const LIQUITY_PERMISSION = {
-  targets: [LIQUITY.branches.wCTC.borrowerOperations],
-  functions: [
-    toFunctionSelector("adjustTroveInterestRate(uint256,uint256,uint256,uint256,uint256)"),
-    toFunctionSelector("addColl(uint256,uint256)"),
-  ] as `0x${string}`[],
-};
+function getLiquityPermission(branch: "wCTC" | "lstCTC") {
+  return {
+    targets: [LIQUITY.branches[branch].borrowerOperations],
+    functions: [
+      toFunctionSelector("adjustTroveInterestRate(uint256,uint256,uint256,uint256,uint256)"),
+      toFunctionSelector("addColl(uint256,uint256)"),
+    ] as `0x${string}`[],
+  };
+}
 
 export function DelegationSetupWizard({
   agentAddress,
   agentVaultAddress,
   scenario,
+  branch = "wCTC",
   troveId: externalTroveId,
   onTroveIdChange,
   onComplete,
@@ -75,7 +79,7 @@ export function DelegationSetupWizard({
   // Step 3: Protocol delegation
   const { setAuthorization, isPending: isMorphoPending } = useMorphoAuthorization();
   const { setAddManager, setInterestIndividualDelegate, setRemoveManagerWithReceiver, isPending: isLiquityPending } =
-    useTroveDelegate("wCTC");
+    useTroveDelegate(branch);
 
   // troveId is controlled by parent when provided, otherwise local state
   const [localTroveId, setLocalTroveId] = useState("");
@@ -102,11 +106,12 @@ export function DelegationSetupWizard({
   };
 
   const handleGrantPermission = async () => {
-    const preset = scenario === "morpho" ? MORPHO_PERMISSION : LIQUITY_PERMISSION;
+    const preset = scenario === "morpho" ? MORPHO_PERMISSION : getLiquityPermission(branch);
     const expiry = BigInt(Math.floor(Date.now() / 1000) + 30 * 24 * 3600);
+    const collToken = branch === "lstCTC" ? TOKENS.lstCTC : TOKENS.wCTC;
     const tokenCaps = scenario === "morpho"
       ? [{ token: TOKENS.sbUSD as Address, cap: parseEther("1000") }]
-      : [{ token: TOKENS.wCTC as Address, cap: parseEther("100") }];
+      : [{ token: collToken as Address, cap: parseEther("100") }];
     await grantPermission({
       agent: agentAddress,
       targets: preset.targets,
@@ -254,7 +259,7 @@ export function DelegationSetupWizard({
               <div>Agent: {agentAddress.slice(0, 8)}...{agentAddress.slice(-6)}</div>
               <div>Scope: {scenario === "morpho" ? "Morpho supply + withdraw" : "Liquity adjustRate + addColl"}</div>
               <div>Expiry: 30 days</div>
-              <div>Token Cap: {scenario === "morpho" ? "1,000 sbUSD" : "100 wCTC"}</div>
+              <div>Token Cap: {scenario === "morpho" ? "1,000 sbUSD" : `100 ${branch === "lstCTC" ? "lstCTC" : "wCTC"}`}</div>
             </div>
             <div className="flex gap-2">
               <Button onClick={handleGrantPermission} disabled={isGrantPending} className="flex-1">
