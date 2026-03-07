@@ -1,6 +1,7 @@
 "use client";
 
-import { useConnection, useReadContract, useWriteContract } from "wagmi";
+import { useConnection, useReadContract } from "wagmi";
+import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { QuoterV2ABI, SwapRouterABI } from "@/core/abis";
 import { DEX } from "@/core/config/addresses";
 import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
@@ -47,7 +48,7 @@ export function useSwap(
   const {
     writeContractAsync: swapAsync,
     isPending: isSwapPending,
-  } = useWriteContract();
+  } = useChainWriteContract();
 
   const swap = async (slippageBps = 50) => {
     if (!tokenIn || !tokenOut || !amountIn || !expectedAmountOut || !address) return;

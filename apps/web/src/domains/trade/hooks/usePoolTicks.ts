@@ -89,16 +89,8 @@ export function usePoolTicks(
 ): UsePoolTicksReturn {
   const pool = usePool(token0, token1);
 
-  console.log("[usePoolTicks] pool state:", {
-    poolAddress: pool.poolAddress,
-    slot0: pool.slot0 ? "exists" : "null",
-    liquidity: pool.liquidity?.toString(),
-    isLoading: pool.isLoading,
-  });
-
   const { currentTick, currentPrice, tickSpacing } = useMemo(() => {
     if (!pool.slot0) {
-      console.log("[usePoolTicks] no slot0, using fallback tick=0");
       const fallbackTick = 0;
       const fallbackPrice = tickToPrice(fallbackTick, token0Decimals, token1Decimals);
       return { currentTick: fallbackTick, currentPrice: fallbackPrice, tickSpacing: 60 };
@@ -108,7 +100,6 @@ export function usePoolTicks(
     const tick = Number(slot0Array[1]);
     const price = sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals);
     const spacing = pool.tickSpacing ? Number(pool.tickSpacing) : 60;
-    console.log("[usePoolTicks] slot0 parsed:", { tick, price, spacing, sqrtPriceX96: sqrtPriceX96.toString() });
     return { currentTick: tick, currentPrice: price, tickSpacing: spacing };
   }, [pool.slot0, pool.tickSpacing, token0Decimals, token1Decimals]);
 
@@ -123,14 +114,12 @@ export function usePoolTicks(
 
   const bitmapContracts = useMemo(() => {
     if (!pool.poolAddress) return [];
-    const contracts = wordPositions.map((wordPos) => ({
+    return wordPositions.map((wordPos) => ({
       address: pool.poolAddress!,
       abi: TICK_BITMAP_ABI,
       functionName: "tickBitmap" as const,
       args: [wordPos] as const,
     }));
-    console.log("[usePoolTicks] Phase 1: bitmap contracts:", contracts.length, "words:", wordPositions);
-    return contracts;
   }, [pool.poolAddress, wordPositions]);
 
   const { data: bitmapResults, isLoading: isBitmapLoading } = useReadContracts({
@@ -138,32 +127,18 @@ export function usePoolTicks(
     query: { enabled: bitmapContracts.length > 0, refetchInterval: 30_000 },
   });
 
-  console.log("[usePoolTicks] Phase 1 results:", {
-    bitmapCount: bitmapResults?.length ?? 0,
-    isBitmapLoading,
-    statuses: bitmapResults?.map(r => r?.status),
-  });
-
   // Extract initialized tick indices from bitmaps
   const initializedTickIndices = useMemo(() => {
     if (!bitmapResults) return [];
     const indices: number[] = [];
-    let nonZeroBitmaps = 0;
     for (let i = 0; i < wordPositions.length; i++) {
       const result = bitmapResults[i];
       if (result?.status !== "success") continue;
       const bitmap = result.result as bigint;
-      if (bitmap !== 0n) nonZeroBitmaps++;
       const ticks = extractInitializedTicks(bitmap, wordPositions[i], tickSpacing, minTick, maxTick);
       indices.push(...ticks);
     }
-    const sorted = indices.sort((a, b) => a - b);
-    console.log("[usePoolTicks] Phase 1 extracted:", {
-      nonZeroBitmaps,
-      initializedTicks: sorted.length,
-      ticks: sorted,
-    });
-    return sorted;
+    return indices.sort((a, b) => a - b);
   }, [bitmapResults, wordPositions, tickSpacing, minTick, maxTick]);
 
   // Phase 2: Fetch liquidityNet for each initialized tick
@@ -182,17 +157,9 @@ export function usePoolTicks(
     query: { enabled: tickContracts.length > 0, refetchInterval: 30_000 },
   });
 
-  console.log("[usePoolTicks] Phase 2 results:", {
-    tickContractsCount: tickContracts.length,
-    tickResultsCount: tickResults?.length ?? 0,
-    isTickLoading,
-    statuses: tickResults?.map(r => r?.status),
-  });
-
   // Build TickDisplayData[] from on-chain tick data
   const ticks = useMemo(() => {
     if (!tickResults || initializedTickIndices.length === 0) {
-      console.log("[usePoolTicks] No tick data, returning empty ticks");
       return buildEmptyTicks(currentTick, tickSpacing, token0Decimals, token1Decimals);
     }
 
