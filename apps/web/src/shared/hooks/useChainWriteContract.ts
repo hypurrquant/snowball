@@ -6,9 +6,10 @@ import { useAccount } from "wagmi";
 
 /**
  * Wraps wagmi's useWriteContract with automatic chain switching.
- * If the wallet is on the wrong chain, it switches to Creditcoin Testnet before sending the tx.
+ * @param targetChainId - Chain to execute TX on. Defaults to Creditcoin Testnet.
  */
-export function useChainWriteContract() {
+export function useChainWriteContract(targetChainId?: number) {
+  const target = targetChainId ?? creditcoinTestnet.id;
   const { chainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const result = useWriteContract();
@@ -17,11 +18,11 @@ export function useChainWriteContract() {
     variables,
     options?,
   ) => {
-    if (chainId !== creditcoinTestnet.id) {
-      await switchChainAsync({ chainId: creditcoinTestnet.id });
+    if (chainId !== target) {
+      await switchChainAsync({ chainId: target as 102031 });
     }
     return result.writeContractAsync(
-      { ...variables, chainId: creditcoinTestnet.id } as typeof variables,
+      { ...variables, chainId: target } as typeof variables,
       options,
     );
   };

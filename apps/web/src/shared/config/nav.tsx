@@ -10,6 +10,7 @@ import {
   Bot,
   MessageSquare,
   Vault,
+  Link2,
 } from "lucide-react";
 
 export interface NavItem {
@@ -37,6 +38,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/liquity", label: "Liquity", icon: (cls) => <HandCoins className={cls} /> },
       { href: "/morpho", label: "Morpho", icon: (cls) => <Landmark className={cls} /> },
       { href: "/yield", label: "Yield", icon: (cls) => <Vault className={cls} /> },
+      { href: "/bridge", label: "Bridge", icon: (cls) => <Link2 className={cls} /> },
     ],
   },
   // Options: 비활성화 — EIP-712 미구현 + API 스키마 불일치 + 출금 불가 (options-fe-analysis.md 참조)

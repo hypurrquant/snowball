@@ -1,12 +1,14 @@
 import { http, createConfig, createStorage, cookieStorage, mock, injected } from "wagmi";
-import { creditcoinTestnet } from "@/core/config/chain";
+import { creditcoinTestnet, sepoliaChain, uscTestnet } from "@/core/config/chain";
 import { privateKeyToAccount } from "viem/accounts";
 
 export const wagmiConfig = createConfig({
-  chains: [creditcoinTestnet],
+  chains: [creditcoinTestnet, sepoliaChain, uscTestnet],
   connectors: [injected()],
   transports: {
     [creditcoinTestnet.id]: http(),
+    [sepoliaChain.id]: http("https://1rpc.io/sepolia"),
+    [uscTestnet.id]: http("https://rpc.usc-testnet2.creditcoin.network"),
   },
   storage: createStorage({ storage: cookieStorage }),
   ssr: true,

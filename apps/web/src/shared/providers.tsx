@@ -3,18 +3,21 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, useAccount, useSwitchChain } from "wagmi";
 import { useState, useEffect, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { wagmiConfig } from "@/shared/config/wagmi";
 import { creditcoinTestnet } from "@/core/config/chain";
 
 function AutoChainSwitch() {
   const { chainId, isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
+  const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname?.startsWith("/bridge")) return;
     if (isConnected && chainId && chainId !== creditcoinTestnet.id) {
       switchChain({ chainId: creditcoinTestnet.id });
     }
-  }, [isConnected, chainId, switchChain]);
+  }, [isConnected, chainId, switchChain, pathname]);
 
   return null;
 }
