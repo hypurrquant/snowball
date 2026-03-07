@@ -8,6 +8,7 @@ up:
 		nohup node server.js >> $(LOG_FILE) 2>&1 &
 	@sleep 1
 	@echo "claude-proxy started (log: $(LOG_FILE))"
+	@tail -f $(LOG_FILE)
 
 down:
 	@lsof -ti:3003 | xargs kill -9 2>/dev/null || true
