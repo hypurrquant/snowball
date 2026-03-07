@@ -56,8 +56,8 @@ export async function executePlan(
           abi: call.abi,
           functionName: call.functionName,
           args: call.args,
-          chain: null,
-          account: null as unknown as Address, // Will be set by walletClient
+          chain: ctx.walletClient.chain,
+          account: ctx.walletClient.account!,
         });
         txHashes.push(hash);
         logs.push(`[Executor] tx confirmed: ${hash}`);

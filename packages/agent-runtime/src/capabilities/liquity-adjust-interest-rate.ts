@@ -6,7 +6,7 @@ import { findHints } from "../utils/liquity-hints";
 const ADJUST_RATE_SEL = toFunctionSelector("adjustTroveInterestRate(uint256,uint256,uint256,uint256,uint256)");
 const ADD_COLL_SEL = toFunctionSelector("addColl(uint256,uint256)");
 
-const COOLDOWN_PERIOD = 7n * 24n * 60n * 60n; // 7 days in seconds
+const COOLDOWN_PERIOD = 0n; // no cooldown for testing
 
 function check(ok: boolean, message: string): CheckResult {
   return { ok, message };

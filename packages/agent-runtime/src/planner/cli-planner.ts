@@ -133,10 +133,13 @@ function buildStateMessage(snapshot: Snapshot): string {
     "",
     "### Liquity",
     `- Has trove: ${snapshot.liquity.hasTrove}`,
+    `- Trove ID: ${snapshot.liquity.troveId.toString()}`,
     `- Collateral: ${snapshot.liquity.collateral.toString()} wei`,
     `- Debt: ${snapshot.liquity.debt.toString()} wei`,
     `- Annual interest rate: ${snapshot.liquity.annualInterestRate.toString()} (${formatRate(snapshot.liquity.annualInterestRate)})`,
     `- Market avg interest rate: ${snapshot.liquity.avgInterestRate.toString()} (${formatRate(snapshot.liquity.avgInterestRate)})`,
+    `- Interest delegate set: ${snapshot.liquity.isInterestDelegate}`,
+    `- Add manager set: ${snapshot.liquity.isAddManager}`,
   ].join("\n");
 }
 
