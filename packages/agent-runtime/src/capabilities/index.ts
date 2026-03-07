@@ -1,4 +1,4 @@
-export { morphoSupply } from "./morpho-supply.js";
-export { morphoWithdraw } from "./morpho-withdraw.js";
-export { liquityAdjustInterestRate } from "./liquity-adjust-interest-rate.js";
-export { liquityAddCollateral } from "./liquity-add-collateral.js";
+export { morphoSupply } from "./morpho-supply";
+export { morphoWithdraw } from "./morpho-withdraw";
+export { liquityAdjustInterestRate } from "./liquity-adjust-interest-rate";
+export { liquityAddCollateral } from "./liquity-add-collateral";

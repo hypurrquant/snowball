@@ -1,6 +1,6 @@
 import type { Address, PublicClient } from "viem";
-import { MorphoABI } from "../abis.js";
-import type { AgentConfig, MorphoSnapshot } from "../types.js";
+import { MorphoABI } from "../abis";
+import type { AgentConfig, MorphoSnapshot } from "../types";
 
 export async function observeMorpho(
   publicClient: PublicClient,

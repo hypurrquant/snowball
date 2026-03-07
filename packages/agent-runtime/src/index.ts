@@ -1,5 +1,5 @@
-export * from "./types.js";
-export { loadConfig, loadAnthropicApiKey } from "./config.js";
-export { CapabilityRegistry } from "./registry.js";
-export { AgentRuntime } from "./runtime.js";
-export { AgentVaultABI, TroveManagerABI, TroveNFTABI } from "./abis.js";
+export * from "./types";
+export { loadConfig, loadAnthropicApiKey } from "./config";
+export { CapabilityRegistry } from "./registry";
+export { AgentRuntime } from "./runtime";
+export { AgentVaultABI, TroveManagerABI, TroveNFTABI } from "./abis";

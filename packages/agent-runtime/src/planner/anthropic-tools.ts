@@ -1,4 +1,4 @@
-import type { Capability, JsonSchema } from "../types.js";
+import type { Capability, JsonSchema } from "../types";
 
 export interface AnthropicTool {
   name: string;

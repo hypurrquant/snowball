@@ -1,24 +1,40 @@
 # Snowball Protocol
 
-# Docker — server only (default)
-up:
-    docker compose up -d --build server
-    @echo "Server running at http://localhost:3001"
+# Docker — all services
+up *args:
+    #!/usr/bin/env bash
+    if [ -z "{{args}}" ]; then
+        docker compose up -d --build
+        echo "All services running: server(:3001) agent-server(:3002) usc-worker frontend(:3000)"
+    else
+        docker compose up -d --build {{args}}
+        echo "Started: {{args}}"
+    fi
 
 down:
     docker compose down
 
-up-all:
-    docker compose up -d --build
+logs *args:
+    #!/usr/bin/env bash
+    if [ -z "{{args}}" ]; then
+        docker compose logs -f
+    else
+        docker compose logs -f {{args}}
+    fi
 
-logs:
-    docker compose logs -f server
-
-restart:
-    docker compose restart server
+restart *args:
+    #!/usr/bin/env bash
+    if [ -z "{{args}}" ]; then
+        docker compose restart
+    else
+        docker compose restart {{args}}
+    fi
 
 # Dev (local, without Docker)
 dev:
+    pnpm --filter @snowball/web dev
+
+fe:
     pnpm --filter @snowball/web dev
 
 dev-server:

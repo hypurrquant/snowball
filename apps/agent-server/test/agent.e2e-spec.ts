@@ -1,9 +1,13 @@
 import "reflect-metadata";
+
+// BigInt JSON serialization support
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
 import { Test, TestingModule } from "@nestjs/testing";
 import { INestApplication } from "@nestjs/common";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
-import { ExpressAdapter } from "@nestjs/platform-express";
 import request from "supertest";
 import { AgentModule } from "../src/agent/agent.module";
 import { DatabaseModule } from "../src/database/database.module";
@@ -98,7 +102,7 @@ async function createTestApp(
     .useValue(runtime)
     .compile();
 
-  const app = moduleFixture.createNestApplication(new ExpressAdapter());
+  const app = moduleFixture.createNestApplication();
   app.useGlobalFilters(new AllExceptionsFilter());
   await app.init();
   return app;
@@ -225,6 +229,7 @@ describe("Agent E2E Tests", () => {
 
     expect(res.body.uptime).toBeDefined();
     expect(res.body.registeredAgents).toBeDefined();
+    expect(res.body.totalRuns).toBeDefined();
   });
 
   // ─── Scenario 7: Persistence (F4) ───

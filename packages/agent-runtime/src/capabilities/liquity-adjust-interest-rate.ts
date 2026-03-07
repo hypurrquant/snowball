@@ -1,7 +1,7 @@
 import { encodeFunctionData } from "viem";
-import { AgentVaultABI, BorrowerOperationsABI } from "../abis.js";
-import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, PermissionSpec } from "../types.js";
-import { findHints } from "../utils/liquity-hints.js";
+import { AgentVaultABI, BorrowerOperationsABI } from "../abis";
+import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, PermissionSpec } from "../types";
+import { findHints } from "../utils/liquity-hints";
 
 const COOLDOWN_PERIOD = 7n * 24n * 60n * 60n; // 7 days in seconds
 

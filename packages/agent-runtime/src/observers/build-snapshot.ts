@@ -1,8 +1,8 @@
 import type { Address, PublicClient } from "viem";
-import type { AgentConfig, Snapshot } from "../types.js";
-import { observeVault } from "./vault.js";
-import { observeMorpho } from "./morpho.js";
-import { observeLiquity } from "./liquity.js";
+import type { AgentConfig, Snapshot } from "../types";
+import { observeVault } from "./vault";
+import { observeMorpho } from "./morpho";
+import { observeLiquity } from "./liquity";
 
 export async function buildSnapshot(
   publicClient: PublicClient,

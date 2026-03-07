@@ -1,6 +1,6 @@
 import type { Address, PublicClient } from "viem";
-import { TroveManagerABI, AddRemoveManagersABI } from "../abis.js";
-import type { AgentConfig, LiquitySnapshot } from "../types.js";
+import { TroveManagerABI, AddRemoveManagersABI } from "../abis";
+import type { AgentConfig, LiquitySnapshot } from "../types";
 
 export async function observeLiquity(
   publicClient: PublicClient,

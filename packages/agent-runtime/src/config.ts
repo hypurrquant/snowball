@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import type { AgentConfig } from "./types.js";
+import type { AgentConfig } from "./types";
 
 function requireEnv(name: string): string {
   const value = process.env[name];

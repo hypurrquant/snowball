@@ -1,8 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { AgentConfig, AgentManifest, Snapshot, StrategyPlan, PlanStep } from "../types.js";
-import { CapabilityRegistry } from "../registry.js";
-import { buildAnthropicTools } from "./anthropic-tools.js";
-import { loadAnthropicApiKey } from "../config.js";
+import type { AgentConfig, AgentManifest, Snapshot, StrategyPlan, PlanStep } from "../types";
+import { CapabilityRegistry } from "../registry";
+import { buildAnthropicTools } from "./anthropic-tools";
+import { loadAnthropicApiKey } from "../config";
 import * as fs from "fs";
 import * as path from "path";
 

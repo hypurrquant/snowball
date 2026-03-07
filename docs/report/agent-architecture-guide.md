@@ -275,14 +275,16 @@ packages/agent-runtime/src/
 
 ### 2.2 실행 파이프라인
 
-AgentRuntime.run()이 호출되면 다음 순서로 진행된다:
+`AgentRuntime.run(manifest, user, troveId, runId)` 호출 시:
+- `runId`는 외부(Agent Server)에서 주입 — 2-Phase Write를 위해 서버가 사전에 UUID를 생성하여 DB에 `started` 레코드를 삽입한 후 runtime에 전달한다.
+- Anthropic SDK에 60초 타임아웃이 설정되어 있다.
 
 ```
-[1. Observe]  온체인 상태 수집
+[1. Observe]  온체인 상태 수집 (Vault + Morpho + Liquity 병렬)
       ↓
 [2. Filter]   실행 가능한 Capability 필터링
       ↓
-[3. Plan]     Claude AI에게 상태 전달 → 전략 수립
+[3. Plan]     Claude AI에게 상태 전달 → 전략 수립 (60s timeout)
       ↓
 [4. Execute]  계획된 트랜잭션 순차 실행
       ↓
@@ -459,39 +461,107 @@ interface Capability<TInput> {
 
 ```
 apps/agent-server/src/
-  main.ts                          # 서버 진입점 (port 3001)
-  app.module.ts                    # 루트 모듈
+  main.ts                          # 서버 진입점 (port 3001, Winston 로거)
+  app.module.ts                    # 루트 모듈 (ThrottlerModule + DatabaseModule)
+  database/
+    database.module.ts             # Global 모듈 (DatabaseService export)
+    database.service.ts            # SQLite + WAL + 마이그레이션 + crash recovery
   agent/
-    agent.module.ts                # Agent 모듈
-    agent.service.ts               # 비즈니스 로직
-    agent.controller.ts            # HTTP 엔드포인트
+    agent.module.ts                # Agent 모듈 (DI: AGENT_RUNTIME provider)
+    agent.service.ts               # 비즈니스 로직 (2-phase write)
+    agent.controller.ts            # HTTP 엔드포인트 (Rate Limiting)
+    run-store.service.ts           # DB CRUD (insertStarted, updateTerminal, findByUser...)
     dto/run-agent.dto.ts           # 요청 DTO
   scheduler/
     scheduler.module.ts            # 스케줄러 모듈
     scheduler.service.ts           # Cron 기반 자동 실행
   common/
     guards/api-key.guard.ts        # API Key 인증
-    filters/http-exception.filter.ts
+    filters/http-exception.filter.ts  # 전역 예외 필터
+    logger/winston.config.ts       # Winston 설정 (콘솔 + 파일 + 에러)
 ```
 
-### 3.2 API 엔드포인트
+### 3.2 SQLite 영속화 (2-Phase Write)
 
-| Method | Path | Auth | 설명 |
-|--------|------|------|------|
-| `POST` | `/agent/run` | API Key | 에이전트 실행 요청 |
-| `GET` | `/agent/runs` | - | 실행 이력 조회 |
-| `GET` | `/agent/runs/:id` | - | 특정 실행 결과 |
-| `GET` | `/agent/status` | - | 서버 상태 (uptime, 총 실행 수) |
-| `GET` | `/agent/manifests` | - | 등록된 Manifest 목록 |
+실행 결과가 SQLite(WAL 모드)에 영구 저장된다. 2-Phase Write 패턴으로 서버 크래시 시 데이터 일관성을 보장한다:
+
+```
+Phase 1: Pre-insert
+  RunStore.insertStarted(runId, user, manifestId)  → status='started'
+  실패 시 → 500 (런타임 실행 안 함, fail-closed)
+
+Phase 2: Runtime 실행 후
+  RunStore.updateTerminal(runId, result)  → status='success'/'error'/'no_action'
+  실패 시 → Fallback: updateError(runId) → status='error'
+            Fallback도 실패 → 500
+```
+
+**Crash Recovery**: 서버 재시작 시 `status='started'` 레코드를 자동으로 `'error'`로 변경.
+
+**started→error API 매핑**: GET /agent/runs 응답에서 `status='started'` 레코드는 `'error'`로 매핑하여 반환 (클라이언트에 started 노출 방지).
+
+**스키마:**
+```sql
+CREATE TABLE agent_runs (
+  run_id TEXT PRIMARY KEY,
+  user TEXT NOT NULL,
+  manifest_id TEXT NOT NULL,
+  status TEXT NOT NULL,          -- 'started' | 'success' | 'error' | 'no_action'
+  result_json TEXT,              -- JSON.stringify(RunResult, bigintReplacer)
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+```
+
+### 3.3 DI (Dependency Injection)
+
+AgentRuntime을 NestJS provider로 주입하여 테스트에서 mock 교체 가능:
+
+```typescript
+// agent.module.ts
+providers: [
+  AgentService,
+  RunStoreService,
+  { provide: "AGENT_RUNTIME", useFactory: () => new AgentRuntime() },
+]
+
+// agent.service.ts
+constructor(
+  @Inject("AGENT_RUNTIME") private readonly runtime: AgentRuntime,
+  private readonly runStore: RunStoreService,
+) {}
+```
+
+### 3.4 로깅 (Winston)
+
+3중 로깅 체계:
+
+| Transport | 대상 | 포맷 | 로테이션 |
+|-----------|------|------|---------|
+| Console | stdout | colorize + timestamp | - |
+| File | `logs/agent-YYYY-MM-DD.log` | JSON | 20MB × 14파일 |
+| Error File | `logs/error-YYYY-MM-DD.log` | JSON | 20MB × 14파일 |
+
+### 3.5 API 엔드포인트
+
+모든 엔드포인트는 `x-api-key` 헤더 필수.
+
+| Method | Path | Rate Limit | 설명 |
+|--------|------|-----------|------|
+| `POST` | `/agent/run` | **10회/분** | 에이전트 실행 요청 |
+| `GET` | `/agent/runs` | 60회/분 | 실행 이력 조회 (?user=0x... 필터) |
+| `GET` | `/agent/runs/:id` | 60회/분 | 특정 실행 결과 (200/404) |
+| `GET` | `/agent/status` | 60회/분 | 서버 상태 (uptime, totalRuns, registeredAgents) |
+| `GET` | `/agent/manifests` | 60회/분 | 등록된 Manifest 목록 |
 
 **실행 요청:**
 ```json
 POST /agent/run
-X-API-Key: <secret>
+x-api-key: <secret>
 
 {
   "user": "0x1234...ABCD",
-  "manifestId": "snowball-morpho-optimizer-v1",
+  "manifestId": "snowball-demo-defi-manager",
   "troveId": "123"  // optional, Liquity용
 }
 ```
@@ -499,7 +569,7 @@ X-API-Key: <secret>
 **실행 결과:**
 ```json
 {
-  "runId": "run_abc123",
+  "runId": "550e8400-e29b-41d4-a716-446655440000",
   "status": "success",
   "plan": {
     "goal": "Optimize portfolio",
@@ -511,11 +581,15 @@ X-API-Key: <secret>
   "logs": ["Supplied 1000 sbUSD to Morpho"],
   "errors": [],
   "reasoning": "Utilization rate is low, good time to supply",
-  "timestamp": 1709784000
+  "timestamp": 1709784000,
+  "user": "0x1234...ABCD",
+  "manifestId": "snowball-demo-defi-manager"
 }
 ```
 
-### 3.3 스케줄러 (Cron 자동 실행)
+**동시 실행 방지**: 동일 user+manifestId 조합의 실행이 이미 진행 중이면 `409 Conflict` 반환.
+
+### 3.6 스케줄러 (Cron 자동 실행)
 
 ```typescript
 // 5분마다 실행
@@ -527,7 +601,7 @@ async handleCron() {
 }
 ```
 
-### 3.4 프론트엔드 프록시
+### 3.7 프론트엔드 프록시
 
 Next.js API Routes가 프론트엔드에서 에이전트 서버로 프록시한다:
 
@@ -538,6 +612,26 @@ Next.js API Routes가 프론트엔드에서 에이전트 서버로 프록시한�
 ```
 
 클라이언트에 API Key가 노출되지 않는다.
+
+### 3.8 E2E 테스트
+
+11개 시나리오로 서버 핵심 동작을 검증한다 (`apps/agent-server/test/agent.e2e-spec.ts`):
+
+| # | 시나리오 | 검증 대상 |
+|---|---------|----------|
+| 1 | 정상 실행 | POST /agent/run → 200 + status=success |
+| 2 | API Key 누락 | 401 Unauthorized |
+| 3 | 동시 실행 | 409 Conflict (같은 user+manifest) |
+| 4 | 유저 필터 | GET /agent/runs?user= → 해당 유저만 |
+| 5 | 단건 조회 | GET /agent/runs/:id → 200 |
+| 6 | 미존재 ID | GET /agent/runs/:id → 404 |
+| 7 | 서버 상태 | uptime, registeredAgents, totalRuns |
+| 8 | 영속성 | DB에 레코드 존재 확인 |
+| 9 | Crash Recovery | started → error 자동 전환 |
+| 10 | BigInt 직렬화 | JSON.stringify 에러 없음 |
+| 11 | started→error 매핑 | API 응답에서 started가 error로 노출 |
+
+테스트는 `TestDatabaseService`(임시 SQLite)와 `MockAgentRuntime`으로 외부 의존성 없이 동작한다.
 
 ---
 
@@ -717,10 +811,14 @@ Layer 2: 런타임
   - Manifest 기반 Capability 화이트리스트
   - Precondition 체크 (잔고, 인가 상태 등)
   - maxSteps 제한
-  - 동시 실행 방지 (activeRuns lock)
+  - SDK 타임아웃 (60초)
 
 Layer 3: 서버
-  - API Key 인증
+  - API Key 인증 (x-api-key 헤더)
+  - Rate Limiting (POST /agent/run 10회/분, 전역 60회/분)
+  - 동시 실행 방지 (user+manifest 기준 activeRuns lock → 409)
+  - 2-Phase Write + Crash Recovery (DB 일관성)
+  - Winston 구조화 로깅 (감사 추적)
   - 프론트엔드 프록시 (클라이언트에 Key 미노출)
 
 Layer 4: 프로토콜
@@ -731,3 +829,4 @@ Layer 4: 프로토콜
 ---
 
 **작성일**: 2026-03-07 KST
+**갱신일**: 2026-03-07 KST (v0.18.0 반영: SQLite 영속화, Winston 로깅, Rate Limiting, DI, 2-Phase Write, E2E 테스트)

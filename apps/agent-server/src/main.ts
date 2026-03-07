@@ -1,5 +1,10 @@
 import "dotenv/config";
 import "reflect-metadata";
+
+// BigInt JSON serialization support
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/filters/http-exception.filter";

@@ -1,6 +1,6 @@
 import type { PublicClient } from "viem";
-import { HintHelpersABI, SortedTrovesABI } from "../abis.js";
-import type { AgentConfig } from "../types.js";
+import { HintHelpersABI, SortedTrovesABI } from "../abis";
+import type { AgentConfig } from "../types";
 
 /**
  * Calculate upperHint and lowerHint for adjustTroveInterestRate.

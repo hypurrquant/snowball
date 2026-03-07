@@ -4,8 +4,8 @@
  * the planner ignores that step and logs a warning.
  */
 
-import { buildAnthropicTools } from "./anthropic-tools.js";
-import type { Capability } from "../types.js";
+import { buildAnthropicTools } from "./anthropic-tools";
+import type { Capability } from "../types";
 
 // A minimal test capability
 const testCap: Capability = {

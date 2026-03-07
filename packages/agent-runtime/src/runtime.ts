@@ -1,12 +1,12 @@
 import { createPublicClient, createWalletClient, http, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import type { AgentManifest, RunResult, AgentConfig } from "./types.js";
-import { CapabilityRegistry } from "./registry.js";
-import { morphoSupply, morphoWithdraw, liquityAdjustInterestRate, liquityAddCollateral } from "./capabilities/index.js";
-import { buildSnapshot } from "./observers/build-snapshot.js";
-import { plan as planWithClaude } from "./planner/anthropic-planner.js";
-import { executePlan } from "./executor/execute-plan.js";
-import { loadConfig } from "./config.js";
+import type { AgentManifest, RunResult, AgentConfig } from "./types";
+import { CapabilityRegistry } from "./registry";
+import { morphoSupply, morphoWithdraw, liquityAdjustInterestRate, liquityAddCollateral } from "./capabilities/index";
+import { buildSnapshot } from "./observers/build-snapshot";
+import { plan as planWithClaude } from "./planner/anthropic-planner";
+import { executePlan } from "./executor/execute-plan";
+import { loadConfig } from "./config";
 
 export function buildDemoRegistry(): CapabilityRegistry {
   const registry = new CapabilityRegistry();

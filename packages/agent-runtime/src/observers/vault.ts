@@ -1,6 +1,6 @@
 import type { Address, PublicClient } from "viem";
-import { AgentVaultABI, ERC20ABI } from "../abis.js";
-import type { AgentConfig, VaultSnapshot, PermissionState } from "../types.js";
+import { AgentVaultABI, ERC20ABI } from "../abis";
+import type { AgentConfig, VaultSnapshot, PermissionState } from "../types";
 
 export async function observeVault(
   publicClient: PublicClient,

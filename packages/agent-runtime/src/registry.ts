@@ -1,4 +1,4 @@
-import type { AgentConfig, AgentManifest, Capability, Snapshot } from "./types.js";
+import type { AgentConfig, AgentManifest, Capability, Snapshot } from "./types";
 
 export class CapabilityRegistry {
   private capabilities = new Map<string, Capability>();

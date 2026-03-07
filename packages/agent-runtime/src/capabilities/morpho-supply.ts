@@ -1,6 +1,6 @@
 import { encodeFunctionData } from "viem";
-import { AgentVaultABI, MorphoABI } from "../abis.js";
-import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, PermissionSpec } from "../types.js";
+import { AgentVaultABI, MorphoABI } from "../abis";
+import type { Capability, CheckResult, PreparedCall, ExecutionContext, AgentConfig, PermissionSpec } from "../types";
 
 function check(ok: boolean, message: string): CheckResult {
   return { ok, message };

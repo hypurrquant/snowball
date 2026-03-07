@@ -1,7 +1,7 @@
 import type { WalletClient, PublicClient, Address } from "viem";
-import type { AgentConfig, AgentManifest, StrategyPlan, ExecutionContext, RunResult, Snapshot } from "../types.js";
-import { CapabilityRegistry } from "../registry.js";
-import { buildSnapshot } from "../observers/build-snapshot.js";
+import type { AgentConfig, AgentManifest, StrategyPlan, ExecutionContext, RunResult, Snapshot } from "../types";
+import { CapabilityRegistry } from "../registry";
+import { buildSnapshot } from "../observers/build-snapshot";
 
 export async function executePlan(
   plan: StrategyPlan,

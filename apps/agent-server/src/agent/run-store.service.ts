@@ -63,6 +63,13 @@ export class RunStoreService {
     return rows.map((row) => this.rowToResult(row));
   }
 
+  count(): number {
+    const row = this.db.instance
+      .prepare("SELECT COUNT(*) as count FROM agent_runs")
+      .get() as { count: number };
+    return row.count;
+  }
+
   findById(runId: string): RunResult | undefined {
     const row = this.db.instance
       .prepare(`SELECT * FROM agent_runs WHERE run_id = ?`)

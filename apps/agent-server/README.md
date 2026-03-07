@@ -12,12 +12,12 @@ cp .env.example .env
 # 2. 의존성 설치 (프로젝트 루트에서)
 pnpm install
 
-# 3. 서버 실행
-pnpm start
+# 3. 서버 실행 (프로젝트 루트에서)
+pnpm --filter @snowball/agent-server start
 
-# 4. 상태 확인
-curl http://localhost:3000/agent/status
-# → {"status":"ok"}
+# 4. 상태 확인 (x-api-key 헤더 필수)
+curl -H "x-api-key: <YOUR_API_KEY>" http://localhost:3001/agent/status
+# → {"uptime":1234,"lastRun":null,"registeredAgents":1,"totalRuns":0}
 ```
 
 ## 환경변수
@@ -26,15 +26,17 @@ curl http://localhost:3000/agent/status
 |------|------|------|
 | `AGENT_PRIVATE_KEY` | Y | Agent 지갑 private key (온체인 실행용) |
 | `ANTHROPIC_API_KEY` | Y | Claude API key (AI 플래너용) |
-| `API_KEY` | Y | REST API 인증 키 (Authorization 헤더) |
+| `API_KEY` | Y | REST API 인증 키 (`x-api-key` 헤더) |
 | `RPC_URL` | N | RPC 엔드포인트 (기본: Creditcoin Testnet) |
 
 ## API Endpoints
 
+모든 엔드포인트는 `x-api-key` 헤더가 필요합니다.
+
 | Method | Path | 설명 |
 |--------|------|------|
-| POST | `/agent/run` | Agent 실행 (API key 필요) |
-| GET | `/agent/runs` | 실행 이력 조회 |
-| GET | `/agent/runs/:id` | 단건 조회 |
+| POST | `/agent/run` | Agent 실행 (10/분 rate limit) |
+| GET | `/agent/runs` | 실행 이력 조회 (?user=0x... 필터) |
+| GET | `/agent/runs/:id` | 단건 조회 (200/404) |
 | GET | `/agent/status` | 서버 상태 |
 | GET | `/agent/manifests` | 등록 Agent 목록 |

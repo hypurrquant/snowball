@@ -26,7 +26,7 @@ export class AgentService {
     let manifestDir: string;
     try {
       const runtimeEntry = require.resolve("@snowball/agent-runtime");
-      manifestDir = path.resolve(path.dirname(runtimeEntry), "../../manifests");
+      manifestDir = path.resolve(path.dirname(runtimeEntry), "../manifests");
     } catch {
       manifestDir = path.resolve(__dirname, "../../../../packages/agent-runtime/manifests");
     }
@@ -96,8 +96,13 @@ export class AgentService {
         this.logger.error(`Phase 2 terminal update failed: ${message}`);
         try {
           this.runStore.updateError(runId);
+          // Fallback succeeded — return error status per E2
+          this.lastRunTime = Date.now();
+          return { ...result, status: "error" as const, errors: [...result.errors, `DB update failed: ${message}`] };
         } catch (fallbackErr) {
+          // Fallback also failed — 500 per E2
           this.logger.error(`Phase 2 fallback also failed: ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`);
+          throw new InternalServerErrorException("Failed to persist run result");
         }
       }
 
@@ -129,6 +134,7 @@ export class AgentService {
       uptime: Date.now() - this.startTime,
       lastRun: this.lastRunTime,
       registeredAgents: this.manifests.size,
+      totalRuns: this.runStore.count(),
     };
   }
 }
