@@ -9,6 +9,7 @@
 - "시뮬레이션 실행", "simulate", "페르소나 실행"
 - "DEX 스왑 시뮬레이션", "Morpho 시뮬레이션"
 - "계정별 전략 실행", "시뮬 돌려"
+- "볼륨 생성", "스왑 볼륨", "풀 볼륨 채우기"
 
 ---
 
@@ -129,6 +130,29 @@ const marketParams = {
   lltv: market.lltv,
 };
 ```
+
+---
+
+## Pool Volume Generation
+
+상세: [volume-generation.md](volume-generation.md)
+
+### 실행된 스크립트
+
+| 스크립트 | 풀 | 상태 |
+|---------|-----|------|
+| `simulate-dex-liquidity.ts` | wCTC/USDC, lstCTC/USDC, lstCTC/wCTC | LP 완료 |
+| `simulate-swap-volume.ts` | wCTC/USDC | 볼륨 완료 |
+| `simulate-sbUSD-pools.ts` | wCTC/sbUSD, sbUSD/USDC | Trove+LP+볼륨 완료 |
+| `simulate-lstCTC-pools.ts` | lstCTC/wCTC, lstCTC/USDC | 볼륨 완료 |
+
+### 실전 핵심 교훈
+
+1. **SPL 에러 방지**: 스왑 금액 0.5~1.5%, 방향 교대, 실패 시 반대방향 retry
+2. **풀 주소**: `Factory.getPool()`으로 온체인 검증 필수 (배포 버전 불일치 주의)
+3. **sbUSD**: faucet 없음 → Liquity Trove에서만 민팅
+4. **fee tier**: sbUSD/USDC는 500, 나머지 3000
+5. **서버 연동**: `packages/core/src/config/pools.ts`에 풀 등록 → 서버가 자동 수집
 
 ---
 
