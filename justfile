@@ -12,7 +12,7 @@ up *args:
     fi
 
 down:
-    docker compose down
+    docker compose -f docker-compose.local.yml down
 
 logs *args:
     #!/usr/bin/env bash
