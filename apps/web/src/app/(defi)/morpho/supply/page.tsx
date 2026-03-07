@@ -39,6 +39,9 @@ function MarketSupplyCard({
 
   const [supplyAmount, setSupplyAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
+
+  const parsedSupply = (() => { try { return supplyAmount ? parseEther(supplyAmount) : 0n; } catch { return 0n; } })();
+  const insufficientBalance = parsedSupply > 0n && tokenBalance && parsedSupply > tokenBalance.value;
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const demoPosition = IS_TEST_MODE ? DEMO_POSITIONS[index] : null;
@@ -137,8 +140,11 @@ function MarketSupplyCard({
                   <p className="text-xs text-text-tertiary">Balance: {formatTokenAmount(tokenBalance.value, 18, 4)}</p>
                 )}
               </div>
-              <Button className="w-full" onClick={handleSupply} disabled={!supplyAmount || actions.isPending || isDemo}>
-                Supply
+              {insufficientBalance && (
+                <p className="text-xs text-red-400">Insufficient balance</p>
+              )}
+              <Button className="w-full" onClick={handleSupply} disabled={!supplyAmount || !!insufficientBalance || actions.isPending || isDemo}>
+                {insufficientBalance ? "Insufficient Balance" : "Supply"}
               </Button>
 
               <div className="border-t border-border pt-4 space-y-2">
