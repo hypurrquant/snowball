@@ -75,13 +75,29 @@ function loadSession(address: string): BridgeSession | null {
   try {
     const raw = localStorage.getItem(getSessionKey(address));
     if (!raw) return null;
-    const session = JSON.parse(raw) as BridgeSession;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsed = JSON.parse(raw) as any;
     // TTL: 24 hours
-    if (Date.now() - session.timestamp > 86_400_000) {
+    if (Date.now() - (parsed.timestamp ?? 0) > 86_400_000) {
       localStorage.removeItem(getSessionKey(address));
       return null;
     }
-    return session;
+    // Migrate old format (had depositTxHash instead of completedSteps)
+    if (!parsed.completedSteps) {
+      const migrated: BridgeSession = {
+        amount: parsed.amount ?? "0",
+        timestamp: parsed.timestamp ?? Date.now(),
+        completedSteps: {},
+      };
+      // Old format had depositTxHash → means approve+deposit were completed
+      if (parsed.depositTxHash) {
+        migrated.completedSteps.approve = "migrated";
+        migrated.completedSteps.deposit = parsed.depositTxHash;
+      }
+      saveSession(address, migrated);
+      return migrated;
+    }
+    return parsed as BridgeSession;
   } catch { return null; }
 }
 

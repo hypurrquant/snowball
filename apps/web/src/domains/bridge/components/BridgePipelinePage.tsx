@@ -125,6 +125,12 @@ export function BridgePipelinePage() {
                     New Bridge
                   </Button>
                 )}
+                {/* Safety valve: always show reset when there's progress but no primary action */}
+                {hasProgress && !isResumable && phase !== "done" && phase !== "error" && phase !== "timeout" && phase !== "attestWait" && !isExecuting && (
+                  <Button variant="outline" className="w-full" onClick={reset}>
+                    Reset
+                  </Button>
+                )}
               </div>
             </>
           )}
