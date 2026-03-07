@@ -33,7 +33,7 @@
 
 ## 제약사항
 - 온체인 조회만 사용 (서브그래프/인덱서 없음) — `balanceOf` → `tokenOfOwnerByIndex` → `positions` 순차 호출
-- 포지션 수가 많을 경우 RPC 호출 증가 → 최대 20개 포지션으로 제한 (초과 시 "최근 20개만 표시" 안내 문구)
+- 포지션 수가 많을 경우 RPC 호출 증가 → 최대 20개 포지션으로 제한 (인덱스 0~19, 초과 시 "최대 20개만 표시" 안내 문구)
 - USD 가치 계산: CreditcoinOracle의 `price()` (1e36 스케일) 사용. 오라클에 없는 토큰은 TOKEN_INFO.mockPriceUsd fallback (추정치 — UX에 정확도 한계 안내 불필요, 테스트넷)
 - 미수령 수수료: `positions().tokensOwed0/tokensOwed1`만 사용 (feeGrowth 정밀 계산은 비목표)
 - 기존 DDD 4계층 구조 준수: hook은 `domains/trade/hooks/`, 컴포넌트는 `domains/trade/components/`, 페이지는 `app/(trade)/`

@@ -9,6 +9,7 @@ import { StatCard } from "@/shared/components/common/StatCard";
 import { useProtocolStats } from "@/domains/trade/hooks/useProtocolStats";
 import { usePoolList, type PoolListItem } from "@/domains/trade/hooks/usePoolList";
 import { Plus, Droplets, DollarSign, BarChart3, TrendingUp, Flame, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { MyPositionsBanner } from "@/domains/trade/components/MyPositionsBanner";
 
 /* ── Trending Pool Card ── */
 function TrendingPoolCard({ pool }: { pool: PoolListItem }) {
@@ -124,6 +125,9 @@ export default function PoolPage() {
           </Link>
         </Button>
       </div>
+
+      {/* My Positions Banner */}
+      <MyPositionsBanner />
 
       {/* Protocol Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

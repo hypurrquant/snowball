@@ -38,6 +38,54 @@ export function alignTickToSpacing(tick: number, tickSpacing: number, roundDown:
   return Math.ceil(tick / tickSpacing) * tickSpacing;
 }
 
+/**
+ * Calculate underlying token amounts for a Uniswap V3 position.
+ *
+ * Formulas (standard Uniswap V3):
+ * - Below range (currentTick < tickLower):
+ *     amount0 = L * (1/sqrtPl - 1/sqrtPu), amount1 = 0
+ * - Above range (currentTick >= tickUpper):
+ *     amount0 = 0, amount1 = L * (sqrtPu - sqrtPl)
+ * - In range (tickLower <= currentTick < tickUpper):
+ *     amount0 = L * (1/sqrtP - 1/sqrtPu), amount1 = L * (sqrtP - sqrtPl)
+ */
+export function getPositionAmounts(
+  liquidity: bigint,
+  tickLower: number,
+  tickUpper: number,
+  currentTick: number,
+  decimals0: number,
+  decimals1: number,
+): { amount0: number; amount1: number } {
+  const L = Number(liquidity);
+  if (L === 0) return { amount0: 0, amount1: 0 };
+
+  const sqrtPl = tickToSqrtPrice(tickLower);
+  const sqrtPu = tickToSqrtPrice(tickUpper);
+
+  let amount0 = 0;
+  let amount1 = 0;
+
+  if (currentTick < tickLower) {
+    // Below range: all in token0
+    amount0 = L * (1 / sqrtPl - 1 / sqrtPu);
+  } else if (currentTick >= tickUpper) {
+    // Above range: all in token1
+    amount1 = L * (sqrtPu - sqrtPl);
+  } else {
+    // In range
+    const sqrtP = tickToSqrtPrice(currentTick);
+    amount0 = L * (1 / sqrtP - 1 / sqrtPu);
+    amount1 = L * (sqrtP - sqrtPl);
+  }
+
+  // Convert from raw sqrt-price space to human-readable with decimals
+  amount0 = amount0 / 10 ** decimals0;
+  amount1 = amount1 / 10 ** decimals1;
+
+  return { amount0, amount1 };
+}
+
 /** Format price for compact display */
 export function formatPriceCompact(price: number): string {
   if (price === 0) return '0';

@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Vault,
   Link2,
+  Layers,
 } from "lucide-react";
 
 export interface NavItem {
@@ -30,6 +31,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/swap", label: "Swap", icon: (cls) => <ArrowLeftRight className={cls} /> },
       { href: "/pool", label: "Pool", icon: (cls) => <Droplets className={cls} /> },
+      { href: "/pool/positions", label: "Positions", icon: (cls) => <Layers className={cls} /> },
     ],
   },
   {
