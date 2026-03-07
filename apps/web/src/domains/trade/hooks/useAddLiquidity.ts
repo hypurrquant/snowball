@@ -34,7 +34,7 @@ export function useAddLiquidity() {
     tickUpper,
     amount0Desired,
     amount1Desired,
-    slippageBps = 50,
+    slippageBps = 500,
   }: {
     token0: Address;
     token1: Address;
@@ -50,20 +50,28 @@ export function useAddLiquidity() {
       return;
     }
 
-    const amount0Min =
-      (amount0Desired * BigInt(10000 - slippageBps)) / 10000n;
-    const amount1Min =
-      (amount1Desired * BigInt(10000 - slippageBps)) / 10000n;
+    // Uniswap V3 requires token0 < token1. Callers pass tokens in URL/user order,
+    // but ticks from usePoolTicks are already in sorted-token order — only swap tokens & amounts.
+    const needsSwap = token0.toLowerCase() > token1.toLowerCase();
+    const t0 = needsSwap ? token1 : token0;
+    const t1 = needsSwap ? token0 : token1;
+    const a0 = needsSwap ? amount1Desired : amount0Desired;
+    const a1 = needsSwap ? amount0Desired : amount1Desired;
+
+    // Mint adds liquidity at current price — no swap, no MEV risk.
+    // The pool takes only what it needs; min=0 avoids false slippage reverts.
+    const amount0Min = 0n;
+    const amount1Min = 0n;
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200);
 
     const mintParams = {
-      token0,
-      token1,
+      token0: t0,
+      token1: t1,
       fee,
       tickLower,
       tickUpper,
-      amount0Desired,
-      amount1Desired,
+      amount0Desired: a0,
+      amount1Desired: a1,
       amount0Min,
       amount1Min,
       recipient: address,
@@ -73,8 +81,9 @@ export function useAddLiquidity() {
     console.log("[mint] NonfungiblePositionManager:", DEX.nonfungiblePositionManager);
     console.log("[mint] params:", {
       ...mintParams,
-      amount0Desired: amount0Desired.toString(),
-      amount1Desired: amount1Desired.toString(),
+      needsSwap,
+      amount0Desired: a0.toString(),
+      amount1Desired: a1.toString(),
       amount0Min: amount0Min.toString(),
       amount1Min: amount1Min.toString(),
       deadline: deadline.toString(),
