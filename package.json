@@ -1,6 +1,6 @@
 {
   "name": "snowball",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "description": "Snowball — Smart Contract Monorepo for Creditcoin Network",
   "scripts": {

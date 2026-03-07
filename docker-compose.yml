@@ -24,6 +24,30 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    container_name: snowball-server
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-3001}:3001"
+    volumes:
+      - server-data:/app/apps/server/data
+    environment:
+      - PORT=3001
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   frontend:
     build:
       context: ./apps/web
@@ -32,12 +56,15 @@ services:
         NEXT_PUBLIC_PRIVY_APP_ID: ${NEXT_PUBLIC_PRIVY_APP_ID:-}
         NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://backend:8000}
         NEXT_PUBLIC_CHAT_API_BASE: ${NEXT_PUBLIC_CHAT_API_BASE:-}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://server:3001}
     container_name: snowball-frontend
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       backend:
+        condition: service_healthy
+      server:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
@@ -50,3 +77,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+volumes:
+  server-data:
