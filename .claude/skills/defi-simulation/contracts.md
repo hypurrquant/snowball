@@ -12,10 +12,16 @@
 
 | Symbol | Address | Mock Price |
 |--------|---------|------------|
-| wCTC | `0xdb5c8e9d0827c474342bea03e0e35a60d621afea` | $2.50 |
-| lstCTC | `0x47ad69498520edb2e1e9464fedf5309504e26207` | $2.60 |
-| sbUSD | `0x5772f9415b75ecca00e7667e0c7d730db3b29fbd` | $1.00 |
-| USDC | `0x3e31b08651644b9e6535f5bf0c7a9e7e6ad92e02` | $1.00 |
+| wCTC | `0xca69344e2917f026ef4a5ace5d7b122343fc8528` | $5.00 |
+| lstCTC | `0xa768d376272f9216c8c4aa3063391bdafbcad4c2` | $5.20 |
+| sbUSD | `0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5` | $1.00 |
+| USDC | `0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9` | $1.00 |
+
+### Token Minting
+
+- **wCTC / lstCTC**: `faucet(amount)` — 누구나 호출 가능, 1회 100k 제한
+- **USDC**: `mint(to, amount)` — 누구나 호출 가능, 제한 없음
+- **sbUSD**: Liquity Trove에서만 민팅 (BorrowerOperations.openTrove)
 
 ---
 
@@ -27,6 +33,16 @@
 | SwapRouter | `0xec48ed2e9c81b77ab6f8e79c257f9d0c21074154` |
 | NonfungiblePositionManager | `0xa28bfaa2e84098de8d654f690e51c265e4ae01c9` |
 | QuoterV2 | `0x2383343c2c7ae52984872f541b8b22f8da0b419a` |
+
+### Pools
+
+| Pair | Fee | Address |
+|------|-----|---------|
+| wCTC/USDC | 3000 | `0xb6Db55F3d318B6b0C37777A818C2c195181B94C9` |
+| lstCTC/USDC | 3000 | `0x394ECC1c9094F5E3D83a6C9497a33a969e9B136a` |
+| wCTC/sbUSD | 3000 | `0x23e6152CC07d4DEBA597c9e975986E2B307E8874` |
+| sbUSD/USDC | 500 | `0xe70647BF2baB8282B65f674b0DF8B7f0bb658859` |
+| lstCTC/wCTC | 3000 | `0xee0AF4a1Aa3ce7447248f87c384b8bE7de302DA5` |
 
 ### ABI 위치
 
@@ -49,6 +65,62 @@
 
 ---
 
+## Liquity (Borrow / Earn)
+
+### wCTC Branch
+
+| Contract | Address |
+|----------|---------|
+| AddressesRegistry | `0x7cfed108ed84194cf37f93d47268fbdd14da73d2` |
+| BorrowerOperations | `0xb637f375cbbd278ace5fdba53ad868ae7cb186ea` |
+| TroveManager | `0xa20f9dfeb110e11c89147b9db5adb98a7d91e70e` |
+| StabilityPool | `0xf1654541efb7a3c34a9255464ebb2294fa1a43f3` |
+| ActivePool | `0xa7f0600a023cf6076f5d8dc51b46b91bafe095e5` |
+| DefaultPool | `0x201ff7ec1a9ceaf1396ea6d90cd24ac6b757e404` |
+| GasPool | `0x4aa86795705a604e3dac4cfe45c375976eca3189` |
+| CollSurplusPool | `0x0dc9642129470d6a0ac0bac2a5d1b18a2ea09111` |
+| SortedTroves | `0xf5ef344759df7786cda9d2133e4d1e10e3b43f9f` |
+| TroveNFT | `0x72e383eff50893e2b2edeb711a81c3a812dcd2f9` |
+| PriceFeed | `0xca9341894230b84fdff429ff43e83cc8f8990342` |
+
+### lstCTC Branch
+
+| Contract | Address |
+|----------|---------|
+| AddressesRegistry | `0x0afe1c58a76c49d62bd7331f309aa14731efb1fc` |
+| BorrowerOperations | `0x8700ed43989e2f935ab8477dd8b2822cae7f60ca` |
+| TroveManager | `0x83715c7e9873b0b8208adbbf8e07f31e83b94aed` |
+| StabilityPool | `0xec700d805b5de3bf988401af44b1b384b136c41b` |
+| ActivePool | `0xa57cca34198bf262a278da3b2b7a8a5f032cb835` |
+| DefaultPool | `0x6ed045c0cadc55755dc09f1bfee0f964baf1f859` |
+| GasPool | `0x31d560b7a74b179dce8a8017a1de707c32dd67da` |
+| CollSurplusPool | `0xa287db89e552698a118c89d8bbee25bf51a0ec33` |
+| SortedTroves | `0x25aa78c7b0dbc736ae23a316ab44579467ba9507` |
+| TroveNFT | `0x51a90151e0dd1348e77ee6bcc30278ee311f29a8` |
+| PriceFeed | `0xa12ed39d24d4bbc100d310ae1cbf10b4c67e4a08` |
+
+### Shared
+
+| Contract | Address |
+|----------|---------|
+| CollateralRegistry | `0x5c1683f9d8a8d77de48b380a15b623cf5d91bb59` |
+| HintHelpers | `0x6ee9850b0915763bdc0c7edca8b66189449a447f` |
+| MultiTroveGetter | `0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6` |
+| RedemptionHelper | `0x8baf58113f968b4dfb2916290b57ce3ae114fb77` |
+| DebtInFrontHelper | `0x9fd6116fc1d006fa1d8993746ac1924f16d722bb` |
+| AgentVault | `0xf8e322c36485fa4c3971f75819c5de5a9be2b870` |
+
+### Liquity Parameters
+
+| Parameter | wCTC | lstCTC |
+|-----------|------|--------|
+| MCR | 110% | 120% |
+| CCR | 150% | 160% |
+| ETH_GAS_COMPENSATION | 0.2 CTC | 0.2 CTC |
+| MIN_DEBT | 10 sbUSD | 10 sbUSD |
+
+---
+
 ## Morpho (SnowballLend)
 
 | Contract | Address |
@@ -56,30 +128,30 @@
 | SnowballLend | `0x7d604b31297b36aace73255931f65e891cf289d3` |
 | AdaptiveCurveIRM | `0x0ac487d84507b2fbe9130acc080f2b554cb3fffe` |
 
-### Oracles
+### Oracles (18 decimals)
 
-| Token | Address |
-|-------|---------|
-| wCTC | `0x42ca12a83c14e95f567afc940b0118166d8bd852` |
-| lstCTC | `0x192f1feb36f319e79b3bba25a17359ee72266a14` |
-| sbUSD | `0xc39f222e034f4bd4f3c858e6fde9ce4398400a26` |
+| Token | Address | Price |
+|-------|---------|-------|
+| wCTC | `0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2` | $5.00 |
+| lstCTC | `0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a` | $5.20 |
+| sbUSD | `0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a` | $1.00 |
 
 ### Markets
 
 | ID | Pair | LLTV | Oracle |
 |----|------|------|--------|
-| `0xfb2641d7...` | wCTC(coll) / sbUSD(loan) | 77% | wCTC oracle |
-| `0x35cfd9e9...` | lstCTC(coll) / sbUSD(loan) | 77% | lstCTC oracle |
-| `0x3df89a2c...` | sbUSD(coll) / USDC(loan) | 90% | sbUSD oracle |
+| `0x8dce00fb...` | wCTC(coll) / sbUSD(loan) | 77% | wCTC oracle |
+| `0x93c1cf16...` | lstCTC(coll) / sbUSD(loan) | 77% | lstCTC oracle |
+| `0x6708534b...` | sbUSD(coll) / USDC(loan) | 90% | sbUSD oracle |
 
 ### MarketParams 구성법
 
 ```typescript
 // wCTC / sbUSD 마켓 예시
 const marketParams = {
-  loanToken: "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd",      // sbUSD
-  collateralToken: "0xdb5c8e9d0827c474342bea03e0e35a60d621afea", // wCTC
-  oracle: "0x42ca12a83c14e95f567afc940b0118166d8bd852",          // wCTC oracle
+  loanToken: "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5",      // sbUSD
+  collateralToken: "0xca69344e2917f026ef4a5ace5d7b122343fc8528", // wCTC
+  oracle: "0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2",          // wCTC oracle
   irm: "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",             // AdaptiveCurveIRM
   lltv: 770000000000000000n,                                       // 0.77
 };

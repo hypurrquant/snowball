@@ -7,31 +7,31 @@
 ```typescript
 const MARKETS = {
   "wCTC/sbUSD": {
-    id: "0xfb2641d76f7e8a4170560c308a158508651a22e3f40110f99008ca892767f261",
+    id: "0x8dce00fbd59450e4d2f46e9aa637690fc21c058c4c8abf4dea75e9ab2ce38364",
     params: {
-      loanToken: "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd",      // sbUSD
-      collateralToken: "0xdb5c8e9d0827c474342bea03e0e35a60d621afea", // wCTC
-      oracle: "0x42ca12a83c14e95f567afc940b0118166d8bd852",
+      loanToken: "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5",      // sbUSD
+      collateralToken: "0xca69344e2917f026ef4a5ace5d7b122343fc8528", // wCTC
+      oracle: "0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2",
       irm: "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
       lltv: 770000000000000000n,
     },
   },
   "lstCTC/sbUSD": {
-    id: "0x35cfd9e93f81434c0f3e6e688a42775e53fc442163cc960090efcc4c2ef8488e",
+    id: "0x93c1cf16ce13082a758d11757a899388741c39c4ed01364116137074fc9671ae",
     params: {
-      loanToken: "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd",      // sbUSD
-      collateralToken: "0x47ad69498520edb2e1e9464fedf5309504e26207", // lstCTC
-      oracle: "0x192f1feb36f319e79b3bba25a17359ee72266a14",
+      loanToken: "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5",      // sbUSD
+      collateralToken: "0xa768d376272f9216c8c4aa3063391bdafbcad4c2", // lstCTC
+      oracle: "0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a",
       irm: "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
       lltv: 770000000000000000n,
     },
   },
   "sbUSD/USDC": {
-    id: "0x3df89a2c4e307c088bc4ddff74f5e0dc246404b7a1c0096771d1fa6b080fb681",
+    id: "0x6708534b3aa0dc0b77dd4e534187d801f664958238b45b0563e63dbfe914fddd",
     params: {
-      loanToken: "0x3e31b08651644b9e6535f5bf0c7a9e7e6ad92e02",      // USDC
-      collateralToken: "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd", // sbUSD
-      oracle: "0xc39f222e034f4bd4f3c858e6fde9ce4398400a26",
+      loanToken: "0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9",      // USDC
+      collateralToken: "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5", // sbUSD
+      oracle: "0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a",
       irm: "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",
       lltv: 900000000000000000n,
     },
