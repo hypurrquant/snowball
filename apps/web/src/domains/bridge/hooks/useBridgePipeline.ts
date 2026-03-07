@@ -113,6 +113,7 @@ export function useBridgePipeline() {
   const [steps, setSteps] = useState<TxStep[]>(createInitialSteps);
   const [phase, setPhase] = useState<BridgePhase>("idle");
   const [amount, setAmount] = useState<bigint>(0n);
+  const [executing, setExecuting] = useState(false);
   const phaseRef = useRef<BridgePhase>("idle");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionRef = useRef<BridgeSession | null>(null);
@@ -278,6 +279,7 @@ export function useBridgePipeline() {
       const startIdx = phaseOrder.indexOf(startPhase);
       if (startIdx < 0) return;
 
+      setExecuting(true);
       try {
         for (let i = startIdx; i < phaseOrder.length; i++) {
           const p = phaseOrder[i];
@@ -306,9 +308,11 @@ export function useBridgePipeline() {
             persistStep("burn", tx, { burnBlock });
           } else if (p === "attestWait") {
             // Polling handled by useEffect
+            setExecuting(false);
             return;
           }
         }
+        setExecuting(false);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error";
         const failedStepId = PHASE_STEP_MAP[phaseRef.current];
@@ -317,6 +321,7 @@ export function useBridgePipeline() {
           persistFailure(failedStepId, message);
         }
         setPhase("error");
+        setExecuting(false);
       }
     },
     [address, actions, updateStep, persistStep, persistFailure]
@@ -377,6 +382,7 @@ export function useBridgePipeline() {
     setSteps(createInitialSteps());
     setPhase("idle");
     setAmount(0n);
+    setExecuting(false);
     sessionRef.current = null;
     if (address) clearSession(address);
   }, [address]);
@@ -388,6 +394,6 @@ export function useBridgePipeline() {
     execute,
     retry,
     reset,
-    isExecuting: phase !== "idle" && phase !== "done" && phase !== "error" && phase !== "timeout",
+    isExecuting: executing,
   };
 }
