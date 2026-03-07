@@ -22,6 +22,9 @@ import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { usePositionPreview } from "@/domains/defi/liquity/hooks/usePositionPreview";
 import { useMarketRateStats } from "@/domains/defi/liquity/hooks/useMarketRateStats";
 import { TOKENS } from "@/core/config/addresses";
+import { InterestRateSlider } from "@/domains/defi/liquity/components/InterestRateSlider";
+import { PositionSummary } from "@/domains/defi/liquity/components/PositionSummary";
+import { EditTroveDialog } from "@/domains/defi/liquity/components/EditTroveDialog";
 import { DEMO_TROVES } from "@/domains/defi/liquity/data/fixtures";
 import type { TroveData } from "@/domains/defi/liquity/types";
 import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
@@ -33,66 +36,6 @@ const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
 // Matches on-chain Constants.sol MIN_DEBT = 10e18
 const MIN_DEBT = 10;
 
-/** Gradient gauge slider for interest rate */
-function InterestRateSlider({ value, onChange, avgRate }: { value: number; onChange: (v: number) => void; avgRate?: number | null }) {
-  // thumb is 20px wide, so we need to offset the gauge to align with thumb center
-  const THUMB = 20; // px, matches w-5
-  const toPct = (v: number) => ((v - 0.5) / (25 - 0.5)) * 100;
-  const pct = toPct(value);
-  const avgPct = avgRate != null ? toPct(avgRate) : null;
-  return (
-    <div className="space-y-1">
-      <div className="relative h-8 flex items-center">
-        {/* Track background (unfilled portion) */}
-        <div className="absolute inset-x-0 h-2.5 rounded-full bg-bg-input/50" />
-        {/* Filled gradient gauge — offset by half-thumb so it aligns with thumb center */}
-        <div
-          className="absolute h-2.5 rounded-full"
-          style={{
-            left: 0,
-            width: `calc(${pct}% + ${THUMB / 2 - (pct / 100) * THUMB}px)`,
-            background: "linear-gradient(to right, #ef4444, #f59e0b 40%, #4ade80 80%, #22c55e)",
-          }}
-        />
-        {/* Avg marker line on the track */}
-        {avgPct !== null && (
-          <div
-            className="absolute top-1/2 -translate-y-1/2 w-0.5 h-5 bg-white/50 rounded-full pointer-events-none z-[5]"
-            style={{ left: `calc(${avgPct}% + ${THUMB / 2 - (avgPct / 100) * THUMB}px)` }}
-          />
-        )}
-        {/* Native range input (invisible but interactive) */}
-        <input
-          type="range"
-          min={0.5}
-          max={25}
-          step={0.1}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="relative z-10 w-full h-2.5 appearance-none bg-transparent cursor-pointer
-            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white/90 [&::-webkit-slider-thumb]:bg-[#1a1b2e] [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing
-            [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white/90 [&::-moz-range-thumb]:bg-[#1a1b2e] [&::-moz-range-thumb]:shadow-lg [&::-moz-range-thumb]:cursor-grab
-            [&::-moz-range-track]:bg-transparent"
-        />
-      </div>
-      {/* Avg label below, aligned to the marker */}
-      {avgPct !== null && avgRate != null && (
-        <div className="relative h-3">
-          <span
-            className="absolute text-[10px] text-white/50 whitespace-nowrap pointer-events-none"
-            style={{
-              left: `calc(${avgPct}% + ${THUMB / 2 - (avgPct / 100) * THUMB}px)`,
-              transform: "translateX(-50%)",
-            }}
-          >
-            Avg {avgRate.toFixed(1)}%
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function LiquityBorrowPage() {
   const searchParams = useSearchParams();
   const branch = (searchParams.get("branch") as "wCTC" | "lstCTC") ?? "wCTC";
@@ -101,7 +44,7 @@ export default function LiquityBorrowPage() {
   const { stats, isLoading: statsLoading } = useLiquityBranch(branch);
   const { troves, troveCount, isLoading: trovesLoading, refetch: refetchTroves, nextOwnerIndex } = useTroves(branch, address);
   const { troves: allTroves, totalCount: systemTroveCount, isLoading: allTrovesLoading } = useAllTroves(branch);
-  const { approveCollateral, openTrove, adjustTrove, adjustInterestRate, closeTrove, isPending, needsApproval } =
+  const { approveCollateral, openTrove, closeTrove, isPending, needsApproval } =
     useTroveActions(branch, address);
   const collToken = branch === "wCTC" ? TOKENS.wCTC : TOKENS.lstCTC;
   const { data: collBalance, refetch: refetchBalance } = useTokenBalance({ address, token: collToken });
@@ -122,16 +65,8 @@ export default function LiquityBorrowPage() {
     setTxSteps((prev) => prev.map((s) => (s.id === id ? { ...s, ...update } : s)));
   }, []);
 
-  // Adjust Trove form
-  const [adjustTroveId, setAdjustTroveId] = useState<bigint | null>(null);
-  const [adjustCollChange, setAdjustCollChange] = useState("");
-  const [adjustDebtChange, setAdjustDebtChange] = useState("");
-  const [adjustIsCollIncrease, setAdjustIsCollIncrease] = useState(true);
-  const [adjustIsDebtIncrease, setAdjustIsDebtIncrease] = useState(true);
-
-  // Rate Adjust form
-  const [rateTroveId, setRateTroveId] = useState<bigint | null>(null);
-  const [newRate, setNewRate] = useState("");
+  // Edit Trove
+  const [editTroveId, setEditTroveId] = useState<bigint | null>(null);
 
   const collBalanceValue = collBalance?.value ?? 0n;
   const parsedColl = collAmount ? parseEther(collAmount) : 0n;
@@ -231,38 +166,6 @@ export default function LiquityBorrowPage() {
         s.status === "executing" ? { ...s, status: "error" as const, error: errorMsg } : s,
       ));
       setTxPhase("error");
-    }
-  };
-
-  const handleAdjustTrove = async () => {
-    if (!adjustTroveId) return;
-    try {
-      await adjustTrove({
-        troveId: adjustTroveId,
-        collChange: adjustCollChange ? parseEther(adjustCollChange) : 0n,
-        isCollIncrease: adjustIsCollIncrease,
-        debtChange: adjustDebtChange ? parseEther(adjustDebtChange) : 0n,
-        isDebtIncrease: adjustIsDebtIncrease,
-      });
-      setAdjustTroveId(null);
-      refetchTroves(); refetchBalance();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Adjust trove failed");
-    }
-  };
-
-  const handleAdjustRate = async () => {
-    if (!rateTroveId || !newRate) return;
-    try {
-      await adjustInterestRate({
-        troveId: rateTroveId,
-        newRate: parseEther(String(Number(newRate) / 100)),
-        maxFee: parseEther("1"),
-      });
-      setRateTroveId(null);
-      refetchTroves(); refetchBalance();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Adjust rate failed");
     }
   };
 
@@ -416,43 +319,7 @@ export default function LiquityBorrowPage() {
 
                   {/* Position Summary */}
                   {(collNum > 0 || debtNum > 0) && (
-                    <div className="rounded-xl bg-bg-input p-4 space-y-2.5">
-                      <p className="font-semibold text-white text-sm">Position Summary</p>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        <div className="flex justify-between col-span-2">
-                          <span className="text-text-tertiary">Health Factor</span>
-                          <span className={`font-bold ${preview.crColor}`}>
-                            {preview.cr > 0 ? (preview.cr / 100).toFixed(2) : "\u2014"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between col-span-2">
-                          <span className="text-text-tertiary">Collateral Ratio</span>
-                          <span className={`font-mono ${preview.crColor}`}>
-                            {preview.cr > 0 ? `${preview.cr.toFixed(1)}%` : "\u2014"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between col-span-2">
-                          <span className="text-text-tertiary">Liquidation Price</span>
-                          <span className="text-white font-mono">
-                            {preview.liquidationPrice > 0n ? `$${formatTokenAmount(preview.liquidationPrice, 18, 4)}` : "\u2014"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between col-span-2">
-                          <span className="text-text-tertiary">7-day Upfront Fee</span>
-                          <span className="text-white font-mono">
-                            {preview.upfrontFee > 0n ? `${formatTokenAmount(preview.upfrontFee, 18, 4)} sbUSD` : "\u2014"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-text-tertiary">MCR</span>
-                          <span className="text-text-secondary">{mcrPct.toFixed(0)}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-text-tertiary">CCR</span>
-                          <span className="text-text-secondary">{ccrPct.toFixed(0)}%</span>
-                        </div>
-                      </div>
-                    </div>
+                    <PositionSummary preview={preview} mcrPct={mcrPct} ccrPct={ccrPct} />
                   )}
 
                   {/* Errors */}
@@ -529,61 +396,17 @@ export default function LiquityBorrowPage() {
                     )}
                     {!t.isDemo && (
                       <>
-                        <Dialog open={adjustTroveId === t.id} onOpenChange={(open) => setAdjustTroveId(open ? t.id : null)}>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="secondary">Adjust</Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Adjust Trove</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-3 py-4">
-                              <div className="flex items-center gap-2">
-                                <select
-                                  className="bg-bg-input border border-border rounded px-2 py-1 text-sm"
-                                  value={adjustIsCollIncrease ? "add" : "remove"}
-                                  onChange={(e) => setAdjustIsCollIncrease(e.target.value === "add")}
-                                >
-                                  <option value="add">Add Coll</option>
-                                  <option value="remove">Remove Coll</option>
-                                </select>
-                                <Input placeholder="0.00" className="font-mono" value={adjustCollChange} onChange={(e) => setAdjustCollChange(e.target.value)} />
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <select
-                                  className="bg-bg-input border border-border rounded px-2 py-1 text-sm"
-                                  value={adjustIsDebtIncrease ? "borrow" : "repay"}
-                                  onChange={(e) => setAdjustIsDebtIncrease(e.target.value === "borrow")}
-                                >
-                                  <option value="borrow">Borrow More</option>
-                                  <option value="repay">Repay Debt</option>
-                                </select>
-                                <Input placeholder="0.00" className="font-mono" value={adjustDebtChange} onChange={(e) => setAdjustDebtChange(e.target.value)} />
-                              </div>
-                              <Button className="w-full" onClick={handleAdjustTrove} disabled={isPending}>
-                                {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                                Confirm Adjust
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                        <Dialog open={rateTroveId === t.id} onOpenChange={(open) => { setRateTroveId(open ? t.id : null); if (open) setNewRate(String(Number(t.interestRate) / 1e16)); }}>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="secondary">Rate</Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Adjust Interest Rate</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-3 py-4">
-                              <Input placeholder="5" className="font-mono" value={newRate} onChange={(e) => setNewRate(e.target.value)} />
-                              <Button className="w-full" onClick={handleAdjustRate} disabled={isPending || !newRate}>
-                                {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                                Update Rate
-                              </Button>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        <Button size="sm" variant="secondary" onClick={() => setEditTroveId(t.id)}>
+                          Edit
+                        </Button>
+                        <EditTroveDialog
+                          open={editTroveId === t.id}
+                          onOpenChange={(open) => setEditTroveId(open ? t.id : null)}
+                          trove={t}
+                          branch={branch}
+                          address={address}
+                          onSuccess={() => { refetchTroves(); refetchBalance(); }}
+                        />
                         <Button size="sm" variant="destructive" onClick={() => handleCloseTrove(t.id)} disabled={isPending}>
                           Close
                         </Button>

@@ -100,10 +100,6 @@ export function useTroveActions(
     debtChange: bigint;
     isDebtIncrease: boolean;
   }) => {
-    if (params.isCollIncrease && params.collChange > 0n) {
-      await approve(params.collChange);
-    }
-
     const hash = await writeContractAsync({
       address: b.borrowerOperations,
       abi: BorrowerOperationsABI,
