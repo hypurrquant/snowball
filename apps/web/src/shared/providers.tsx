@@ -1,9 +1,23 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { WagmiProvider } from "wagmi";
-import { useState, type ReactNode } from "react";
+import { WagmiProvider, useAccount, useSwitchChain } from "wagmi";
+import { useState, useEffect, type ReactNode } from "react";
 import { wagmiConfig } from "@/shared/config/wagmi";
+import { creditcoinTestnet } from "@/core/config/chain";
+
+function AutoChainSwitch() {
+  const { chainId, isConnected } = useAccount();
+  const { switchChain } = useSwitchChain();
+
+  useEffect(() => {
+    if (isConnected && chainId && chainId !== creditcoinTestnet.id) {
+      switchChain({ chainId: creditcoinTestnet.id });
+    }
+  }, [isConnected, chainId, switchChain]);
+
+  return null;
+}
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -20,7 +34,10 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={wagmiConfig}>{children}</WagmiProvider>
+      <WagmiProvider config={wagmiConfig}>
+        <AutoChainSwitch />
+        {children}
+      </WagmiProvider>
     </QueryClientProvider>
   );
 }

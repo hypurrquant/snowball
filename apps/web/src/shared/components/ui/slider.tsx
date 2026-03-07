@@ -7,8 +7,13 @@ import { cn } from "@/shared/lib/utils"
 
 function Slider({
   className,
+  trackClassName,
+  rangeClassName,
   ...props
-}: React.ComponentProps<typeof SliderPrimitive.Root>) {
+}: React.ComponentProps<typeof SliderPrimitive.Root> & {
+  trackClassName?: string;
+  rangeClassName?: string;
+}) {
   return (
     <SliderPrimitive.Root
       data-slot="slider"
@@ -18,10 +23,10 @@ function Slider({
       )}
       {...props}
     >
-      <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-bg-input">
-        <SliderPrimitive.Range className="absolute h-full bg-ice-400" />
+      <SliderPrimitive.Track className={cn("relative h-2 w-full grow overflow-hidden rounded-full bg-bg-input", trackClassName)}>
+        <SliderPrimitive.Range className={cn("absolute h-full bg-ice-400", rangeClassName)} />
       </SliderPrimitive.Track>
-      <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border border-ice-400 bg-bg-surface shadow transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ice-400/50 disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing" />
+      <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-white/90 bg-bg-surface shadow-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing" />
     </SliderPrimitive.Root>
   )
 }
