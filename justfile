@@ -4,10 +4,10 @@
 up *args:
     #!/usr/bin/env bash
     if [ -z "{{args}}" ]; then
-        docker compose up -d --build
+        docker compose -f docker-compose.local.yml up -d --build
         echo "All services running: server(:3001) agent-server(:3002) usc-worker frontend(:3000)"
     else
-        docker compose up -d --build {{args}}
+        docker compose -f docker-compose.local.yml up -d --build {{args}}
         echo "Started: {{args}}"
     fi
 

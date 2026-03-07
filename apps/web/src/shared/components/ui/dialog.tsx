@@ -40,7 +40,7 @@ const DialogContent = React.forwardRef<
 >(({ className, children, snowfall = "light", style, ...props }, ref) => {
     const isHeavy = snowfall === "heavy";
     const snowCount = isHeavy ? 120 : snowfall === "light" ? 40 : 0;
-    // heavy(TxPipeline)는 일반 모달 위에 떠야 하므로 z-index를 높게
+    // heavy(TxPipeline) needs higher z-index to overlay normal modals
     const overlayZ = isHeavy ? 70 : 50;
     const snowZ = isHeavy ? 75 : 55;
     const contentZ = isHeavy ? 80 : 60;
