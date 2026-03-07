@@ -22,7 +22,6 @@ const MOCK_DATA: ProtocolStats = {
   tvlChange24h: 2.3,
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 function formatUsd(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
@@ -31,7 +30,7 @@ function formatUsd(value: number): string {
 }
 
 async function fetchStats(): Promise<ProtocolStats> {
-  const res = await fetch(`${API_URL}/api/protocol/stats`);
+  const res = await fetch("/api/protocol/stats");
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const json: ProtocolStatsResponse = await res.json();
   return {
@@ -47,13 +46,12 @@ export function useProtocolStats(): UseProtocolStatsReturn {
   const { data, isLoading } = useQuery({
     queryKey: ["protocolStats"],
     queryFn: fetchStats,
-    enabled: !!API_URL,
     staleTime: 60_000,
     retry: 1,
   });
 
   return {
-    data: API_URL && data ? data : MOCK_DATA,
-    isLoading: API_URL ? isLoading : false,
+    data: data ?? MOCK_DATA,
+    isLoading,
   };
 }

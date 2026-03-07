@@ -24,6 +24,7 @@ import { TOKENS } from "@/core/config/addresses";
 import { InterestRateSlider } from "@/domains/defi/liquity/components/InterestRateSlider";
 import { PositionSummary } from "@/domains/defi/liquity/components/PositionSummary";
 import { EditTroveDialog } from "@/domains/defi/liquity/components/EditTroveDialog";
+import { MiniRateGauge } from "@/domains/defi/liquity/components/MiniRateGauge";
 import { DEMO_TROVES } from "@/domains/defi/liquity/data/fixtures";
 import type { TroveData } from "@/domains/defi/liquity/types";
 import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
@@ -100,6 +101,11 @@ export default function LiquityBorrowPage() {
   if (debtNum > 0 && debtNum < MIN_DEBT) errors.push(`Minimum debt is ${MIN_DEBT} sbUSD.`);
   if (preview.cr > 0 && !preview.isAboveMCR) errors.push(`CR (${preview.cr.toFixed(0)}%) is below MCR (${mcrPct.toFixed(0)}%). Increase collateral or reduce debt.`);
   const canOpen = !!collAmount && !!debtAmount && debtNum >= MIN_DEBT && preview.isAboveMCR && !insufficientBalance;
+
+  const userTroveIds = useMemo(
+    () => new Set(troves.map((t) => String(t.id))),
+    [troves],
+  );
 
   const displayTroves: (TroveData & { isDemo?: boolean })[] = [
     ...troves.map((t) => ({ ...t, isDemo: false })),
@@ -388,6 +394,12 @@ export default function LiquityBorrowPage() {
                       <span className="font-mono text-white">
                         {formatNumber(Number(t.interestRate) / 1e16)}%
                       </span>
+                      <MiniRateGauge
+                        rate={Number(t.interestRate) / 1e16}
+                        median={marketStats?.median ?? null}
+                        isUser
+                        className="mt-1"
+                      />
                     </div>
                     <div>
                       <span className="text-text-tertiary block">ICR</span>
@@ -471,8 +483,17 @@ export default function LiquityBorrowPage() {
                       <td className="py-2.5 px-3 font-mono text-right text-white">
                         {formatTokenAmount(t.entireDebt, 18, 2)} sbUSD
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-right text-white">
-                        {formatNumber(Number(t.annualInterestRate) / 1e16)}%
+                      <td className="py-2.5 px-3">
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="font-mono text-white">
+                            {formatNumber(Number(t.annualInterestRate) / 1e16)}%
+                          </span>
+                          <MiniRateGauge
+                            rate={Number(t.annualInterestRate) / 1e16}
+                            median={marketStats?.median ?? null}
+                            isUser={userTroveIds.has(String(t.id))}
+                          />
+                        </div>
                       </td>
                       <td className={`py-2.5 px-3 font-mono text-right ${t.icr < 150 ? "text-red-400" : t.icr < 200 ? "text-yellow-400" : "text-success"}`}>
                         {formatNumber(t.icr)}%

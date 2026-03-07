@@ -84,7 +84,7 @@ const MOCK_POOLS: PoolListItem[] = [
   },
 ];
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_ENABLED = typeof window !== "undefined";
 
 function formatUsd(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`;
@@ -124,7 +124,7 @@ function apiToPoolListItem(pool: PoolStatsResponse["data"][number]): PoolListIte
 }
 
 async function fetchPools(): Promise<PoolListItem[]> {
-  const res = await fetch(`${API_URL}/api/pools`);
+  const res = await fetch("/api/pools");
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   const data: PoolStatsResponse = await res.json();
   return data.data.map(apiToPoolListItem);
@@ -134,12 +134,12 @@ export function usePoolList(): UsePoolListReturn {
   const { data: pools, isLoading } = useQuery({
     queryKey: ["poolList"],
     queryFn: fetchPools,
-    enabled: !!API_URL,
+    enabled: API_ENABLED,
     staleTime: 60_000,
     retry: 1,
   });
 
-  const finalPools = API_URL && pools ? pools : MOCK_POOLS;
+  const finalPools = pools ?? MOCK_POOLS;
   const trending = useMemo(
     () => finalPools.filter((p) => p.isTrending),
     [finalPools],
@@ -148,6 +148,6 @@ export function usePoolList(): UsePoolListReturn {
   return {
     pools: finalPools,
     trending,
-    isLoading: API_URL ? isLoading : false,
+    isLoading,
   };
 }
