@@ -87,7 +87,7 @@ Snowball Protocol은 **2개 담보 Branch**로 구성. 각 Branch는 독립적�
 | CollateralRegistry | `0x5c1683f9d8a8d77de48b380a15b623cf5d91bb59` | 담보 Branch 통합 레지스트리, 리뎀션 처리 |
 | HintHelpers | `0x6ee9850b0915763bdc0c7edca8b66189449a447f` | 수수료 예측, 삽입 위치 힌트 |
 | MultiTroveGetter | `0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6` | 배치 Trove 조회 |
-| AgentVault | `0xf8e322c36485fa4c3971f75819c5de5a9be2b870` | AI Agent 권한 관리 + 자산 보관 |
+| AgentVault | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` | AI Agent 권한 관리 + 자산 보관 |
 | RedemptionHelper | `0x8baf58113f968b4dfb2916290b57ce3ae114fb77` | 리뎀션 헬퍼 |
 | DebtInFrontHelper | `0x9fd6116fc1d006fa1d8993746ac1924f16d722bb` | 선순위 부채 조회 헬퍼 |
 
@@ -284,7 +284,7 @@ const SBUSD  = "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5";
 const COLLATERAL_REGISTRY = "0x5c1683f9d8a8d77de48b380a15b623cf5d91bb59";
 const HINT_HELPERS        = "0x6ee9850b0915763bdc0c7edca8b66189449a447f";
 const MULTI_TROVE_GETTER  = "0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6";
-const AGENT_VAULT         = "0xf8e322c36485fa4c3971f75819c5de5a9be2b870";
+const AGENT_VAULT         = "0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed";
 const REDEMPTION_HELPER   = "0x8baf58113f968b4dfb2916290b57ce3ae114fb77";
 const DEBT_IN_FRONT_HELPER = "0x9fd6116fc1d006fa1d8993746ac1924f16d722bb";
 

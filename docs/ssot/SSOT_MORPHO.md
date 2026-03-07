@@ -225,7 +225,7 @@ const MARKET_SBUSD_USDC   = "0x3a94c96ec40aa5fe54bcd20ecbcd733497e4f4f2c8d31ae48
 collateralRegistry: 0x5c1683f9d8a8d77de48b380a15b623cf5d91bb59
 hintHelpers:        0x6ee9850b0915763bdc0c7edca8b66189449a447f
 multiTroveGetter:   0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6
-agentVault:         0xf8e322c36485fa4c3971f75819c5de5a9be2b870
+agentVault:         0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed
 ```
 
 소스: `/snowball/deployments/addresses.json`

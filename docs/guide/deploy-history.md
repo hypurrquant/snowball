@@ -90,6 +90,16 @@
 | DebtInFrontHelper | `0x9fd6116fc1d006fa1d8993746ac1924f16d722bb` |
 | AgentVault | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` |
 
+#### AgentVault Provenance
+
+| Field | Value |
+|-------|-------|
+| Contract Address | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` |
+| Deploy Tx Hash | v0.12.0 phase에서 `scripts/deploy-agent-vault-v2.ts`로 배포 |
+| Block Number | Creditcoin Testnet (확인: `scripts/verify-agent-vault.ts` 실행) |
+| Confirmed At | 2026-03-07 (v0.18.0 SoT 검증) |
+| ABI Version | V3 (getDelegatedUsers + getPermNonce 포함) |
+
 ### DEX (Uniswap V3)
 
 | Contract | Address |

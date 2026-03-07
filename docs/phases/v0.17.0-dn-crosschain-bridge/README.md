@@ -41,21 +41,22 @@ Snowball Protocol은 CTC 홀더가 자산을 유동화하여 외부 체인에서
 ## 사용자 흐름 (테스트 시나리오)
 
 ```
-[CC Testnet]     사용자: USDC를 BridgeVault에 deposit       [서명 1]
+[CC Testnet]     사용자: USDC approve                        [서명 1]
+[CC Testnet]     사용자: USDC를 BridgeVault에 deposit        [서명 2]
                       ↓ (체인 스위치 안내)
-[Sepolia]        사용자: DN Token mint (시뮬레이션)           [서명 2]
-[Sepolia]        사용자: DN bridgeBurn()                     [서명 3]
+[Sepolia]        사용자: DN Token mint (시뮬레이션)           [서명 3]
+[Sepolia]        사용자: DN bridgeBurn()                     [서명 4]
                       ↓ (USC Worker 자동 처리, ~4-5분)
 [USC Testnet]    자동: DN Token mint (processBridgeMint)     [자동]
 ```
 
-**사용자 서명 3회, 체인 스위치 1회, 자동 처리 1건**
+**사용자 서명 4회 (approve + deposit + mint + burn), 체인 스위치 1회, 자동 처리 2건 (attestation + USC mint)**
 
 ### 단일 페이지 구성
 
 | 영역 | 내용 |
 |------|------|
-| **Pipeline Progress** | 현재 단계 시각화 (deposit → mint → burn → attestation 대기 → USC mint) |
+| **Pipeline Progress** | 현재 단계 시각화 (approve → deposit → mint → burn → attestation 대기 → USC mint) |
 | **3-Chain Dashboard** | CC Testnet USDC 잔액, Sepolia DN 잔액, USC Testnet DN 잔액 실시간 표시 |
 
 ## 제약사항

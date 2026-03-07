@@ -895,7 +895,7 @@ Step 6: 시작
 | CollateralRegistry | `0x5c1683f9d8a8d77de48b380a15b623cf5d91bb59` |
 | HintHelpers | `0x6ee9850b0915763bdc0c7edca8b66189449a447f` |
 | MultiTroveGetter | `0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6` |
-| AgentVault | `0xf8e322c36485fa4c3971f75819c5de5a9be2b870` |
+| AgentVault | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` |
 
 ### Morpho Blue (Lend)
 
