@@ -37,3 +37,7 @@ playwright/.cache/
 
 simulation-accounts.json
 
+# SQLite data
+data/
+logs/
+

@@ -133,26 +133,58 @@ const marketParams = {
 
 ---
 
-## Pool Volume Generation
+## 시뮬레이션 스크립트 전체 목록
 
-상세: [volume-generation.md](volume-generation.md)
+### DEX 스크립트
 
-### 실행된 스크립트
+상세: [dex-guide.md](dex-guide.md), [volume-generation.md](volume-generation.md)
 
-| 스크립트 | 풀 | 상태 |
-|---------|-----|------|
-| `simulate-dex-liquidity.ts` | wCTC/USDC, lstCTC/USDC, lstCTC/wCTC | LP 완료 |
-| `simulate-swap-volume.ts` | wCTC/USDC | 볼륨 완료 |
-| `simulate-sbUSD-pools.ts` | wCTC/sbUSD, sbUSD/USDC | Trove+LP+볼륨 완료 |
-| `simulate-lstCTC-pools.ts` | lstCTC/wCTC, lstCTC/USDC | 볼륨 완료 |
+| 스크립트 | 용도 | 프로토콜 |
+|---------|------|---------|
+| `simulate-dex-liquidity.ts` | LP 추가 (bell curve 분포) | DEX |
+| `simulate-swap-volume.ts` | wCTC/USDC 스왑 볼륨 | DEX |
+| `simulate-sbUSD-pools.ts` | Trove→LP→스왑 (sbUSD 풀) | Liquity+DEX |
+| `simulate-lstCTC-pools.ts` | lstCTC 풀 스왑 볼륨 | DEX |
+| `simulate-liquity.ts` | Liquity Trove 오픈 (sbUSD 민팅) | Liquity |
+
+### Morpho 스크립트
+
+상세: [morpho-guide.md](morpho-guide.md)
+
+| 스크립트 | 용도 | 실행 순서 |
+|---------|------|----------|
+| `simulate-morpho-supply.ts` | 전 계정 3개 마켓 loanToken supply | 1 |
+| `simulate-morpho-borrow.ts` | 페르소나별 담보예치 + 대출 | 2 |
+| `simulate-morpho-rebalance.ts` | utilization 조정 (target% 지정) | 3 (필요시) |
+
+### 전체 실행 순서
+
+```bash
+# DEX (먼저 — sbUSD 민팅에 Liquity 필요)
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-dex-liquidity.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-swap-volume.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-sbUSD-pools.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-lstCTC-pools.ts
+
+# Morpho (supply → borrow → rebalance)
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-supply.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-borrow.ts
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-rebalance.ts
+```
 
 ### 실전 핵심 교훈
 
-1. **SPL 에러 방지**: 스왑 금액 0.5~1.5%, 방향 교대, 실패 시 반대방향 retry
-2. **풀 주소**: `Factory.getPool()`으로 온체인 검증 필수 (배포 버전 불일치 주의)
-3. **sbUSD**: faucet 없음 → Liquity Trove에서만 민팅
-4. **fee tier**: sbUSD/USDC는 500, 나머지 3000
-5. **서버 연동**: `packages/core/src/config/pools.ts`에 풀 등록 → 서버가 자동 수집
+**DEX:**
+1. SPL 에러 방지: 스왑 금액 0.5~1.5%, 방향 교대, 실패 시 반대방향 retry
+2. 풀 주소: `Factory.getPool()`으로 온체인 검증 필수
+3. fee tier: sbUSD/USDC는 500, 나머지 3000
+4. 서버 연동: `packages/core/src/config/pools.ts`에 풀 등록
+
+**Morpho:**
+5. sbUSD faucet 없음 → Liquity Trove에서만 민팅 → supply 양이 제한적
+6. supply 먼저 충분히 넣은 후 borrow (안 그러면 utilization 99% 급등)
+7. Oracle 1e36 스케일 필수 (CreditcoinOracle)
+8. utilization 조정은 rebalance 스크립트 활용
 
 ---
 
@@ -168,14 +200,11 @@ const marketParams = {
 
 ### Morpho 페르소나
 
-- **#4 Conservative Lender**: wCTC/sbUSD 마켓에 loanToken(sbUSD) supply만. borrow 절대 안 함.
-- **#5 Moderate Borrower**: 담보(wCTC) 예치 → sbUSD 대출. HF 2.0 이상 유지.
-- **#6 Aggressive Borrower**: 담보 최소, 대출 최대. HF 1.2~1.5 목표.
-- **#7 Multi-Market**: 3개 마켓 모두에 소액 supply + 1개에서 borrow.
-
-### 혼합 페르소나
-
-- **#8 DeFi Maximalist**: Morpho supply(보유량의 5%) + DEX LP(5%) 동시 실행.
+- **#4 Conservative Lender**: 3개 마켓 loanToken supply only. borrow 절대 안 함.
+- **#5 Moderate Borrower**: wCTC 담보 예치 → sbUSD 대출. HF 2.0+ 목표.
+- **#6 Aggressive Borrower**: wCTC 담보 → sbUSD 대출. HF 1.2~1.5 목표 (유동성 부족 시 제한).
+- **#7 Multi-Market**: lstCTC/sbUSD + sbUSD/USDC 마켓에 분산 borrow.
+- **#8 DeFi Maximalist**: Morpho supply + borrow + DEX LP 동시 운용.
 
 ---
 

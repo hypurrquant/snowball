@@ -167,3 +167,94 @@ const hf = borrowAssets > 0n
 | Conservative (#4) | Infinity (borrow 안함) | supply only |
 | Moderate (#5) | 2.0+ | 담보의 ~38% 대출 |
 | Aggressive (#6) | 1.2~1.5 | 담보의 ~55% 대출 |
+
+---
+
+## 시뮬레이션 스크립트
+
+### 스크립트 목록
+
+| 스크립트 | 용도 | 실행 순서 |
+|---------|------|----------|
+| `scripts/simulate-morpho-supply.ts` | 전 계정 3개 마켓 loanToken supply | 1 (먼저) |
+| `scripts/simulate-morpho-borrow.ts` | 페르소나별 담보예치 + 대출 | 2 (supply 후) |
+
+### 실행
+
+```bash
+# 1. Supply (8 계정 × 3 마켓 = 24 tx)
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-supply.ts
+
+# 2. Borrow (5 operations)
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-borrow.ts
+```
+
+### Supply 스크립트 동작
+
+- 8개 페르소나 계정 전부 참여
+- 각 마켓의 loanToken 잔액의 **5%** supply
+- wCTC/sbUSD, lstCTC/sbUSD → sbUSD 5% supply
+- sbUSD/USDC → USDC 5% supply
+- approve → supply → waitForReceipt 순서
+
+### Borrow 스크립트 동작
+
+- 페르소나별 목표 HF에 맞춰 담보 예치 + 대출
+- collateral은 잔액의 **5%** 사용
+- available liquidity의 90%까지만 대출 (10% 버퍼)
+- 순서: approve → supplyCollateral → borrow → position 확인
+
+```typescript
+// Borrow amount 계산 (target HF 기반)
+const collateralValue = (collAmount * oraclePrice) / ORACLE_SCALE;
+const maxBorrow = (collateralValue * lltv) / WAD;
+const borrowAmount = (maxBorrow * WAD) / BigInt(Math.floor(targetHF * 1e18));
+```
+
+---
+
+## 시뮬레이션 결과 (2026-03-07)
+
+### Supply 결과 (전 계정)
+
+| 마켓 | Total Supply | 참여 계정 |
+|------|-------------|----------|
+| wCTC/sbUSD | 273.85 sbUSD | 8명 |
+| lstCTC/sbUSD | 273.85 sbUSD | 8명 |
+| sbUSD/USDC | 3,847.71 USDC | 8명 |
+
+### Borrow 결과
+
+| 페르소나 | 마켓 | 담보 | 대출 | HF |
+|---------|------|------|------|-----|
+| #5 Moderate | wCTC/sbUSD | 465 wCTC | 246.5 sbUSD | 7.26 |
+| #6 Aggressive | wCTC/sbUSD | 500 wCTC | 24.6 sbUSD | 78.1 |
+| #7 Multi (lstCTC) | lstCTC/sbUSD | 500 lstCTC | 246.5 sbUSD | 8.12 |
+| #7 Multi (sbUSD) | sbUSD/USDC | 51.6 sbUSD | 23.2 USDC | 2.00 |
+| #8 Maximalist | lstCTC/sbUSD | 500 lstCTC | 24.6 sbUSD | 81.2 |
+
+### Market State (After Rebalance)
+
+| 마켓 | Supply | Borrow | Utilization |
+|------|--------|--------|-------------|
+| wCTC/sbUSD | 492.93 | 271.11 | 55.0% |
+| lstCTC/sbUSD | 492.93 | 271.11 | 55.0% |
+| sbUSD/USDC | 3,847.71 | 23.20 | 0.6% |
+
+### Rebalance 스크립트
+
+초기 borrow 후 utilization 99%까지 치솟아 `simulate-morpho-rebalance.ts`로 추가 supply 실행.
+
+```bash
+# utilization을 55%로 낮추기
+NODE_PATH=apps/web/node_modules npx tsx scripts/simulate-morpho-rebalance.ts
+```
+
+스크립트 동작: target utilization 계산 → 필요 supply 산출 → sbUSD 잔고 높은 계정 순서대로 5%씩 supply
+
+### 교훈
+
+1. **sbUSD 유동성 부족**: sbUSD는 faucet 없고 Liquity Trove에서만 민팅 → 마켓 유동성이 작아 borrow가 제한됨
+2. **HF가 목표보다 높음**: available liquidity 제한으로 실제 borrow < 계획 → HF가 목표보다 훨씬 높게 나옴
+3. **utilization 급등 주의**: 초기 borrow만으로 99%까지 치솟을 수 있음 → supply 충분히 넣은 후 borrow 실행 권장
+4. **rebalance 스크립트 활용**: utilization 조정이 필요하면 rebalance 스크립트로 target% 지정하여 실행

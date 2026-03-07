@@ -47,11 +47,11 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 현재 페이즈
 
-- **버전**: v0.18.0
-- **기능**: Agent Production Hardening (운영 인프라 강화)
+- **버전**: v0.19.0
+- **기능**: DEX Position Dashboard (LP 포지션 대시보드)
 - **상태**: Step 1 - PRD
-- **문서**: [docs/phases/v0.18.0-agent-production-hardening/](docs/phases/v0.18.0-agent-production-hardening/)
-- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.18.0-agent-production-hardening`
+- **문서**: [docs/phases/v0.19.0-dex-position-dashboard/](docs/phases/v0.19.0-dex-position-dashboard/)
+- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.19.0-dex-position-dashboard`
 - **시작일**: 2026-03-07
 
 ## 문서 구조

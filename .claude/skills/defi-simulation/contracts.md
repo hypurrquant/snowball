@@ -13,7 +13,7 @@
 | Symbol | Address | Mock Price |
 |--------|---------|------------|
 | wCTC | `0xca69344e2917f026ef4a5ace5d7b122343fc8528` | $5.00 |
-| lstCTC | `0xa768d376272f9216c8c4aa3063391bdafbcad4c2` | $5.20 |
+| lstCTC | `0xa768d376272f9216c8c4aa3063391bdafbcad4c2` | $5.00 |
 | sbUSD | `0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5` | $1.00 |
 | USDC | `0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9` | $1.00 |
 
@@ -108,7 +108,7 @@
 | MultiTroveGetter | `0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6` |
 | RedemptionHelper | `0x8baf58113f968b4dfb2916290b57ce3ae114fb77` |
 | DebtInFrontHelper | `0x9fd6116fc1d006fa1d8993746ac1924f16d722bb` |
-| AgentVault | `0xf8e322c36485fa4c3971f75819c5de5a9be2b870` |
+| AgentVault | `0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed` |
 
 ### Liquity Parameters
 

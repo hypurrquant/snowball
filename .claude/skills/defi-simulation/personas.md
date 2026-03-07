@@ -1,19 +1,19 @@
 # 페르소나별 시뮬레이션 시나리오
 
-## 현재 잔고 (2026-03-06 기준)
+## 활동 요약
 
-| # | Label | CTC | wCTC | lstCTC | USDC |
-|---|-------|-----|------|--------|------|
-| 1 | Whale LP | ~500 | 1,000 | 1,000 | 1,000 |
-| 2 | Active Trader | 1,000 | 1,000 | 1,000 | 1,000 |
-| 3 | Arbitrageur | 500 | 1,000 | 1,000 | 1,000 |
-| 4 | Conservative Lender | 500 | 1,000 | 1,000 | 1,000 |
-| 5 | Moderate Borrower | 500 | 1,000 | 1,000 | 1,000 |
-| 6 | Aggressive Borrower | 500 | 1,000 | 1,000 | 1,000 |
-| 7 | Multi-Market | 500 | 1,000 | 1,000 | 1,000 |
-| 8 | DeFi Maximalist | 500 | 1,000 | 1,000 | 1,000 |
+| # | Label | DEX | Morpho Supply | Morpho Borrow | 비고 |
+|---|-------|-----|---------------|---------------|------|
+| 1 | Whale LP | LP 5풀 | 3 마켓 supply | - | DEX 메인 |
+| 2 | Active Trader | 스왑 볼륨 | 3 마켓 supply | - | DEX 메인 |
+| 3 | Arbitrageur | 스왑 볼륨 | 3 마켓 supply | - | DEX 메인 |
+| 4 | Conservative Lender | - | 3 마켓 supply | - | Supply only |
+| 5 | Moderate Borrower | sbUSD풀 LP | 3 마켓 supply + rebalance | wCTC/sbUSD (HF 7.26) | 안전 대출 |
+| 6 | Aggressive Borrower | - | 3 마켓 supply + rebalance | wCTC/sbUSD (HF 78.1) | 유동성 부족 |
+| 7 | Multi-Market | - | 3 마켓 supply + rebalance | lstCTC/sbUSD + sbUSD/USDC | 분산 대출 |
+| 8 | DeFi Maximalist | sbUSD풀 LP | 3 마켓 supply | lstCTC/sbUSD (HF 81.2) | 복합 전략 |
 
-5% 제한 = 각 토큰당 1회 최대 50.
+5% 제한 = 잔고 ~10,000 기준 1회 최대 ~500.
 
 ---
 
