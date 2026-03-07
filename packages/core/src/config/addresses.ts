@@ -7,15 +7,15 @@ export const EXPLORER_URL = "https://creditcoin-testnet.blockscout.com";
 
 // ─── Tokens ───
 export const TOKENS = {
-  wCTC: "0xdb5c8e9d0827c474342bea03e0e35a60d621afea" as Address,
-  lstCTC: "0x47ad69498520edb2e1e9464fedf5309504e26207" as Address,
-  sbUSD: "0x5772f9415b75ecca00e7667e0c7d730db3b29fbd" as Address,
-  USDC: "0x3e31b08651644b9e6535f5bf0c7a9e7e6ad92e02" as Address,
+  wCTC: "0xca69344e2917f026ef4a5ace5d7b122343fc8528" as Address,
+  lstCTC: "0xa768d376272f9216c8c4aa3063391bdafbcad4c2" as Address,
+  sbUSD: "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5" as Address,
+  USDC: "0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9" as Address,
 } as const;
 
 export const TOKEN_INFO: Record<string, { symbol: string; name: string; decimals: number; mockPriceUsd: number }> = {
-  [TOKENS.wCTC]: { symbol: "wCTC", name: "Wrapped CTC", decimals: 18, mockPriceUsd: 2.50 },
-  [TOKENS.lstCTC]: { symbol: "lstCTC", name: "Liquid Staked CTC", decimals: 18, mockPriceUsd: 2.60 },
+  [TOKENS.wCTC]: { symbol: "wCTC", name: "Wrapped CTC", decimals: 18, mockPriceUsd: 5.00 },
+  [TOKENS.lstCTC]: { symbol: "lstCTC", name: "Liquid Staked CTC", decimals: 18, mockPriceUsd: 5.20 },
   [TOKENS.sbUSD]: { symbol: "sbUSD", name: "Snowball USD", decimals: 18, mockPriceUsd: 1.00 },
   [TOKENS.USDC]: { symbol: "USDC", name: "Mock USDC", decimals: 18, mockPriceUsd: 1.00 },
 };
@@ -32,31 +32,39 @@ export const DEX = {
 export const LIQUITY = {
   branches: {
     wCTC: {
-      addressesRegistry: "0xd5bd51f411e8472ddc3632e7d9bf3ddff44225ce" as Address,
-      borrowerOperations: "0xe8285b406dc77d16c193e6a1a2b8ecc1f386602c" as Address,
-      troveManager: "0x30ef6615f01be4c9fea06c33b07432b40cab7bdc" as Address,
-      stabilityPool: "0x91c9983499f257015597d756108efdf26746db81" as Address,
-      activePool: "0xad3a046f1db8f648d2641c34a2dfff72b9c39bde" as Address,
-      troveNFT: "0x51b7b40ded97cffd01b448402c8802b839942e9b" as Address,
-      sortedTroves: "0x749f4111b67b7f770d2e43187d6433b470c2b3ad" as Address,
-      priceFeed: "0x17a36a4d4dbda9aa3f9ba3d12e0a4bfc9533c96c" as Address,
+      addressesRegistry: "0x7cfed108ed84194cf37f93d47268fbdd14da73d2" as Address,
+      borrowerOperations: "0xb637f375cbbd278ace5fdba53ad868ae7cb186ea" as Address,
+      troveManager: "0xa20f9dfeb110e11c89147b9db5adb98a7d91e70e" as Address,
+      stabilityPool: "0xf1654541efb7a3c34a9255464ebb2294fa1a43f3" as Address,
+      activePool: "0xa7f0600a023cf6076f5d8dc51b46b91bafe095e5" as Address,
+      defaultPool: "0x201ff7ec1a9ceaf1396ea6d90cd24ac6b757e404" as Address,
+      gasPool: "0x4aa86795705a604e3dac4cfe45c375976eca3189" as Address,
+      collSurplusPool: "0x0dc9642129470d6a0ac0bac2a5d1b18a2ea09111" as Address,
+      troveNFT: "0x72e383eff50893e2b2edeb711a81c3a812dcd2f9" as Address,
+      sortedTroves: "0xf5ef344759df7786cda9d2133e4d1e10e3b43f9f" as Address,
+      priceFeed: "0xca9341894230b84fdff429ff43e83cc8f8990342" as Address,
     },
     lstCTC: {
-      addressesRegistry: "0x5f407d42b3cd83a5bbb70c09726d8a8ebd2c866c" as Address,
-      borrowerOperations: "0x34f36f41f912e29c600733d90a4d210a49718a5d" as Address,
-      troveManager: "0xda7b322d26b3477161dc80282d1ea4d486528232" as Address,
-      stabilityPool: "0x353f40353453f123f9073f117956e8fdf324e977" as Address,
-      activePool: "0x94e0d44e8b03782f7616a3488b4f973d7f76b6a4" as Address,
-      troveNFT: "0x32da60f2b720e67889c4a2722ae881c99c2dc281" as Address,
-      sortedTroves: "0x645b38f477ea61bd71072face0892021208b8d49" as Address,
-      priceFeed: "0x702121516551b72f7f1ee77906b2488bd8d2eb0a" as Address,
+      addressesRegistry: "0x0afe1c58a76c49d62bd7331f309aa14731efb1fc" as Address,
+      borrowerOperations: "0x8700ed43989e2f935ab8477dd8b2822cae7f60ca" as Address,
+      troveManager: "0x83715c7e9873b0b8208adbbf8e07f31e83b94aed" as Address,
+      stabilityPool: "0xec700d805b5de3bf988401af44b1b384b136c41b" as Address,
+      activePool: "0xa57cca34198bf262a278da3b2b7a8a5f032cb835" as Address,
+      defaultPool: "0x6ed045c0cadc55755dc09f1bfee0f964baf1f859" as Address,
+      gasPool: "0x31d560b7a74b179dce8a8017a1de707c32dd67da" as Address,
+      collSurplusPool: "0xa287db89e552698a118c89d8bbee25bf51a0ec33" as Address,
+      troveNFT: "0x51a90151e0dd1348e77ee6bcc30278ee311f29a8" as Address,
+      sortedTroves: "0x25aa78c7b0dbc736ae23a316ab44579467ba9507" as Address,
+      priceFeed: "0xa12ed39d24d4bbc100d310ae1cbf10b4c67e4a08" as Address,
     },
   },
   shared: {
-    collateralRegistry: "0xb18f7a1944e905739e18f96d6e60427aab93c23d" as Address,
-    hintHelpers: "0x7e8fa8852b0c1d697905fd7594d30afe693c76bb" as Address,
-    multiTroveGetter: "0x8376dfa413a536075e23c706affbd6370ec7d380" as Address,
-    agentVault: "0xb944c1fdc2bd1232d490dd03ab5129ab15ccbc40" as Address,
+    collateralRegistry: "0x5c1683f9d8a8d77de48b380a15b623cf5d91bb59" as Address,
+    hintHelpers: "0x6ee9850b0915763bdc0c7edca8b66189449a447f" as Address,
+    multiTroveGetter: "0xc26bce003e00dde70c0ecff8778e9edacd5ec6e6" as Address,
+    redemptionHelper: "0x8baf58113f968b4dfb2916290b57ce3ae114fb77" as Address,
+    debtInFrontHelper: "0x9fd6116fc1d006fa1d8993746ac1924f16d722bb" as Address,
+    agentVault: "0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed" as Address,
   },
 } as const;
 
@@ -67,13 +75,13 @@ export const LEND = {
   vaultFactory: "0x6e97df392462b8c2b8d13e2cd77a90168925edf6" as Address,
   publicAllocator: "0x35b35a8c835eaf78b43137a51c4adccfc5d653b4" as Address,
   oracles: {
-    wCTC: "0x42ca12a83c14e95f567afc940b0118166d8bd852" as Address,
-    lstCTC: "0x192f1feb36f319e79b3bba25a17359ee72266a14" as Address,
-    sbUSD: "0xc39f222e034f4bd4f3c858e6fde9ce4398400a26" as Address,
+    wCTC: "0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2" as Address,
+    lstCTC: "0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a" as Address,
+    sbUSD: "0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a" as Address,
   },
   markets: [
     {
-      id: "0xfb2641d76f7e8a4170560c308a158508651a22e3f40110f99008ca892767f261" as `0x${string}`,
+      id: "0x8dce00fbd59450e4d2f46e9aa637690fc21c058c4c8abf4dea75e9ab2ce38364" as `0x${string}`,
       name: "wCTC / sbUSD",
       loanToken: TOKENS.sbUSD,
       collateralToken: TOKENS.wCTC,
@@ -82,7 +90,7 @@ export const LEND = {
       lltv: 770000000000000000n, // 0.77
     },
     {
-      id: "0x35cfd9e93f81434c0f3e6e688a42775e53fc442163cc960090efcc4c2ef8488e" as `0x${string}`,
+      id: "0x93c1cf16ce13082a758d11757a899388741c39c4ed01364116137074fc9671ae" as `0x${string}`,
       name: "lstCTC / sbUSD",
       loanToken: TOKENS.sbUSD,
       collateralToken: TOKENS.lstCTC,
@@ -91,7 +99,7 @@ export const LEND = {
       lltv: 770000000000000000n,
     },
     {
-      id: "0x3df89a2c4e307c088bc4ddff74f5e0dc246404b7a1c0096771d1fa6b080fb681" as `0x${string}`,
+      id: "0x6708534b3aa0dc0b77dd4e534187d801f664958238b45b0563e63dbfe914fddd" as `0x${string}`,
       name: "sbUSD / USDC",
       loanToken: TOKENS.USDC,
       collateralToken: TOKENS.sbUSD,
@@ -154,7 +162,7 @@ export const ERC8004 = {
   identityRegistry: "0x993C9150f074435BA79033300834FcE06897de9B" as Address,
   reputationRegistry: "0x3E5E194e39b777F568c9a261f46a5DCC43840726" as Address,
   validationRegistry: "0x84b9B2121187155C1c85bA6EA34e35c981BbA023" as Address,
-  agentVault: "0xb944c1fdc2bd1232d490dd03ab5129ab15ccbc40" as Address,
+  agentVault: "0x7d3f7e6bde481e3260f5bebfcd9490315d99e3ed" as Address,
 } as const;
 
 // Backend API constants are in apps/web (process.env is Next.js-specific)

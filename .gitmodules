@@ -22,3 +22,6 @@
 [submodule "packages/options/lib/openzeppelin-contracts"]
 	path = packages/options/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/morpho/lib/openzeppelin-contracts"]
+	path = packages/morpho/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
