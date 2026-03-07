@@ -62,6 +62,9 @@ interface BridgeSession {
   };
   /** Block number on Sepolia when burn was confirmed — used as polling lower bound */
   burnBlock?: string;
+  /** Step ID that failed — enables retry after page refresh */
+  failedStep?: string;
+  failedError?: string;
 }
 
 function saveSession(address: string, session: BridgeSession) {
@@ -113,7 +116,19 @@ export function useBridgePipeline() {
       ...current,
       ...extra,
       completedSteps: { ...current.completedSteps, [stepKey]: txHash },
+      failedStep: undefined,
+      failedError: undefined,
     };
+    sessionRef.current = updated;
+    saveSession(address, updated);
+  }, [address]);
+
+  // Persist a failure into the session so retry works after refresh
+  const persistFailure = useCallback((stepId: string, error: string) => {
+    if (!address) return;
+    const current = sessionRef.current;
+    if (!current) return;
+    const updated: BridgeSession = { ...current, failedStep: stepId, failedError: error };
     sessionRef.current = updated;
     saveSession(address, updated);
   }, [address]);
@@ -129,62 +144,55 @@ export function useBridgePipeline() {
     const completed = session.completedSteps;
     setAmount(BigInt(session.amount));
 
-    // If USC mint is already recorded → done
-    if (completed.uscMint) {
-      setSteps(createInitialSteps().map((s) => ({
-        ...s,
-        status: "done" as const,
-        txHash: (completed[s.id as keyof typeof completed] ?? undefined) as `0x${string}` | undefined,
-      })));
-      setPhase("done");
-      return;
+    // Determine the order of completed steps and the next phase
+    const stepOrder = ["approve", "deposit", "mint", "burn", "uscMint"] as const;
+    const phaseAfterStep: Record<string, BridgePhase> = {
+      approve: "deposit",
+      deposit: "mint",
+      mint: "burn",
+      burn: "attestWait",
+      uscMint: "done",
+    };
+
+    // Find the last completed step
+    let lastCompleted = -1;
+    for (let i = 0; i < stepOrder.length; i++) {
+      if (completed[stepOrder[i]]) lastCompleted = i;
+      else break;
     }
 
-    // If burn is completed → attestWait (poll for USC mint)
-    if (completed.burn) {
-      setSteps((prev) => prev.map((s) => {
-        if (s.id === "approve") return { ...s, status: "done" as const, txHash: completed.approve as `0x${string}` | undefined };
-        if (s.id === "deposit") return { ...s, status: "done" as const, txHash: completed.deposit as `0x${string}` | undefined };
-        if (s.id === "mint") return { ...s, status: "done" as const, txHash: completed.mint as `0x${string}` | undefined };
-        if (s.id === "burn") return { ...s, status: "done" as const, txHash: completed.burn as `0x${string}` | undefined };
-        if (s.id === "attest") return { ...s, status: "executing" as const };
-        return s;
-      }));
-      setPhase("attestWait");
-      return;
-    }
+    if (lastCompleted < 0) return; // Nothing completed
 
-    // If mint is completed → resume from burn
-    if (completed.mint) {
-      setSteps((prev) => prev.map((s) => {
-        if (s.id === "approve") return { ...s, status: "done" as const, txHash: completed.approve as `0x${string}` | undefined };
-        if (s.id === "deposit") return { ...s, status: "done" as const, txHash: completed.deposit as `0x${string}` | undefined };
-        if (s.id === "mint") return { ...s, status: "done" as const, txHash: completed.mint as `0x${string}` | undefined };
-        return s;
-      }));
-      setPhase("burn");
-      return;
-    }
+    // Restore step statuses + txHashes
+    const stepIdMap: Record<string, string> = {
+      approve: "approve", deposit: "deposit", mint: "mint", burn: "burn", uscMint: "uscMint",
+    };
 
-    // If deposit is completed → resume from mint
-    if (completed.deposit) {
-      setSteps((prev) => prev.map((s) => {
-        if (s.id === "approve") return { ...s, status: "done" as const, txHash: completed.approve as `0x${string}` | undefined };
-        if (s.id === "deposit") return { ...s, status: "done" as const, txHash: completed.deposit as `0x${string}` | undefined };
-        return s;
-      }));
-      setPhase("mint");
-      return;
-    }
+    setSteps((prev) => prev.map((s) => {
+      // Find matching step key
+      for (let i = 0; i <= lastCompleted; i++) {
+        const key = stepOrder[i];
+        if (s.id === stepIdMap[key]) {
+          return { ...s, status: "done" as const, txHash: completed[key] as `0x${string}` | undefined };
+        }
+      }
+      // If this is the attestation step and burn is done but uscMint is not, mark as executing
+      if (s.id === "attest" && completed.burn && !completed.uscMint) {
+        return { ...s, status: "executing" as const };
+      }
+      // If this is the failed step, mark it
+      if (session.failedStep && s.id === session.failedStep) {
+        return { ...s, status: "error" as const, error: session.failedError ?? "Transaction failed" };
+      }
+      return s;
+    }));
 
-    // If only approve → resume from deposit
-    if (completed.approve) {
-      setSteps((prev) => prev.map((s) => {
-        if (s.id === "approve") return { ...s, status: "done" as const, txHash: completed.approve as `0x${string}` | undefined };
-        return s;
-      }));
-      setPhase("deposit");
-      return;
+    // Set phase: if there's a failed step → error, otherwise resume from next
+    if (session.failedStep) {
+      setPhase("error");
+    } else {
+      const nextPhase = phaseAfterStep[stepOrder[lastCompleted]];
+      setPhase(nextPhase);
     }
   }, [address]);
 
@@ -290,11 +298,12 @@ export function useBridgePipeline() {
         const failedStepId = PHASE_STEP_MAP[phaseRef.current];
         if (failedStepId) {
           updateStep(failedStepId, { status: "error", error: message });
+          persistFailure(failedStepId, message);
         }
         setPhase("error");
       }
     },
-    [address, actions, updateStep, persistStep]
+    [address, actions, updateStep, persistStep, persistFailure]
   );
 
   const execute = useCallback(
@@ -325,6 +334,14 @@ export function useBridgePipeline() {
 
   const retry = useCallback(() => {
     if (!amount) return;
+
+    // Clear failure from session
+    if (address && sessionRef.current) {
+      const updated = { ...sessionRef.current, failedStep: undefined, failedError: undefined };
+      sessionRef.current = updated;
+      saveSession(address, updated);
+    }
+
     setSteps((prev) => {
       const failedIdx = prev.findIndex((s) => s.status === "error");
       if (failedIdx < 0) return prev;
