@@ -176,6 +176,15 @@ export function useEditTrove(
           isCollIncrease: collDelta.isIncrease,
           debtChange: debtDelta.amount,
           isDebtIncrease: debtDelta.isIncrease,
+          // TODO(liquity-upfront-fee):
+          // When `debtDelta.isIncrease === true`, this value is the absolute max upfront fee in sbUSD,
+          // not a percentage. Keeping it fixed at 1 sbUSD can cause `UpfrontFeeTooHigh()` reverts
+          // whenever the predicted fee for the debt increase is above 1.
+          //
+          // Proper fix:
+          // - Call `HintHelpers.predictAdjustTroveUpfrontFee(branchIdx, troveId, debtIncrease)`.
+          // - Add a small buffer for state drift between read and write.
+          // - Surface the estimate in the edit dialog and pass that buffered amount here.
           maxUpfrontFee: debtDelta.isIncrease ? parseEther("1") : 0n,
         });
         updateStep("adjust", { status: "done", txHash: hash as `0x${string}` | undefined });
@@ -187,6 +196,14 @@ export function useEditTrove(
         const hash = await adjustInterestRate({
           troveId: trove.id,
           newRate: parsedRate,
+          // TODO(liquity-upfront-fee):
+          // Interest-rate changes can also charge an upfront fee when adjusted before the cooldown ends.
+          // This same hardcoded 1 sbUSD cap can therefore revert with `UpfrontFeeTooHigh()` depending on
+          // trove size, branch state, and the newly selected rate.
+          //
+          // Proper fix:
+          // - Call `HintHelpers.predictAdjustInterestRateUpfrontFee(branchIdx, troveId, newRate)`.
+          // - Add a buffer, display the estimate to the user, and pass the buffered value instead.
           maxFee: parseEther("1"),
         });
         updateStep("rate", { status: "done", txHash: hash as `0x${string}` | undefined });

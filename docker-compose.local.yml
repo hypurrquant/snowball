@@ -61,6 +61,8 @@ services:
       - RPC_URL=${RPC_URL:-https://rpc.cc3-testnet.creditcoin.network}
       - PLANNER_MODE=${PLANNER_MODE:-cli}
       - CLAUDE_PROXY_URL=${CLAUDE_PROXY_URL:-http://host.docker.internal:3003}
+      - AGENT_CRON=${AGENT_CRON:-}
+      - AGENT_CRON_MANIFEST=${AGENT_CRON_MANIFEST:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:

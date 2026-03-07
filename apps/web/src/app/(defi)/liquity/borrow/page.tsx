@@ -191,6 +191,25 @@ export default function LiquityBorrowPage() {
         coll: parsedColl,
         debt: parsedDebt,
         rate: parsedRate,
+        // TODO(liquity-upfront-fee):
+        // `maxFee` here is an absolute sbUSD cap for BorrowerOperations._requireUserAcceptsUpfrontFee(),
+        // not a percentage/slippage value. `parseEther("1")` means "revert if the predicted upfront fee
+        // is above 1 sbUSD".
+        //
+        // Why this sometimes fails:
+        // - On CC3 testnet, openTrove can revert with `BorrowerOperations.UpfrontFeeTooHigh()`
+        //   (selector `0x2337edc7`) even when approval and hints are otherwise correct.
+        // - Example reproduced on 2026-03-07:
+        //   11111 wCTC collateral / 2222 sbUSD debt / 5% rate required about
+        //   2.021279626946928609 sbUSD upfront fee, so this hardcoded 1 sbUSD cap reverted.
+        // - Lowering borrow size or interest rate can make the tx succeed again because the predicted fee
+        //   drops below 1 sbUSD, which makes this look intermittent.
+        //
+        // Proper fix:
+        // - Read `HintHelpers.predictOpenTroveUpfrontFee(branchIdx, debt, rate)` before sending.
+        // - Add a safety buffer (for example 10-20%) to absorb state changes between read and write.
+        // - Show that estimated fee in the UI so the user knows why the cap is what it is.
+        // - Pass the buffered estimate here instead of a hardcoded `parseEther("1")`.
         maxFee: parseEther("1"),
         ownerIndex: nextOwnerIndex,
       });
