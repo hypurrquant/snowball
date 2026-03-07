@@ -1,5 +1,5 @@
 export type TxStepStatus = "pending" | "executing" | "done" | "error";
-export type TxStepType = "approve" | "mint" | "openTrove";
+export type TxStepType = "approve" | "mint" | "openTrove" | "adjustTrove" | "adjustRate";
 export type TxPhase = "idle" | "executing" | "complete" | "error";
 
 export interface TxStep {

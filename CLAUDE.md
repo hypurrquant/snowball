@@ -31,9 +31,10 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 ## 온체인 참고사항
 
 ### Oracle 스케일링
-- MockOracle의 `price()`는 **18 decimals** 반환 (Morpho 본가 스펙은 36 decimals이지만 이 프로젝트는 18)
-- 현재 테스트넷 가격: wCTC=$5, lstCTC=$5, sbUSD=$1 (고정값)
-- `useMorphoPosition.ts`의 `ORACLE_SCALE = 10n ** 18n` — oracle 컨트랙트 변경 시 같이 수정 필요
+- CreditcoinOracle의 `price()`는 **1e36 스케일** 반환 (Morpho Blue 표준)
+- 현재 테스트넷 가격: wCTC=$5 (5e36), lstCTC=$5.20 (5.2e36), sbUSD=$1 (1e36)
+- `useMorphoPosition.ts`의 `ORACLE_SCALE = 10n ** 36n`
+- 배포 이력: `docs/guide/deploy-history.md`
 
 ### 컨트랙트 배포 상태 (Creditcoin Testnet)
 - SnowballLend, AdaptiveCurveIRM, Oracle 3개 모두 배포 완료
@@ -46,11 +47,11 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 현재 페이즈
 
-- **버전**: v0.17.0
-- **기능**: DN Crosschain Bridge Pipeline (USDC → DN → USC trustless bridge 데모)
+- **버전**: v0.18.0
+- **기능**: Agent Production Hardening (운영 인프라 강화)
 - **상태**: Step 1 - PRD
-- **문서**: [docs/phases/v0.17.0-dn-crosschain-bridge/](docs/phases/v0.17.0-dn-crosschain-bridge/)
-- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.17.0-dn-crosschain-bridge`
+- **문서**: [docs/phases/v0.18.0-agent-production-hardening/](docs/phases/v0.18.0-agent-production-hardening/)
+- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.18.0-agent-production-hardening`
 - **시작일**: 2026-03-07
 
 ## 문서 구조

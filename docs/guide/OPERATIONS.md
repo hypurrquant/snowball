@@ -901,13 +901,11 @@ Step 6: 시작
 
 | 컨트랙트 | 주소 |
 |----------|------|
-| SnowballLend | `0x7d604b31297b36aace73255931f65e891cf289d3` |
-| AdaptiveCurveIRM | `0x0ac487d84507b2fbe9130acc080f2b554cb3fffe` |
-| SnowballVaultFactory | `0x6e97df392462b8c2b8d13e2cd77a90168925edf6` |
-| PublicAllocator | `0x35b35a8c835eaf78b43137a51c4adccfc5d653b4` |
-| wCTC Oracle | `0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2` |
-| lstCTC Oracle | `0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a` |
-| sbUSD Oracle | `0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a` |
+| SnowballLend | `0x190a733eda9ba7d2b52d56764c5921d5cd4752ca` |
+| AdaptiveCurveIRM | `0xc4c694089af9bab4c6151663ae8424523fce32a8` |
+| wCTC Oracle | `0xbd2c8afda5fa753669c5dd03885a45a3612171af` |
+| lstCTC Oracle | `0xa9aeac36aab8ce93fe4a3d63cf6b1d263dd2eb31` |
+| sbUSD Oracle | `0xf82396f39e93d77802bfecc33344faafc4df50f2` |
 
 ### Options Protocol
 

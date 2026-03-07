@@ -125,24 +125,24 @@
 
 | Contract | Address |
 |----------|---------|
-| SnowballLend | `0x7d604b31297b36aace73255931f65e891cf289d3` |
-| AdaptiveCurveIRM | `0x0ac487d84507b2fbe9130acc080f2b554cb3fffe` |
+| SnowballLend | `0x190a733eda9ba7d2b52d56764c5921d5cd4752ca` |
+| AdaptiveCurveIRM | `0xc4c694089af9bab4c6151663ae8424523fce32a8` |
 
-### Oracles (18 decimals)
+### Oracles (1e36 scale, CreditcoinOracle)
 
 | Token | Address | Price |
 |-------|---------|-------|
-| wCTC | `0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2` | $5.00 |
-| lstCTC | `0xff5f8a4c3f41d6bd0247d9655cebda9e3246712a` | $5.20 |
-| sbUSD | `0x32fc6b26d7f5f0af091f196e1cac66678a0ef84a` | $1.00 |
+| wCTC | `0xbd2c8afda5fa753669c5dd03885a45a3612171af` | $5.00 (5e36) |
+| lstCTC | `0xa9aeac36aab8ce93fe4a3d63cf6b1d263dd2eb31` | $5.20 (5.2e36) |
+| sbUSD | `0xf82396f39e93d77802bfecc33344faafc4df50f2` | $1.00 (1e36) |
 
 ### Markets
 
 | ID | Pair | LLTV | Oracle |
 |----|------|------|--------|
-| `0x8dce00fb...` | wCTC(coll) / sbUSD(loan) | 77% | wCTC oracle |
-| `0x93c1cf16...` | lstCTC(coll) / sbUSD(loan) | 77% | lstCTC oracle |
-| `0x6708534b...` | sbUSD(coll) / USDC(loan) | 90% | sbUSD oracle |
+| `0x5aa4edaf...` | wCTC(coll) / sbUSD(loan) | 77% | wCTC oracle |
+| `0x2eea8a6b...` | lstCTC(coll) / sbUSD(loan) | 77% | lstCTC oracle |
+| `0x3a94c96e...` | sbUSD(coll) / USDC(loan) | 90% | sbUSD oracle |
 
 ### MarketParams 구성법
 
@@ -151,8 +151,8 @@
 const marketParams = {
   loanToken: "0x8aefed3e2e9a886bdd72ec9cebe27d7aabced2a5",      // sbUSD
   collateralToken: "0xca69344e2917f026ef4a5ace5d7b122343fc8528", // wCTC
-  oracle: "0xf3c292721011ef0f5bff2b4657a1d32b15a34fa2",          // wCTC oracle
-  irm: "0x0ac487d84507b2fbe9130acc080f2b554cb3fffe",             // AdaptiveCurveIRM
+  oracle: "0xbd2c8afda5fa753669c5dd03885a45a3612171af",          // wCTC oracle
+  irm: "0xc4c694089af9bab4c6151663ae8424523fce32a8",             // AdaptiveCurveIRM
   lltv: 770000000000000000n,                                       // 0.77
 };
 ```
