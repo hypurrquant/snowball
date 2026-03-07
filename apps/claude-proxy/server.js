@@ -2,6 +2,7 @@
 "use strict";
 
 const http = require("http");
+const crypto = require("crypto");
 const { spawn } = require("child_process");
 
 const PORT = process.env.CLAUDE_PROXY_PORT || 3002;
@@ -9,7 +10,11 @@ const DEFAULT_MODEL = process.env.CODEX_MODEL || "gpt-5.4";
 const DEFAULT_EFFORT = process.env.CODEX_REASONING_EFFORT || "xhigh";
 const TIMEOUT_MS = 180_000; // 3 minutes
 
-function callCodex(prompt, model, reasoningEffort) {
+function ts() {
+  return new Date().toISOString();
+}
+
+function callCodex(prompt, model, reasoningEffort, ctxId) {
   return new Promise((resolve, reject) => {
     const cmdArgs = [
       "-a", "never",
@@ -20,7 +25,7 @@ function callCodex(prompt, model, reasoningEffort) {
       prompt,
     ];
 
-    console.log(`[codex-proxy] Running: codex ${cmdArgs.slice(0, 7).join(" ")} "<prompt ${prompt.length} chars>"`);
+    console.log(`[${ctxId}] Spawning: codex --model ${model} --effort ${reasoningEffort}`);
 
     const proc = spawn("codex", cmdArgs, {
       stdio: ["pipe", "pipe", "pipe"],
@@ -65,6 +70,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  const ctxId = crypto.randomBytes(4).toString("hex");
+
   let body = "";
   req.on("data", (chunk) => (body += chunk));
   req.on("end", async () => {
@@ -78,18 +85,43 @@ const server = http.createServer(async (req, res) => {
 
       const selectedModel = model || DEFAULT_MODEL;
       const selectedEffort = reasoningEffort || DEFAULT_EFFORT;
+      const startTime = Date.now();
 
-      console.log(`[codex-proxy] Request: model=${selectedModel}, effort=${selectedEffort}, prompt=${prompt.length} chars`);
+      console.log("");
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`[${ctxId}] ${ts()} REQUEST RECEIVED`);
+      console.log(`[${ctxId}] Model: ${selectedModel} | Effort: ${selectedEffort}`);
+      console.log(`[${ctxId}] Prompt (${prompt.length} chars):`);
+      console.log(`[${ctxId}] ┌─────────────────────────────────────────`);
+      for (const line of prompt.split("\n").slice(0, 40)) {
+        console.log(`[${ctxId}] │ ${line}`);
+      }
+      if (prompt.split("\n").length > 40) {
+        console.log(`[${ctxId}] │ ... (${prompt.split("\n").length - 40} more lines)`);
+      }
+      console.log(`[${ctxId}] └─────────────────────────────────────────`);
+      console.log(`[${ctxId}] Sending to Codex agent...`);
 
-      const response = await callCodex(prompt, selectedModel, selectedEffort);
+      const response = await callCodex(prompt, selectedModel, selectedEffort, ctxId);
 
-      console.log(`[codex-proxy] Codex responded (${response.length} chars)`);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+      console.log(`[${ctxId}] ${ts()} RESPONSE (${elapsed}s, ${response.length} chars):`);
+      console.log(`[${ctxId}] ┌─────────────────────────────────────────`);
+      for (const line of response.split("\n")) {
+        console.log(`[${ctxId}] │ ${line}`);
+      }
+      console.log(`[${ctxId}] └─────────────────────────────────────────`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log("");
 
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ response }));
     } catch (err) {
       const message = err.message || String(err);
-      console.error(`[codex-proxy] Error: ${message}`);
+      const elapsed = "?";
+      console.error(`[${ctxId}] ${ts()} ERROR (${elapsed}s): ${message}`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
       const status = message.includes("timed out") ? 504 : 500;
       res.writeHead(status, { "Content-Type": "application/json" });
