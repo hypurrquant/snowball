@@ -54,12 +54,19 @@ export interface VaultSnapshot {
   permissions: PermissionState[];
 }
 
+export interface TokenAllowanceState {
+  token: Address;
+  cap: bigint;
+  spent: bigint;
+}
+
 export interface PermissionState {
   agent: Address;
   targets: Address[];
   selectors: string[];
   expiry: bigint;
   active: boolean;
+  tokenAllowances: TokenAllowanceState[];
 }
 
 export interface MorphoSnapshot {
@@ -106,6 +113,7 @@ export interface AgentConfig {
   liquity: {
     borrowerOperations: Address;
     troveManager: Address;
+    troveNFT: Address;
     sortedTroves: Address;
     hintHelpers: Address;
     collToken: Address;

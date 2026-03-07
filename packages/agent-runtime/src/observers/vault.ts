@@ -26,23 +26,22 @@ export async function observeVault(
     balances[token.toLowerCase()] = balanceResults[i] as bigint;
   });
 
-  // Read permission for this agent
+  // Read permission for this agent (pass tokens for token allowance lookup)
   const permResult = await publicClient.readContract({
     address: config.agentVault,
     abi: AgentVaultABI,
     functionName: "getPermission",
-    args: [user, agentAddress],
+    args: [user, agentAddress, tokens],
   }) as {
     allowedTargets: readonly Address[];
     allowedFunctions: readonly `0x${string}`[];
-    spendingCap: bigint;
-    spent: bigint;
     expiry: bigint;
     active: boolean;
+    tokenAllowances: readonly { token: Address; cap: bigint; spent: bigint }[];
   };
 
   const now = BigInt(Math.floor(Date.now() / 1000));
-  const isActive = permResult.active && (permResult.expiry === 0n || permResult.expiry > now);
+  const isActive = permResult.active && (permResult.expiry === 0n || permResult.expiry >= now);
 
   const permissions: PermissionState[] = [{
     agent: agentAddress,
@@ -50,6 +49,11 @@ export async function observeVault(
     selectors: [...permResult.allowedFunctions],
     expiry: permResult.expiry,
     active: isActive,
+    tokenAllowances: permResult.tokenAllowances.map((ta) => ({
+      token: ta.token,
+      cap: ta.cap,
+      spent: ta.spent,
+    })),
   }];
 
   return { balances, permissions };

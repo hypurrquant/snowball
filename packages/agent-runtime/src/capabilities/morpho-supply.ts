@@ -53,20 +53,8 @@ export const morphoSupply: Capability<{ amount: string; reason: string }> = {
       {
         to: ctx.config.agentVault,
         abi: AgentVaultABI,
-        functionName: "approveFromVault",
-        args: [ctx.user, ctx.config.morpho.loanToken, ctx.config.morpho.core, amt],
-      },
-      {
-        to: ctx.config.agentVault,
-        abi: AgentVaultABI,
-        functionName: "executeOnBehalf",
-        args: [ctx.user, ctx.config.morpho.core, supplyData],
-      },
-      {
-        to: ctx.config.agentVault,
-        abi: AgentVaultABI,
-        functionName: "approveFromVault",
-        args: [ctx.user, ctx.config.morpho.loanToken, ctx.config.morpho.core, 0n],
+        functionName: "approveAndExecute",
+        args: [ctx.user, ctx.config.morpho.loanToken, amt, ctx.config.morpho.core, supplyData],
       },
     ];
   },

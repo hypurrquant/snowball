@@ -3,10 +3,14 @@
 
 export const AgentVaultABI = [
   { type: "function", name: "getBalance", inputs: [{ name: "user", type: "address" }, { name: "token", type: "address" }], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
-  { type: "function", name: "getPermission", inputs: [{ name: "user", type: "address" }, { name: "agent", type: "address" }], outputs: [{ name: "", type: "tuple", components: [{ name: "allowedTargets", type: "address[]" }, { name: "allowedFunctions", type: "bytes4[]" }, { name: "spendingCap", type: "uint256" }, { name: "spent", type: "uint256" }, { name: "expiry", type: "uint256" }, { name: "active", type: "bool" }] }], stateMutability: "view" },
-  { type: "function", name: "approveFromVault", inputs: [{ name: "user", type: "address" }, { name: "token", type: "address" }, { name: "spender", type: "address" }, { name: "amount", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "getPermission", inputs: [{ name: "user", type: "address" }, { name: "agent", type: "address" }, { name: "tokens", type: "address[]" }], outputs: [{ name: "", type: "tuple", components: [{ name: "allowedTargets", type: "address[]" }, { name: "allowedFunctions", type: "bytes4[]" }, { name: "expiry", type: "uint256" }, { name: "active", type: "bool" }, { name: "tokenAllowances", type: "tuple[]", components: [{ name: "token", type: "address" }, { name: "cap", type: "uint256" }, { name: "spent", type: "uint256" }] }] }], stateMutability: "view" },
+  { type: "function", name: "getTokenAllowance", inputs: [{ name: "user", type: "address" }, { name: "agent", type: "address" }, { name: "token", type: "address" }], outputs: [{ name: "cap", type: "uint256" }, { name: "spent", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "getPermNonce", inputs: [{ name: "user", type: "address" }, { name: "agent", type: "address" }], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "approveAndExecute", inputs: [{ name: "user", type: "address" }, { name: "token", type: "address" }, { name: "amount", type: "uint256" }, { name: "target", type: "address" }, { name: "data", type: "bytes" }], outputs: [{ name: "", type: "bytes" }], stateMutability: "nonpayable" },
   { type: "function", name: "executeOnBehalf", inputs: [{ name: "user", type: "address" }, { name: "target", type: "address" }, { name: "data", type: "bytes" }], outputs: [{ name: "", type: "bytes" }], stateMutability: "nonpayable" },
+  { type: "function", name: "getDelegatedUsers", inputs: [{ name: "agent", type: "address" }], outputs: [{ name: "", type: "address[]" }], stateMutability: "view" },
   { type: "event", name: "ExecutedOnBehalf", inputs: [{ name: "user", type: "address", indexed: true }, { name: "agent", type: "address", indexed: true }, { name: "target", type: "address", indexed: false }, { name: "selector", type: "bytes4", indexed: false }, { name: "value", type: "uint256", indexed: false }] },
+  { type: "event", name: "ApprovedAndExecuted", inputs: [{ name: "user", type: "address", indexed: true }, { name: "agent", type: "address", indexed: true }, { name: "token", type: "address", indexed: false }, { name: "amount", type: "uint256", indexed: false }, { name: "target", type: "address", indexed: false }, { name: "selector", type: "bytes4", indexed: false }] },
 ] as const;
 
 export const MorphoABI = [
@@ -24,6 +28,7 @@ export const BorrowerOperationsABI = [
 ] as const;
 
 export const TroveManagerABI = [
+  { type: "function", name: "getTroveIdsCount", inputs: [], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "getTroveFromTroveIdsArray", inputs: [{ name: "_index", type: "uint256" }], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "getLatestTroveData", inputs: [{ name: "_troveId", type: "uint256" }], outputs: [{ name: "", type: "tuple", components: [{ name: "entireDebt", type: "uint256" }, { name: "entireColl", type: "uint256" }, { name: "redistDebtGain", type: "uint256" }, { name: "redistCollGain", type: "uint256" }, { name: "accruedInterest", type: "uint256" }, { name: "recordedDebt", type: "uint256" }, { name: "annualInterestRate", type: "uint256" }, { name: "weightedRecordedDebt", type: "uint256" }, { name: "accruedBatchManagementFee", type: "uint256" }, { name: "lastInterestRateAdjTime", type: "uint256" }] }], stateMutability: "view" },
   { type: "function", name: "getTroveStatus", inputs: [{ name: "_troveId", type: "uint256" }], outputs: [{ name: "", type: "uint8" }], stateMutability: "view" },
@@ -41,6 +46,10 @@ export const HintHelpersABI = [
 export const ERC20ABI = [
   { type: "function", name: "balanceOf", inputs: [{ name: "account", type: "address" }], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
   { type: "function", name: "allowance", inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
+] as const;
+
+export const TroveNFTABI = [
+  { type: "function", name: "ownerOf", inputs: [{ name: "tokenId", type: "uint256" }], outputs: [{ name: "", type: "address" }], stateMutability: "view" },
 ] as const;
 
 export const AddRemoveManagersABI = [

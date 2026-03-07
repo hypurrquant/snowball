@@ -48,20 +48,8 @@ export const liquityAddCollateral: Capability<{ troveId: string; amount: string;
       {
         to: ctx.config.agentVault,
         abi: AgentVaultABI,
-        functionName: "approveFromVault",
-        args: [ctx.user, ctx.config.liquity.collToken, ctx.config.liquity.borrowerOperations, amt],
-      },
-      {
-        to: ctx.config.agentVault,
-        abi: AgentVaultABI,
-        functionName: "executeOnBehalf",
-        args: [ctx.user, ctx.config.liquity.borrowerOperations, addCollData],
-      },
-      {
-        to: ctx.config.agentVault,
-        abi: AgentVaultABI,
-        functionName: "approveFromVault",
-        args: [ctx.user, ctx.config.liquity.collToken, ctx.config.liquity.borrowerOperations, 0n],
+        functionName: "approveAndExecute",
+        args: [ctx.user, ctx.config.liquity.collToken, amt, ctx.config.liquity.borrowerOperations, addCollData],
       },
     ];
   },
