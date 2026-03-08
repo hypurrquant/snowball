@@ -1,197 +1,194 @@
-# Snowball Protocol
+<p align="center">
+  <img src="docs/pitch/snowball.png" alt="Snowball Protocol" width="120" />
+</p>
 
-DeFi 프로토콜 on Creditcoin Testnet (Chain ID: 102031)
+<h1 align="center">Snowball Protocol</h1>
 
-5개 프로토콜: DEX (Uniswap V3) · Borrow (Liquity V2) · Lend (Morpho Blue) · Yield Vaults · Agent (ERC-8004)
+<p align="center">
+  <strong>A Full-Stack DeFi Suite for Creditcoin — Unlocking $80M+ in Idle Liquidity</strong>
+</p>
+
+<p align="center">
+  <a href="#key-features">Features</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#demo-scenario">Demo</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#getting-started">Getting Started</a>
+</p>
+
+---
+
+## The Problem
+
+Creditcoin holds **over $80M in on-chain assets**, yet there is no native DeFi infrastructure to put them to work. Users have no way to swap, borrow, lend, or earn yield — their capital sits idle with zero utility.
+
+## Our Solution
+
+**Snowball** brings a complete, production-grade DeFi stack to Creditcoin — from a DEX to lending markets to cross-chain yield — all managed by AI agents that make DeFi accessible to everyone.
+
+<table>
+<tr>
+<td width="25%" align="center"><strong>🔄 DEX</strong><br/><sub>Uniswap V3</sub></td>
+<td width="25%" align="center"><strong>🏦 Borrow & Lend</strong><br/><sub>Liquity V2 + Morpho Blue</sub></td>
+<td width="25%" align="center"><strong>🌐 Cross-Chain Yield</strong><br/><sub>USC Bridge Infrastructure</sub></td>
+<td width="25%" align="center"><strong>🤖 AI Agent</strong><br/><sub>ERC-8004 Protocol</sub></td>
+</tr>
+<tr>
+<td>Concentrated liquidity AMM for efficient on-chain trading</td>
+<td>Mint sbUSD stablecoin against CTC collateral, then lend across isolated markets</td>
+<td>Import yield sources from other chains (e.g. Hyperliquid DN) via USC</td>
+<td>Autonomous on-chain agents that manage DeFi positions on behalf of users</td>
+</tr>
+</table>
+
+---
+
+## Key Features
+
+### 1. DEX — Uniswap V3 on Creditcoin
+
+Full Uniswap V3 deployment with concentrated liquidity. Users can swap tokens and provide liquidity with custom price ranges for maximum capital efficiency.
+
+### 2. Borrow — Liquity V2 CDP
+
+Users deposit **wCTC** as collateral to mint **sbUSD**, a dollar-pegged stablecoin native to Creditcoin. Interest rates are user-selected, with a redemption mechanism that incentivizes market-rate pricing.
+
+### 3. Lend — Morpho Blue Markets
+
+Isolated lending markets powered by Morpho Blue. Users can supply assets (wCTC, lstCTC, sbUSD) and borrow against them with oracle-priced collateral. Supports multiple market configurations with adaptive interest rate curves.
+
+### 4. Cross-Chain Yield via USC
+
+**The key infrastructure innovation.** USC (Universal Stablecoin) bridges enable importing external yield sources into Creditcoin. In our demo, users deposit sbUSD into a **Delta-Neutral Vault** backed by Hyperliquid yield — bringing real, sustainable returns to Creditcoin users without leaving the ecosystem.
+
+### 5. AI Agent — ERC-8004 Autonomous DeFi Management
+
+For users unfamiliar with DeFi, our **ERC-8004 AI Agent** autonomously manages positions:
+
+- **Observer** — Monitors on-chain state (user rates, average rates, redemption risk)
+- **Planner** — LLM-powered decision engine (via OpenAI Codex) analyzes risk and generates action plans
+- **Executor** — Executes on-chain transactions through `AgentVault` with delegated permissions
+
+> **Demo scenario:** When a market maker raises rates, the average rate increases and positions with below-average rates face redemption risk. The AI Agent detects this, evaluates the situation, and autonomously adjusts the interest rate — protecting the user's collateral without any manual intervention.
 
 ---
 
 ## Architecture
 
 ```
-                        ┌──────────────────────────┐
-                        │   Frontend (Next.js)     │
-                        │   localhost:3000          │
-                        └────────────┬─────────────┘
-                                     │
-                    ┌────────────────┼────────────────┐
-                    ▼                ▼                 ▼
-             ┌────────────┐  ┌─────────────┐  ┌──────────────┐
-             │   nginx    │  │   nginx     │  │    nginx     │
-             │  /api/*    │  │ /api/agent/*│  │   (future)   │
-             └─────┬──────┘  └──────┬──────┘  └──────────────┘
-                   ▼                ▼
-            ┌────────────┐  ┌──────────────┐
-            │   server   │  │ agent-server │──→ claude-proxy ──→ codex CLI (LLM)
-            │  (NestJS)  │  │   (NestJS)   │         │
-            │  :3001     │  │   :3002      │         ▼
-            └────────────┘  └──────┬───────┘    LLM 판단 JSON
-                                   │
-                                   ▼
-                          AgentVault.executeOnBehalf()
-                                   │
-                                   ▼
-                     Creditcoin Testnet (102031)
+┌─────────────────────────────────────────────────────────────────┐
+│                      Frontend (Next.js)                         │
+│   DEX  ·  Borrow  ·  Lend  ·  Yield  ·  Agent Delegation UI   │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+   ┌────────────┐  ┌──────────────┐  ┌──────────────┐
+   │   Server   │  │ Agent Server │  │  USC Worker   │
+   │  (NestJS)  │  │   (NestJS)   │  │  (Bridge)     │
+   │ Volume/TVL │  │  Cron + API  │  │ Sepolia→CTC   │
+   └────────────┘  └──────┬───────┘  └──────────────┘
+                          │
+                   ┌──────┴───────┐
+                   │ Claude Proxy │──→ LLM Decision Engine
+                   └──────────────┘
+                          │
+              ┌───────────┴───────────┐
+              ▼                       ▼
+     AgentVault (ERC-8004)    Creditcoin Testnet
+     Permission-gated          Chain ID: 102031
+     On-chain Execution
 ```
 
-### Monorepo 구조
+### Monorepo Structure
 
-| 패키지 | 설명 |
-|--------|------|
-| `apps/web` | Next.js 프론트엔드 |
-| `apps/server` | NestJS API (Volume/TVL 수집) |
-| `apps/agent-server` | NestJS Agent 서버 (Observer → Planner → Executor) |
-| `apps/claude-proxy` | Codex CLI 프록시 (LLM 판단용) |
-| `apps/usc-worker` | Sepolia→USC 브릿지 워커 |
-| `packages/core` | 공유 주소/ABI/설정 |
-| `packages/agent-runtime` | Agent 런타임 (Capability Registry, Snapshot, Planner) |
-| `packages/liquity` | Liquity V2 Solidity 컨트랙트 |
+| Package | Description |
+|---------|-------------|
+| `apps/web` | Next.js frontend — DeFi dashboard with all protocol UIs |
+| `apps/server` | NestJS API — Volume/TVL data collection |
+| `apps/agent-server` | NestJS Agent — Observer → Planner → Executor pipeline |
+| `apps/claude-proxy` | LLM proxy — Routes decisions through Codex CLI |
+| `apps/usc-worker` | Bridge worker — Sepolia BridgeBurn → USC auto-mint |
+| `packages/core` | Shared addresses, ABIs, and configurations |
+| `packages/agent-runtime` | Agent runtime — Capability Registry, Snapshots, Planner |
+| `packages/liquity` | Liquity V2 Solidity contracts (Foundry) |
 
 ---
 
-## Quick Start
+## Demo Scenario
 
-### Prerequisites
-
-- Node.js 20+, pnpm 9+
-- Docker, Docker Compose
-- [Codex CLI](https://github.com/openai/codex) (`npm i -g @openai/codex`)
-- `OPENAI_API_KEY` 환경변수 (codex CLI용)
-
-### 1. 환경변수
-
-```bash
-cp .env.example .env
-# AGENT_PRIVATE_KEY, DEPLOYER_PRIVATE_KEY 설정
-```
-
-### 2. 의존성 설치
-
-```bash
-pnpm install
-```
-
-### 3. 서버 실행 (Docker)
-
-```bash
-# nginx + server + agent-server + usc-worker
-docker compose up -d
-```
-
-### 4. Claude Proxy 실행 (Docker 밖)
-
-```bash
-cd apps/claude-proxy
-make up      # 로그와 함께 실행
-# make logs  — 로그만 보기
-# make down  — 종료
-```
-
-> codex CLI는 Docker 안에서 실행 불가 → 호스트에서 직접 실행
-
-### 5. 프론트엔드
-
-```bash
-# 로컬 개발
-pnpm --filter @snowball/web dev
-
-# 또는 just 사용
-just fe
-```
-
-> 배포 서버에서는 `pnpm --filter @snowball/web build` 후 정적 파일 서빙
-
----
-
-## Agent E2E 파이프라인
-
-Agent는 Liquity V2 Trove 이자율을 시장 평균 대비 자동 조정한다.
+**"AI Agent Protects Your Position from Redemption"**
 
 ```
-1. agent-server (cron/API) → Observer: 온체인 데이터 수집 (user rate, avg rate)
-2. agent-server → claude-proxy → codex CLI: LLM이 올릴지/내릴지 판단
-3. agent-server → Executor: AgentVault.executeOnBehalf() 온체인 TX 실행
-```
-
-### Agent API
-
-```bash
-# 수동 실행
-curl -X POST http://localhost/api/agent/run \
-  -H "Content-Type: application/json" \
-  -d '{"user": "0x...", "manifestId": "snowball-demo-defi-manager", "troveId": "..."}'
-
-# 실행 이력
-curl http://localhost/api/agent/runs
-
-# 상태
-curl http://localhost/api/agent/status
-```
-
-### 위임 설정 (Agent에게 이자율 조정 권한 부여)
-
-```bash
-NODE_PATH=apps/web/node_modules npx tsx scripts/sim/setup-delegation.ts
+Step 1  │  User opens a Trove (CDP) with 4.5% interest rate
+        │  and delegates it to the AI Agent
+        │
+Step 2  │  A market maker raises their rate to 20%
+        │  → Average rate increases across the protocol
+        │
+Step 3  │  Agent's Observer detects: user rate < avg rate
+        │  → Position is now at redemption risk
+        │
+Step 4  │  Agent's Planner (LLM) analyzes the situation
+        │  and decides to raise the interest rate
+        │
+Step 5  │  Agent's Executor calls adjustTroveInterestRate()
+        │  via AgentVault.executeOnBehalf()
+        │  → Position is safe from redemption ✓
 ```
 
 ---
-
-## Scripts
-
-```bash
-# 스크립트 실행 (viem 의존성이 apps/web/node_modules에 있음)
-NODE_PATH=apps/web/node_modules npx tsx scripts/deploy/<script>.ts
-NODE_PATH=apps/web/node_modules npx tsx scripts/sim/<script>.ts
-```
-
-| 경로 | 용도 |
-|------|------|
-| `scripts/deploy/` | 컨트랙트 배포 |
-| `scripts/sim/` | 시뮬레이션/테스트 |
-| `scripts/simulation-accounts.json` | 8 페르소나 + deployer 계정 |
-
----
-
-## 외부 서버 배포
-
-```bash
-# 1. 코드 클론 + .env 설정
-git clone ... && cp .env.example .env
-
-# 2. Docker 서비스
-docker compose up -d
-
-# 3. Claude Proxy (Linux에서는 CLAUDE_PROXY_URL 수정 필요)
-echo 'CLAUDE_PROXY_URL=http://172.17.0.1:3003' >> .env
-docker compose up -d agent-server  # 재시작
-cd apps/claude-proxy && OPENAI_API_KEY=sk-... make up
-
-# 4. 프론트엔드 빌드
-pnpm --filter @snowball/web build
-# 빌드 결과: apps/web/.next/ → nginx나 pm2로 서빙
-```
-
-> Linux Docker에서 `host.docker.internal`이 안 되므로 `172.17.0.1` (Docker bridge IP) 사용.
-> 또는 docker-compose.yml에 `extra_hosts: ["host.docker.internal:host-gateway"]` 추가.
-
----
-
-## Documentation
-
-| 문서 | 설명 |
-|------|------|
-| [`docs/ssot/`](./docs/ssot/) | 프로토콜별 컨트랙트 주소 (SSOT) |
-| [`docs/guide/deploy-history.md`](./docs/guide/deploy-history.md) | 배포 이력 |
-| [`docs/test/agent-test.md`](./docs/test/agent-test.md) | Agent E2E 테스트 시나리오 |
-| [`docs/guide/OPERATIONS.md`](./docs/guide/OPERATIONS.md) | 운영 가이드 |
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Smart Contracts | Solidity 0.8.24, Foundry |
-| Frontend | Next.js 15, TailwindCSS, wagmi v2, viem |
-| Backend | NestJS, TypeScript, SQLite |
-| Agent | agent-runtime (Observer→Planner→Executor), Codex CLI |
-| Infra | Docker Compose, nginx |
-| Blockchain | Creditcoin Testnet (102031) |
+| **Smart Contracts** | Solidity 0.8.24, Foundry, Liquity V2, Morpho Blue, Uniswap V3 |
+| **Frontend** | Next.js 15, React 19, TailwindCSS, wagmi v2, viem |
+| **Backend** | NestJS, TypeScript, SQLite |
+| **AI Agent** | ERC-8004, Observer→Planner→Executor, OpenAI Codex CLI |
+| **Bridge** | USC (Universal Stablecoin), Sepolia ↔ Creditcoin |
+| **Infrastructure** | Docker Compose, nginx, pnpm monorepo |
+| **Blockchain** | Creditcoin Testnet (Chain ID: 102031) |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+, pnpm 9+
+- Docker & Docker Compose
+- [Codex CLI](https://github.com/openai/codex) for AI Agent
+
+### Quick Start
+
+```bash
+# 1. Clone & install
+git clone https://github.com/hypurrquant/snowball.git
+cd snowball
+pnpm install
+
+# 2. Environment setup
+cp .env.example .env
+# Set AGENT_PRIVATE_KEY, DEPLOYER_PRIVATE_KEY, OPENAI_API_KEY
+
+# 3. Start all services
+docker compose up -d          # nginx + server + agent-server + usc-worker
+cd apps/claude-proxy && make up  # LLM proxy (runs on host)
+
+# 4. Start frontend
+pnpm --filter @snowball/web dev  # http://localhost:3000
+```
+
+---
+
+## Team
+
+**Hypurrquant** — Building DeFi infrastructure for Creditcoin
+
+---
+
+<p align="center">
+  <sub>Built with Liquity V2 · Morpho Blue · Uniswap V3 · ERC-8004 · USC</sub>
+</p>
