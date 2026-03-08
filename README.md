@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="docs/pitch/snowball.png" alt="Snowball Protocol" width="120" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="apps/web/public/snowball-logo.png" />
+    <source media="(prefers-color-scheme: light)" srcset="docs/pitch/snowball.png" />
+    <img src="docs/pitch/snowball.png" alt="Snowball Protocol" width="120" />
+  </picture>
 </p>
 
 <h1 align="center">Snowball Protocol</h1>
@@ -173,19 +177,39 @@ pnpm install
 cp .env.example .env
 # Set AGENT_PRIVATE_KEY, DEPLOYER_PRIVATE_KEY, OPENAI_API_KEY
 
-# 3. Start all services
-docker compose up -d          # nginx + server + agent-server + usc-worker
-cd apps/claude-proxy && make up  # LLM proxy (runs on host)
+# 3. Start all services (local)
+just up                          # backend services
+pnpm --filter @snowball/web dev  # frontend (http://localhost:3000)
+cd apps/claude-proxy && make up  # LLM proxy for AI Agent
 
-# 4. Start frontend
-pnpm --filter @snowball/web dev  # http://localhost:3000
+# Production
+docker compose up -d             # nginx + server + agent-server + usc-worker
 ```
 
 ---
 
 ## Team
 
-**Hypurrquant** — Building DeFi infrastructure for Creditcoin
+**Hypurrquant** — DeFi-native builders since 2024
+
+| | Name | Role | Background |
+|---|------|------|-----------|
+| | **Kim HuiSang (HIK)** | Co-Founder / CEO | Financial Mathematics · DeFi strategist |
+| | **Noh Yuseong (NOYU)** | Co-Founder / CTO | Software Engineering · Infrastructure at scale |
+
+**Track Record:**
+
+```
+2024 Q1  Team Formed — AI research lab → on-chain
+    ↓
+2024 Q3  HypurrQuant — DEX LP management + trading bots
+    ↓
+2025 Q1  HypurrQuant V2 — Multi-chain, non-custodial
+    ↓
+2025 Q4  ForwardX — Cross-currency DeFi operations
+    ↓
+2026 Q1  Snowball — Full-stack DeFi for Creditcoin
+```
 
 ---
 
