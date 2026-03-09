@@ -11,7 +11,7 @@ import { TOKENS, TOKEN_INFO } from "@/core/config/addresses";
 import { useSwap } from "@/domains/trade/hooks/useSwap";
 import { formatTokenAmount } from "@/shared/lib/utils";
 import { ArrowDownUp, Settings, Loader2 } from "lucide-react";
-import { TokenSelector } from "@/shared/components/common/TokenSelector";
+import { TokenSelector } from "@/domains/trade/components/TokenSelector";
 import { PriceChart } from "@/domains/trade/components/PriceChart";
 import { TxPipelineModal } from "@/shared/components/ui/tx-pipeline-modal";
 import { useTxPipeline } from "@/shared/hooks/useTxPipeline";

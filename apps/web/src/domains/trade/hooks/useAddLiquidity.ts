@@ -6,6 +6,7 @@ import { NonfungiblePositionManagerABI, MockERC20ABI } from "@/core/abis";
 import { DEX } from "@/core/config/addresses";
 import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import type { Address } from "viem";
+import { DEFAULT_FEE_TIER, DEFAULT_DEADLINE_SECONDS, DEFAULT_ADD_LIQUIDITY_SLIPPAGE_BPS } from "../lib/constants";
 
 export function useAddLiquidity() {
   const { address } = useConnection();
@@ -29,12 +30,12 @@ export function useAddLiquidity() {
   const mint = async ({
     token0,
     token1,
-    fee = 3000,
+    fee = DEFAULT_FEE_TIER,
     tickLower,
     tickUpper,
     amount0Desired,
     amount1Desired,
-    slippageBps = 500,
+    slippageBps = DEFAULT_ADD_LIQUIDITY_SLIPPAGE_BPS,
   }: {
     token0: Address;
     token1: Address;
@@ -62,7 +63,7 @@ export function useAddLiquidity() {
     // The pool takes only what it needs; min=0 avoids false slippage reverts.
     const amount0Min = 0n;
     const amount1Min = 0n;
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200);
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_SECONDS);
 
     const mintParams = {
       token0: t0,

@@ -5,8 +5,9 @@ import { UniswapV3FactoryABI, UniswapV3PoolABI } from "@/core/abis";
 import { DEX } from "@/core/config/addresses";
 import { sortTokens } from "@/shared/lib/utils";
 import type { Address } from "viem";
+import { DEFAULT_FEE_TIER } from "../lib/constants";
 
-export function usePool(tokenA?: Address, tokenB?: Address, fee: number = 3000) {
+export function usePool(tokenA?: Address, tokenB?: Address, fee: number = DEFAULT_FEE_TIER) {
   const [token0, token1] =
     tokenA && tokenB ? sortTokens(tokenA, tokenB) : [undefined, undefined];
 

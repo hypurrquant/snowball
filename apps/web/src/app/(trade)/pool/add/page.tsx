@@ -14,15 +14,9 @@ import { usePool } from "@/domains/trade/hooks/usePool";
 import { formatTokenAmount } from "@/shared/lib/utils";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { RANGE_PRESETS_ADD_PAGE } from "@/domains/trade/lib/constants";
 
 const TOKEN_LIST = Object.entries(TOKENS) as [string, Address][];
-
-const RANGE_PRESETS = [
-  { label: "Full", tickLower: -887220, tickUpper: 887220 },
-  { label: "Safe", tickLower: -60000, tickUpper: 60000 },
-  { label: "Common", tickLower: -12000, tickUpper: 12000 },
-  { label: "Expert", tickLower: -600, tickUpper: 600 },
-];
 
 export default function AddLiquidityPage() {
   const { address, isConnected } = useConnection();
@@ -40,7 +34,7 @@ export default function AddLiquidityPage() {
 
   const token0Info = TOKEN_INFO[token0];
   const token1Info = TOKEN_INFO[token1];
-  const range = RANGE_PRESETS[selectedRange];
+  const range = RANGE_PRESETS_ADD_PAGE[selectedRange];
 
   const handleMint = async () => {
     if (!amount0Str || !amount1Str) return;
@@ -116,7 +110,7 @@ export default function AddLiquidityPage() {
             <div>
               <div className="section-title">2. Price Range</div>
               <div className="flex gap-2 mb-3">
-                {RANGE_PRESETS.map((preset, i) => (
+                {RANGE_PRESETS_ADD_PAGE.map((preset, i) => (
                   <Button
                     key={preset.label}
                     variant={selectedRange === i ? "default" : "secondary"}
@@ -131,13 +125,13 @@ export default function AddLiquidityPage() {
                 <div className="rounded-xl bg-bg-input p-3 text-center">
                   <span className="text-xs text-text-tertiary">Min Price</span>
                   <div className="text-lg font-mono mt-1">
-                    {range.tickLower === -887220 ? "0" : range.tickLower}
+                    {range.tickLower === RANGE_PRESETS_ADD_PAGE[0].tickLower ? "0" : range.tickLower}
                   </div>
                 </div>
                 <div className="rounded-xl bg-bg-input p-3 text-center">
                   <span className="text-xs text-text-tertiary">Max Price</span>
                   <div className="text-lg font-mono mt-1">
-                    {range.tickUpper === 887220 ? "∞" : range.tickUpper}
+                    {range.tickUpper === RANGE_PRESETS_ADD_PAGE[0].tickUpper ? "∞" : range.tickUpper}
                   </div>
                 </div>
               </div>

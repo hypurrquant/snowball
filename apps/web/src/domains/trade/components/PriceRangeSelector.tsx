@@ -8,6 +8,7 @@ import {
   formatPriceCompact,
 } from "@/core/dex/calculators";
 import type { TickDisplayData } from "@/core/dex/types";
+import { RANGE_PRESETS } from "../lib/constants";
 
 // ────────────────────────────────────────────
 // Types
@@ -28,18 +29,6 @@ interface PriceRangeSelectorProps {
 }
 
 type TickRange = { priceLower: number; priceUpper: number };
-
-// ────────────────────────────────────────────
-// Presets
-// ────────────────────────────────────────────
-
-const RANGE_PRESETS = [
-  { label: "Narrow", percent: 5 },
-  { label: "Common", percent: 10 },
-  { label: "Wide", percent: 25 },
-  { label: "Full", percent: -1 },
-  { label: "Custom", percent: 0 },
-] as const;
 
 // Mini histogram bar patterns for each preset (5 bars, heights out of 5)
 const PRESET_MINI_BARS: Record<string, number[]> = {

@@ -6,12 +6,13 @@ import { QuoterV2ABI, SwapRouterABI } from "@/core/abis";
 import { DEX } from "@/core/config/addresses";
 import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
 import type { Address } from "viem";
+import { DEFAULT_FEE_TIER, DEFAULT_SLIPPAGE_BPS, DEFAULT_DEADLINE_SECONDS } from "../lib/constants";
 
 export function useSwap(
   tokenIn?: Address,
   tokenOut?: Address,
   amountIn?: bigint,
-  fee: number = 3000
+  fee: number = DEFAULT_FEE_TIER
 ) {
   const { address } = useConnection();
 
@@ -50,10 +51,10 @@ export function useSwap(
     isPending: isSwapPending,
   } = useChainWriteContract();
 
-  const swap = async (slippageBps = 50) => {
+  const swap = async (slippageBps = DEFAULT_SLIPPAGE_BPS) => {
     if (!tokenIn || !tokenOut || !amountIn || !expectedAmountOut || !address) return;
     const minOut = (expectedAmountOut * BigInt(10000 - slippageBps)) / 10000n;
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200);
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + DEFAULT_DEADLINE_SECONDS);
 
     return swapAsync({
       address: DEX.swapRouter,
