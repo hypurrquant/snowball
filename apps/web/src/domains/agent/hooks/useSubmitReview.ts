@@ -4,8 +4,7 @@ import { useWaitForTransactionReceipt } from "wagmi";
 import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { ERC8004 } from "@/core/config/addresses";
 import { ReputationRegistryABI } from "@/core/abis";
-
-const GENERAL_TAG = "general";
+import { GENERAL_TAG } from "../lib/constants";
 
 export function useSubmitReview() {
   const {

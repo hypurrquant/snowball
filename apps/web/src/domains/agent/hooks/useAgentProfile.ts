@@ -7,8 +7,7 @@ import {
 } from "@/core/abis";
 import type { AgentInfo, ReputationData, Review, Validation } from "../types";
 import type { Address } from "viem";
-
-const GENERAL_TAG = "general";
+import { GENERAL_TAG } from "../lib/constants";
 
 export function useAgentProfile(agentId: bigint | undefined) {
   const enabled = agentId !== undefined && agentId > 0n;

@@ -3,7 +3,9 @@
 import { useReadContracts } from "wagmi";
 import { SnowballLendABI, AdaptiveCurveIRMABI } from "@/core/abis";
 import { YIELD, LEND } from "@/core/config/addresses";
-import { borrowRateToAPR, utilization, supplyAPY } from "@/shared/lib/morphoMath";
+import { borrowRateToAPR, utilization, supplyAPY } from "@/domains/defi/morpho/lib/morphoMath";
+import { FALLBACK_BORROW_APR_MULTIPLIER, type MarketTuple, type ParamsTuple } from "@/domains/defi/morpho/lib/constants";
+import { STRATEGY_FEE_MULTIPLIER, morphoVaults } from "../lib/constants";
 import type { Address } from "viem";
 
 export type ApyState =
@@ -11,16 +13,6 @@ export type ApyState =
   | { kind: "variable" }
   | { kind: "ready"; value: number }
   | { kind: "error" };
-
-const STRATEGY_FEE_MULTIPLIER = 0.955; // 1 - 45/1000 (CALL_FEE=5 + STRAT_FEE=5 + TREASURY_FEE=35)
-
-type MarketTuple = readonly [bigint, bigint, bigint, bigint, bigint, bigint];
-type ParamsTuple = readonly [Address, Address, Address, Address, bigint];
-
-const morphoVaults = YIELD.vaults.filter(
-  (v): v is typeof v & { morphoMarketId: `0x${string}` } =>
-    v.strategyType === "morpho" && "morphoMarketId" in v,
-);
 
 export function useYieldVaultAPY(): Record<Address, ApyState> {
   // Phase 1: market data + idToMarketParams for each morpho vault
@@ -142,7 +134,7 @@ export function useYieldVaultAPY(): Record<Address, ApyState> {
     if (irmResult?.status === "success") {
       borrowAPR = borrowRateToAPR(irmResult.result as bigint);
     } else if (irmResult?.status === "failure") {
-      borrowAPR = util * 0.08; // fallback approximation for on-chain failure
+      borrowAPR = util * FALLBACK_BORROW_APR_MULTIPLIER; // fallback approximation for on-chain failure
     } else {
       // irmResult undefined but irmData loaded — idToMarketParams must have failed for this vault
       result[vault.address] = { kind: "error" };

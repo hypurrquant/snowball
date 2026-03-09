@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/components/ui
 import { Shield, Loader2 } from "lucide-react";
 import { LIQUITY, TOKENS } from "@/core/config/addresses";
 import { useVaultPermission } from "../hooks/useVaultPermission";
+import { PERMISSION_EXPIRY_SECONDS } from "../lib/constants";
 
 // Preset: Allow agent to manage Liquity trove interest rate + add collateral
 const PRESET_LIQUITY_RATE = {
@@ -38,7 +39,7 @@ export function PermissionForm({ agentEndpoint, onSuccess }: PermissionFormProps
 
   const handlePreset = async () => {
     try {
-      const expiry = BigInt(Math.floor(Date.now() / 1000) + 30 * 24 * 3600); // 30 days
+      const expiry = BigInt(Math.floor(Date.now() / 1000) + PERMISSION_EXPIRY_SECONDS);
       await grantPermission({
         agent: agentEndpoint,
         targets: PRESET_LIQUITY_RATE.targets,

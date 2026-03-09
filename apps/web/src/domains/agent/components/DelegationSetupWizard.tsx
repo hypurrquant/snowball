@@ -9,6 +9,7 @@ import { Loader2, ChevronRight, Check } from "lucide-react";
 import { LIQUITY, LEND, TOKENS, ERC8004 } from "@/core/config/addresses";
 import { useVaultActions } from "../hooks/useVaultActions";
 import { useVaultPermission } from "../hooks/useVaultPermission";
+import { PERMISSION_EXPIRY_SECONDS, AGENT_RATE_BOUNDS } from "../lib/constants";
 import { useVaultBalance } from "../hooks/useVaultBalance";
 import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
 import { useMorphoAuthorization } from "@/domains/defi/morpho/hooks/useMorphoAuthorization";
@@ -107,7 +108,7 @@ export function DelegationSetupWizard({
 
   const handleGrantPermission = async () => {
     const preset = scenario === "morpho" ? MORPHO_PERMISSION : getLiquityPermission(branch);
-    const expiry = BigInt(Math.floor(Date.now() / 1000) + 30 * 24 * 3600);
+    const expiry = BigInt(Math.floor(Date.now() / 1000) + PERMISSION_EXPIRY_SECONDS);
     const collToken = branch === "lstCTC" ? TOKENS.lstCTC : TOKENS.wCTC;
     const tokenCaps = scenario === "morpho"
       ? [{ token: TOKENS.sbUSD as Address, cap: parseEther("1000") }]
@@ -136,8 +137,8 @@ export function DelegationSetupWizard({
     await setInterestIndividualDelegate({
       troveId: id,
       delegate: agentVaultAddress,
-      minInterestRate: parseEther("0.005"),
-      maxInterestRate: parseEther("0.15"),
+      minInterestRate: AGENT_RATE_BOUNDS.minInterestRate,
+      maxInterestRate: AGENT_RATE_BOUNDS.maxInterestRate,
       newAnnualInterestRate: 0n,
       upperHint: 0n,
       lowerHint: 0n,

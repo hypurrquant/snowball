@@ -5,12 +5,10 @@ import { usePublicClient } from "wagmi";
 import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { useState, useEffect, useCallback } from "react";
 import { parseAbiItem, type Address } from "viem";
-import { ERC8004, TOKENS } from "@/core/config/addresses";
+import { ERC8004 } from "@/core/config/addresses";
 import { AgentVaultABI } from "@/core/abis";
 import type { Permission } from "../types";
-
-// Known tokens for getPermission query
-const KNOWN_TOKENS: Address[] = [TOKENS.wCTC, TOKENS.sbUSD, TOKENS.lstCTC, TOKENS.USDC];
+import { KNOWN_TOKENS } from "../lib/constants";
 
 interface PermissionEntry {
   agent: Address;

@@ -3,7 +3,8 @@
 import { useReadContracts } from "wagmi";
 import { SnowballLendABI, MockOracleABI, AdaptiveCurveIRMABI } from "@/core/abis";
 import { LEND } from "@/core/config/addresses";
-import { utilization, supplyAPY, borrowRateToAPR } from "@/shared/lib/morphoMath";
+import { utilization, supplyAPY, borrowRateToAPR } from "../lib/morphoMath";
+import { FALLBACK_BORROW_APR_MULTIPLIER, type MarketTuple } from "../lib/constants";
 import { getMarketParams } from "../lib/marketParams";
 import type { MorphoMarket } from "../types";
 
@@ -34,7 +35,6 @@ export function useMorphoMarkets() {
   });
 
   // Phase 2: IRM borrowRateView (depends on phase 1 market data)
-  type MarketTuple = readonly [bigint, bigint, bigint, bigint, bigint, bigint];
   const marketCount = LEND.markets.length;
 
   const irmCalls = phase1Data
@@ -77,7 +77,7 @@ export function useMorphoMarkets() {
       if (irmResult?.status === "success") {
         borrowAPR = borrowRateToAPR(irmResult.result as bigint);
       } else {
-        borrowAPR = util * 0.08;
+        borrowAPR = util * FALLBACK_BORROW_APR_MULTIPLIER;
       }
 
       const oracleIdx = i < oracleAddresses.length ? marketCount + i : 0;

@@ -3,7 +3,8 @@
 import { useReadContract } from "wagmi";
 import { SnowballLendABI } from "@/core/abis";
 import { LEND } from "@/core/config/addresses";
-import { toAssetsDown, calculateHealthFactor, calculateLiquidationPrice } from "@/shared/lib/morphoMath";
+import { toAssetsDown, calculateHealthFactor, calculateLiquidationPrice } from "../lib/morphoMath";
+import { ORACLE_SCALE } from "../lib/constants";
 import type { MorphoPosition } from "../types";
 import type { Address } from "viem";
 
@@ -42,7 +43,6 @@ export function useMorphoPosition(
     const lltv = marketConfig?.lltv ?? 0n;
 
     // Convert collateral amount to value using oracle price (18 decimals, MockOracle)
-    const ORACLE_SCALE = 10n ** 36n;
     const collateralValue = oraclePrice && oraclePrice > 0n
       ? (collateral * oraclePrice) / ORACLE_SCALE
       : collateral;

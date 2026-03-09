@@ -1,7 +1,7 @@
 import { useReadContract, useReadContracts } from "wagmi";
 import { ERC8004 } from "@/core/config/addresses";
 import { IdentityRegistryABI } from "@/core/abis";
-import type { AgentInfo } from "../types";
+import { mapAgentResults } from "../lib/agentMapper";
 
 export function useAgentList() {
   const { data: totalRaw, isLoading: isLoadingTotal } = useReadContract({
@@ -12,11 +12,13 @@ export function useAgentList() {
 
   const total = totalRaw ? Number(totalRaw) : 0;
 
-  const contracts = Array.from({ length: total }, (_, i) => ({
+  const ids = Array.from({ length: total }, (_, i) => BigInt(i + 1));
+
+  const contracts = ids.map((id) => ({
     address: ERC8004.identityRegistry,
     abi: IdentityRegistryABI,
     functionName: "getAgentInfo" as const,
-    args: [BigInt(i + 1)] as const,
+    args: [id] as const,
   }));
 
   const { data, isLoading: isLoadingAgents } = useReadContracts({
@@ -24,16 +26,10 @@ export function useAgentList() {
     query: { enabled: total > 0, refetchInterval: 15_000 },
   });
 
-  const agents = data
-    ?.map((d, i) => {
-      if (d.status !== "success" || !d.result) return null;
-      const info = d.result as unknown as AgentInfo;
-      return { id: BigInt(i + 1), ...info };
-    })
-    .filter(Boolean) as Array<AgentInfo & { id: bigint }> | undefined;
+  const agents = mapAgentResults(data, ids);
 
   return {
-    agents: agents ?? [],
+    agents,
     total,
     isLoading: isLoadingTotal || isLoadingAgents,
   };

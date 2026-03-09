@@ -20,7 +20,7 @@ import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { DEMO_POSITIONS } from "@/domains/defi/morpho/data/fixtures";
 import type { MorphoMarket } from "@/domains/defi/morpho/types";
 import { formatTokenAmount, formatNumber } from "@/shared/lib/utils";
-import { calculateHealthFactor } from "@/shared/lib/morphoMath";
+import { calculateHealthFactor } from "@/domains/defi/morpho/lib/morphoMath";
 import { Landmark } from "lucide-react";
 
 const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
