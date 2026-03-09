@@ -1,4 +1,8 @@
+import { MIN_DEBT } from "./constants";
+
 const WAD = 10n ** 18n;
+const DAYS_7 = 7n;
+const DAYS_365 = 365n;
 
 /**
  * Collateral Ratio = (coll * price) / debt * 100
@@ -61,4 +65,151 @@ export async function getInsertPosition(
   } catch {
     return [0n, 0n];
   }
+}
+
+// ---------------------------------------------------------------------------
+// Position preview (pure computation)
+// ---------------------------------------------------------------------------
+
+export interface PositionPreviewInput {
+  coll: bigint;
+  debt: bigint;
+  rate: bigint;   // 18 decimals (5% = 5e16)
+  price: bigint;
+  mcr: bigint;
+  ccr: bigint;
+}
+
+export interface PositionPreviewResult {
+  cr: number;
+  liquidationPrice: bigint;
+  upfrontFee: bigint;
+  annualCost: bigint;
+  maxBorrow: bigint;
+  isAboveMCR: boolean;
+  isAboveCCR: boolean;
+}
+
+export function computePositionPreview(input: PositionPreviewInput): PositionPreviewResult {
+  const { coll, debt, rate, price, mcr, ccr } = input;
+
+  const cr = debt > 0n ? computeCR(coll, debt, price) : 0;
+  const liqPrice = liquidationPrice(coll, debt, mcr);
+
+  // upfrontFee = debt * rate * 7 / 365 (all 18-decimal math)
+  const upfrontFee =
+    debt > 0n && rate > 0n
+      ? (debt * rate * DAYS_7) / (DAYS_365 * WAD)
+      : 0n;
+
+  // annualCost = debt * rate / 1e18
+  const annualCost =
+    debt > 0n && rate > 0n ? (debt * rate) / WAD : 0n;
+
+  // maxBorrow = coll * price / mcr
+  const maxBorrow =
+    coll > 0n && price > 0n && mcr > 0n
+      ? (coll * price) / mcr
+      : 0n;
+
+  // MCR is 18 decimals (e.g. 1.1e18 = 110%)
+  const mcrPct = Number(mcr) / 1e16;
+  const ccrPct = Number(ccr) / 1e16;
+  const isAboveMCR = cr >= mcrPct;
+  const isAboveCCR = cr >= ccrPct;
+
+  return {
+    cr,
+    liquidationPrice: liqPrice,
+    upfrontFee,
+    annualCost,
+    maxBorrow,
+    isAboveMCR,
+    isAboveCCR,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Market rate statistics (pure computation)
+// ---------------------------------------------------------------------------
+
+export interface RateStats {
+  median: number; // %
+  mean: number;   // %
+  min: number;    // %
+  max: number;    // %
+  count: number;
+}
+
+export function computeRateStats(rates: number[]): RateStats | null {
+  if (rates.length === 0) return null;
+
+  const sorted = [...rates].sort((a, b) => a - b);
+
+  const count = sorted.length;
+  const sum = sorted.reduce((a, b) => a + b, 0);
+  const mean = sum / count;
+
+  const mid = Math.floor(count / 2);
+  const median =
+    count % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+
+  return {
+    median,
+    mean,
+    min: sorted[0],
+    max: sorted[count - 1],
+    count,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Open Trove validation (pure computation)
+// ---------------------------------------------------------------------------
+
+export interface ValidateOpenTroveInput {
+  collAmount: string;
+  debtAmount: string;
+  debtNum: number;
+  cr: number;
+  isAboveMCR: boolean;
+  mcrPct: number;
+  insufficientBalance: boolean;
+  isPending: boolean;
+}
+
+export interface ValidateOpenTroveResult {
+  errors: string[];
+  canOpen: boolean;
+  buttonText: string | null;
+}
+
+export function validateOpenTrove(input: ValidateOpenTroveInput): ValidateOpenTroveResult {
+  const { collAmount, debtAmount, debtNum, cr, isAboveMCR, mcrPct, insufficientBalance, isPending } = input;
+
+  const errors: string[] = [];
+  if (debtNum > 0 && debtNum < MIN_DEBT) errors.push(`Minimum debt is ${MIN_DEBT} sbUSD.`);
+  if (cr > 0 && !isAboveMCR) errors.push(`CR (${cr.toFixed(0)}%) is below MCR (${mcrPct.toFixed(0)}%). Increase collateral or reduce debt.`);
+
+  const canOpen = !!collAmount && !!debtAmount && debtNum >= MIN_DEBT && isAboveMCR && !insufficientBalance;
+
+  // Button text
+  let buttonText: string | null;
+  if (isPending) {
+    buttonText = null; // spinner shown separately
+  } else if (!collAmount) {
+    buttonText = "Enter deposit amount";
+  } else if (!debtAmount) {
+    buttonText = "Enter borrow amount";
+  } else if (debtNum > 0 && debtNum < MIN_DEBT) {
+    buttonText = `Min debt: ${MIN_DEBT} sbUSD`;
+  } else if (insufficientBalance) {
+    buttonText = "Insufficient Balance";
+  } else if (cr > 0 && !isAboveMCR) {
+    buttonText = `CR too low (min ${mcrPct.toFixed(0)}%)`;
+  } else {
+    buttonText = "Open Trove";
+  }
+
+  return { errors, canOpen, buttonText };
 }

@@ -11,13 +11,12 @@ import {
 } from "@/core/abis";
 import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
 import { getInsertPosition } from "../lib/liquityMath";
+import { BRANCH_INDEX, ETH_GAS_COMPENSATION } from "../lib/constants";
 import type { Address } from "viem";
 import { encodePacked, keccak256 } from "viem";
 
-const BRANCH_INDEX: Record<string, bigint> = { wCTC: 0n, lstCTC: 1n };
-
-/** Liquity V2: gas compensation deposited to GasPool on openTrove, returned on closeTrove */
-export const ETH_GAS_COMPENSATION = 2n * 10n ** 17n; // 0.2 wCTC
+// Re-export for backward compatibility (useEditTrove imports from here)
+export { ETH_GAS_COMPENSATION } from "../lib/constants";
 
 export function useTroveActions(
   branch: "wCTC" | "lstCTC",
