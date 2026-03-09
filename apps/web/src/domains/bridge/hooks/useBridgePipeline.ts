@@ -4,108 +4,19 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { zeroAddress, type Address, parseAbiItem } from "viem";
 import type { TxStep } from "@/shared/types/tx";
-import { creditcoinTestnet, sepoliaChain, uscTestnet } from "@/core/config/chain";
-import { ccClient, sepoliaClient, uscClient, bridgeContracts } from "../lib/bridgeConfig";
 import { BRIDGE } from "@/core/config/addresses";
+import { uscClient } from "../lib/bridgeConfig";
 import { useBridgeActions } from "./useBridgeActions";
-
-type BridgePhase =
-  | "idle"
-  | "approve"
-  | "deposit"
-  | "mint"
-  | "burn"
-  | "attestWait"
-  | "done"
-  | "error"
-  | "timeout";
-
-const ATTEST_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
-const ATTEST_POLL_MS = 10_000; // 10 seconds
-
-const SESSION_KEY_PREFIX = "bridge-session:";
-
-function getSessionKey(address: string) {
-  return `${SESSION_KEY_PREFIX}${address.toLowerCase()}`;
-}
-
-function createInitialSteps(): TxStep[] {
-  return [
-    { id: "approve", type: "approve", label: "Approve USDC", status: "pending", chainId: creditcoinTestnet.id },
-    { id: "deposit", type: "vaultDeposit", label: "Send USDC via Wormhole", status: "pending", chainId: creditcoinTestnet.id },
-    { id: "mint", type: "mint", label: "Mint DN (Eth Sepolia)", status: "pending", chainId: sepoliaChain.id },
-    { id: "burn", type: "bridgeBurn", label: "Bridge Burn DN", status: "pending", chainId: sepoliaChain.id },
-    { id: "attest", type: "attestWait", label: "Attestation (~5 min)", status: "pending", chainId: uscTestnet.id },
-    { id: "uscMint", type: "uscMint", label: "CTC USC Mint (Auto)", status: "pending", chainId: uscTestnet.id },
-  ];
-}
-
-const PHASE_STEP_MAP: Record<string, string> = {
-  approve: "approve",
-  deposit: "deposit",
-  mint: "mint",
-  burn: "burn",
-  attestWait: "attest",
-};
-
-// ---- Session persistence (localStorage) ----
-
-interface BridgeSession {
-  amount: string;
-  timestamp: number;
-  completedSteps: {
-    approve?: string;
-    deposit?: string;
-    mint?: string;
-    burn?: string;
-    uscMint?: string;
-  };
-  /** @deprecated Block number on Sepolia (wrong chain for USC polling) */
-  burnBlock?: string;
-  /** Timestamp (ms) when burn was confirmed — used to compute USC polling lower bound */
-  burnTimestamp?: number;
-  /** Step ID that failed — enables retry after page refresh */
-  failedStep?: string;
-  failedError?: string;
-}
-
-function saveSession(address: string, session: BridgeSession) {
-  try { localStorage.setItem(getSessionKey(address), JSON.stringify(session)); } catch {}
-}
-
-function loadSession(address: string): BridgeSession | null {
-  try {
-    const raw = localStorage.getItem(getSessionKey(address));
-    if (!raw) return null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const parsed = JSON.parse(raw) as any;
-    // TTL: 24 hours
-    if (Date.now() - (parsed.timestamp ?? 0) > 86_400_000) {
-      localStorage.removeItem(getSessionKey(address));
-      return null;
-    }
-    // Migrate old format (had depositTxHash instead of completedSteps)
-    if (!parsed.completedSteps) {
-      const migrated: BridgeSession = {
-        amount: parsed.amount ?? "0",
-        timestamp: parsed.timestamp ?? Date.now(),
-        completedSteps: {},
-      };
-      // Old format had depositTxHash → means approve+deposit were completed
-      if (parsed.depositTxHash) {
-        migrated.completedSteps.approve = "migrated";
-        migrated.completedSteps.deposit = parsed.depositTxHash;
-      }
-      saveSession(address, migrated);
-      return migrated;
-    }
-    return parsed as BridgeSession;
-  } catch { return null; }
-}
-
-function clearSession(address: string) {
-  try { localStorage.removeItem(getSessionKey(address)); } catch {}
-}
+import type { BridgeSession } from "../lib/bridgeSession";
+import { saveSession, loadSession, clearSession } from "../lib/bridgeSession";
+import type { BridgePhase } from "../lib/bridgeSteps";
+import {
+  ATTEST_TIMEOUT_MS,
+  ATTEST_POLL_MS,
+  createInitialSteps,
+  PHASE_STEP_MAP,
+  resolveResumePhase,
+} from "../lib/bridgeSteps";
 
 // ---- Hook ----
 
@@ -157,62 +68,16 @@ export function useBridgePipeline() {
     if (!address) return;
 
     const session = loadSession(address);
-    if (!session) return; // No session → fresh start
+    if (!session) return; // No session -> fresh start
     sessionRef.current = session;
 
-    const completed = session.completedSteps;
     setAmount(BigInt(session.amount));
 
-    // Determine the order of completed steps and the next phase
-    const stepOrder = ["approve", "deposit", "mint", "burn", "uscMint"] as const;
-    const phaseAfterStep: Record<string, BridgePhase> = {
-      approve: "deposit",
-      deposit: "mint",
-      mint: "burn",
-      burn: "attestWait",
-      uscMint: "done",
-    };
+    const result = resolveResumePhase(session);
+    if (!result) return; // Nothing completed
 
-    // Find the last completed step
-    let lastCompleted = -1;
-    for (let i = 0; i < stepOrder.length; i++) {
-      if (completed[stepOrder[i]]) lastCompleted = i;
-      else break;
-    }
-
-    if (lastCompleted < 0) return; // Nothing completed
-
-    // Restore step statuses + txHashes
-    const stepIdMap: Record<string, string> = {
-      approve: "approve", deposit: "deposit", mint: "mint", burn: "burn", uscMint: "uscMint",
-    };
-
-    setSteps((prev) => prev.map((s) => {
-      // Find matching step key
-      for (let i = 0; i <= lastCompleted; i++) {
-        const key = stepOrder[i];
-        if (s.id === stepIdMap[key]) {
-          return { ...s, status: "done" as const, txHash: completed[key] as `0x${string}` | undefined };
-        }
-      }
-      // If this is the attestation step and burn is done but uscMint is not, mark as executing
-      if (s.id === "attest" && completed.burn && !completed.uscMint) {
-        return { ...s, status: "executing" as const };
-      }
-      // If this is the failed step, mark it
-      if (session.failedStep && s.id === session.failedStep) {
-        return { ...s, status: "error" as const, error: session.failedError ?? "Transaction failed" };
-      }
-      return s;
-    }));
-
-    // Set phase: if there's a failed step → error, otherwise resume from next
-    if (session.failedStep) {
-      setPhase("error");
-    } else {
-      const nextPhase = phaseAfterStep[stepOrder[lastCompleted]];
-      setPhase(nextPhase);
-    }
+    setSteps(result.restoredSteps);
+    setPhase(result.nextPhase);
   }, [address]);
 
   useEffect(() => {
