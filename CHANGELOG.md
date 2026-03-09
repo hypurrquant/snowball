@@ -1,5 +1,13 @@
 # Changelog
 
+### v0.24.0 - DDD Layer Refactoring (2026-03-09)
+- **Hook Slimming**: 8개 fat hook에서 순수 계산 로직을 `domain/lib/`로 추출 (bridge, liquity, trade, morpho, yield, agent)
+- **Layer Hygiene**: `sortTokens`/`parseTokenAmount`/`needsApproval` → `packages/core`, TxStep 타입 → `core/types`, deep import 4건 수정
+- **App Page Slimming**: `borrow/page.tsx` 748→442줄, TroveDelegation UI 컴포넌트 분리, useOpenTrovePipeline hook 추출
+- **Magic Number Cleanup**: 5개 도메인에 `lib/constants.ts` 생성, 인라인 매직넘버 상수화
+- 41 files changed, 374 insertions(+), 1330 deletions(-)
+- 📝 [Phase 문서](docs/archive/v0.24.0-ddd-layer-refactoring/README.md)
+
 ### v0.10.0 - Agent (ERC-8004) 마켓플레이스 + 볼트 위임 (2026-03-06)
 - **에이전트 마켓플레이스**: 전체 에이전트 탐색, 내 에이전트 목록, 프로필 상세 페이지
 - **에이전트 등록/관리**: registerAgent, activate/deactivate 토글, 리뷰 작성

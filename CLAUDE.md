@@ -6,7 +6,7 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 아키텍처
 
-- **DDD 4계층**: `core/` → `domains/` → `shared/` → `app/`
+- **DDD 4계층**: `core/` → `shared/` → `domains/` → `app/`
 - 모노레포: `apps/web/` (프론트엔드), `apps/server/` (NestJS API), `packages/core/` (공유), `packages/` (컨트랙트)
 - 주소 설정: `packages/core/src/config/addresses.ts` (원본), `apps/web/src/core/config/addresses.ts` (re-export)
 - ABI: `packages/core/src/abis/` (원본), `apps/web/src/core/abis/` (re-export)
@@ -47,12 +47,7 @@ DeFi 프로토콜 프론트엔드 (Next.js + wagmi + viem). Creditcoin 테스트
 
 ## 현재 페이즈
 
-- **버전**: v0.23.0
-- **기능**: Trove Agent Delegation Trigger
-- **상태**: Step 1 - PRD
-- **문서**: [docs/phases/v0.23.0-trove-agent-delegation-trigger/](docs/phases/v0.23.0-trove-agent-delegation-trigger/)
-- **Codex Session ID**: `/Users/mousebook/Documents/side-project/snowball/docs/phases/v0.23.0-trove-agent-delegation-trigger`
-- **시작일**: 2026-03-07
+- 없음 (v0.24.0 완료)
 
 ## Scripts 구조
 
