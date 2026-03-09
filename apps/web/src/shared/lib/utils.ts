@@ -37,17 +37,11 @@ export function formatTokenAmount(
   return `${intPart.toLocaleString()}.${fracStr}`;
 }
 
-export function parseTokenAmount(value: string, decimals: number = 18): bigint {
-  const [intPart, fracPart = ""] = value.split(".");
-  const paddedFrac = fracPart.padEnd(decimals, "0").slice(0, decimals);
-  return BigInt(intPart + paddedFrac);
-}
+// re-export from @snowball/core for backward compatibility
+export { sortTokens, parseTokenAmount } from "@snowball/core";
 
-export function sortTokens(
-  tokenA: `0x${string}`,
-  tokenB: `0x${string}`
-): [`0x${string}`, `0x${string}`] {
-  return tokenA.toLowerCase() < tokenB.toLowerCase()
-    ? [tokenA, tokenB]
-    : [tokenB, tokenA];
+export function formatUsdCompact(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
+  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
+  return `$${value.toFixed(0)}`;
 }

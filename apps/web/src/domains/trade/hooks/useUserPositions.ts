@@ -9,7 +9,7 @@ import {
   MockOracleABI,
 } from "@/core/abis";
 import { DEX, TOKENS, TOKEN_INFO, LEND } from "@/core/config/addresses";
-import { getPositionAmounts } from "@snowball/core/src/dex/calculators";
+import { getPositionAmounts } from "@snowball/core";
 import type { Address } from "viem";
 
 // ── Types ──

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useReadContracts } from "wagmi";
 import { LIQUITY } from "@/core/config/addresses";
 import { AddRemoveManagersABI, InterestDelegateABI } from "@/core/abis";
-import { ERC8004 } from "@snowball/core/src/config/addresses";
+import { ERC8004 } from "@snowball/core";
 import type { Address } from "viem";
 
 export interface TroveDelegationInfo {

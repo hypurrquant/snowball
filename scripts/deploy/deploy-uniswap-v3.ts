@@ -15,6 +15,7 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import * as fs from "fs";
 import * as path from "path";
+import { sortTokens } from "@snowball/core";
 
 // ─── Chain ───
 const creditcoinTestnet = {
@@ -165,11 +166,6 @@ async function main() {
       y = (z + x / z) / 2n;
     }
     return z;
-  }
-
-  // Sort tokens and compute price accordingly
-  function sortTokens(a: Address, b: Address): [Address, Address] {
-    return a.toLowerCase() < b.toLowerCase() ? [a, b] : [b, a];
   }
 
   const pools = [

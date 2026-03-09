@@ -2,18 +2,13 @@
 
 import { StatCard } from "@/shared/components/common/StatCard";
 import { DollarSign, Droplets, Coins } from "lucide-react";
+import { formatUsdCompact } from "@/shared/lib/utils";
 
 interface LPPortfolioSummaryProps {
   totalValueUsd: number;
   positionCount: number;
   totalFeesUsd: number;
   isLoading?: boolean;
-}
-
-function formatUsd(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(2)}K`;
-  return `$${value.toFixed(2)}`;
 }
 
 export function LPPortfolioSummary({
@@ -26,7 +21,7 @@ export function LPPortfolioSummary({
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <StatCard
         label="Total Net Value"
-        value={formatUsd(totalValueUsd)}
+        value={formatUsdCompact(totalValueUsd)}
         icon={<DollarSign className="w-4 h-4" />}
         loading={isLoading}
       />
@@ -38,7 +33,7 @@ export function LPPortfolioSummary({
       />
       <StatCard
         label="Uncollected Fees"
-        value={formatUsd(totalFeesUsd)}
+        value={formatUsdCompact(totalFeesUsd)}
         icon={<Coins className="w-4 h-4" />}
         loading={isLoading}
       />

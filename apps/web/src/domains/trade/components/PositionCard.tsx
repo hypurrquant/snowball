@@ -8,12 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Settings2 } from "lucide-react";
 import { TOKEN_INFO } from "@/core/config/addresses";
 import type { UserPosition } from "@/domains/trade/hooks/useUserPositions";
-
-function formatUsd(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(2)}K`;
-  return `$${value.toFixed(2)}`;
-}
+import { formatUsdCompact } from "@/shared/lib/utils";
 
 function feeTierLabel(fee: number): string {
   return `${(fee / 10_000).toFixed(fee % 10_000 === 0 ? 1 : 2)}%`;
@@ -150,13 +145,13 @@ export function PositionCard({ position }: { position: UserPosition }) {
           <div>
             <span className="text-[10px] text-text-tertiary">Size</span>
             <div className="text-base font-mono font-semibold text-white">
-              {formatUsd(valueUsd)}
+              {formatUsdCompact(valueUsd)}
             </div>
           </div>
           <div className="text-right">
             <span className="text-[10px] text-text-tertiary">Fees</span>
             <div className="text-sm font-mono font-semibold text-success">
-              {formatUsd(feesUsd)}
+              {formatUsdCompact(feesUsd)}
             </div>
           </div>
         </div>

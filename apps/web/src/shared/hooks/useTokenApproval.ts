@@ -3,6 +3,7 @@
 import { useReadContract, useConfig } from "wagmi";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import { erc20Abi, type Address } from "viem";
+import { needsApproval as checkNeedsApproval } from "@snowball/core";
 import { useChainWriteContract } from "./useChainWriteContract";
 
 export function useTokenApproval({
@@ -25,8 +26,7 @@ export function useTokenApproval({
     query: { enabled: !!owner && !!token && !!spender },
   });
 
-  const needsApproval =
-    !!amount && amount > 0n && allowance !== undefined && allowance < amount;
+  const needsApproval = checkNeedsApproval(amount, allowance);
 
   const { writeContractAsync: approveAsync, isPending: isApproving } =
     useChainWriteContract();
