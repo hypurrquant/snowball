@@ -1,0 +1,13 @@
+# ==========================================================================
+# CRE WORKFLOW SETTINGS FILE
+# ==========================================================================
+# Forward Exchange - P2P OTC FX Settlement Workflow
+
+# ==========================================================================
+staging-settings:
+  user-workflow:
+    workflow-name: "fx-forward-settlement-staging"
+  workflow-artifacts:
+    workflow-path: "."
+    config-path: "./config.staging.json"
+    secrets-path: "../secrets.yaml"

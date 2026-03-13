@@ -1,0 +1,21 @@
+{
+  "schedule": "*/5 * * * *",
+  "fxApiUrl": "https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY,EUR",
+  "stockApiUrl": "https://query1.finance.yahoo.com/v8/finance/chart/005930.KS?interval=1d&range=1d",
+  "evms": [
+    {
+      "forwardAddress": "0xbc0c07203Fcc8FD141f19CD9f0c9862B19fb0763",
+      "consumerAddress": "0xa379B60A33c7985Feb958Cf9d51ff055FE71DEF1",
+      "viewHelperAddress": "0x4D515f39f3Bd38a6a2B27b5799ca9fE9F326458D",
+      "chainSelectorName": "ethereum-testnet-sepolia-base-1",
+      "gasLimit": "500000"
+    },
+    {
+      "forwardAddress": "0xb151d6a2Aab387b9EC44771b3c5ec675f0Ac15Cb",
+      "consumerAddress": "0xFD72A4fA82CA0e2f011286fCe473B3DAa5B0D6Bf",
+      "viewHelperAddress": "0xd6380276abCF8b62e1F35CE19B4480Fca95706c2",
+      "chainSelectorName": "hyperliquid-testnet",
+      "gasLimit": "500000"
+    }
+  ]
+}
