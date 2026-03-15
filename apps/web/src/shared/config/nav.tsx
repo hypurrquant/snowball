@@ -13,6 +13,8 @@ import {
   Link2,
   Layers,
   GlassWater,
+  Building2,
+  TrendingUp,
 } from "lucide-react";
 
 export interface NavItem {
@@ -40,7 +42,9 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/liquity", label: "CDP", icon: (cls) => <HandCoins className={cls} /> },
       { href: "/morpho", label: "Lending", icon: (cls) => <Landmark className={cls} /> },
+      { href: "/aave", label: "Aave", icon: (cls) => <Building2 className={cls} /> },
       { href: "/yield", label: "Yield", icon: (cls) => <Vault className={cls} /> },
+      { href: "/forward", label: "ForwardX", icon: (cls) => <TrendingUp className={cls} /> },
       { href: "/bridge", label: "Hyperliquid DN Vault Bridge", icon: (cls) => <Link2 className={cls} /> },
     ],
   },

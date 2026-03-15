@@ -5,3 +5,5 @@ export * from "./liquity";
 export * from "./yield";
 export * from "./agent";
 export * from "./bridge";
+export * from "./aave";
+export * from "./forward";
