@@ -1,4 +1,4 @@
 # Foundry
 cache/
 out/
-lib/
+# lib/ -- managed via git submodules
