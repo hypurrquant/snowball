@@ -132,20 +132,24 @@ contract SnowballYieldVaultV2 is ERC4626, Ownable, ReentrancyGuard {
 
     // ─── ERC-4626 max* overrides ─────────────────────────
 
-    /// @notice Caps maxWithdraw at the strategy's currently liquid balance.
+    /// @notice Caps maxWithdraw at liquid assets: idle vault balance + strategy liquid balance.
     function maxWithdraw(address owner_) public view override returns (uint256) {
         uint256 vaultMax = super.maxWithdraw(owner_);
         if (address(strategy) == address(0)) return vaultMax;
-        return Math.min(vaultMax, strategy.balanceOf());
+        // Include idle assets held directly by the vault so withdrawals up to totalAssets()
+        // are not artificially capped when funds have not yet been deployed to the strategy.
+        uint256 liquidAssets = IERC20(asset()).balanceOf(address(this)) + strategy.balanceOf();
+        return Math.min(vaultMax, liquidAssets);
     }
 
-    /// @notice Caps maxRedeem so the corresponding assets never exceed strategy liquidity.
+    /// @notice Caps maxRedeem so the corresponding assets never exceed liquid assets.
     function maxRedeem(address owner_) public view override returns (uint256) {
         uint256 vaultMax = super.maxRedeem(owner_);
         if (address(strategy) == address(0)) return vaultMax;
-        // Convert strategy liquid balance to shares, then take the minimum.
-        uint256 stratShares = _convertToShares(strategy.balanceOf(), Math.Rounding.Floor);
-        return Math.min(vaultMax, stratShares);
+        // Mirror maxWithdraw: include idle vault balance alongside strategy liquid balance.
+        uint256 liquidAssets = IERC20(asset()).balanceOf(address(this)) + strategy.balanceOf();
+        uint256 liquidShares = _convertToShares(liquidAssets, Math.Rounding.Floor);
+        return Math.min(vaultMax, liquidShares);
     }
 
     // ─── V1 compatibility ────────────────────────────────
@@ -179,7 +183,7 @@ contract SnowballYieldVaultV2 is ERC4626, Ownable, ReentrancyGuard {
     function upgradeStrat() external onlyOwner {
         require(stratCandidate.implementation != address(0), "!candidate");
         require(
-            stratCandidate.proposedTime + UPGRADE_DELAY < block.timestamp,
+            stratCandidate.proposedTime + UPGRADE_DELAY <= block.timestamp,
             "!delay"
         );
 

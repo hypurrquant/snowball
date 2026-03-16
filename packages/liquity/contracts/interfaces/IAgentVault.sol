@@ -64,6 +64,7 @@ interface IAgentVault {
         address[] calldata targets,
         bytes4[] calldata functions,
         uint256 expiry,
+        bool validateBeneficiary,
         TokenCapInput[] calldata tokenCaps
     ) external;
 

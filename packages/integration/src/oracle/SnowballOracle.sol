@@ -15,7 +15,7 @@ contract SnowballOracle is ISnowballOracle, AccessControl {
     uint256 public constant BPS_DIVISOR = 10000;
 
     /// @notice Maximum allowed price deviation per update (basis points).
-    uint256 public maxDeviationBps = 1000; // 10%
+    uint256 public maxDeviationBps = 500; // 5%
 
     mapping(address asset => uint256 price) internal _prices;
     mapping(address asset => uint256 timestamp) internal _lastUpdatedAt;

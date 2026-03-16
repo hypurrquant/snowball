@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SnowballStrategyBase} from "../SnowballStrategyBase.sol";
-import {ISnowballLendFull, IMorphoFlashLoanCallback} from "../interfaces/ISnowballLendFull.sol";
+import {ISnowballLendFull} from "../interfaces/ISnowballLendFull.sol";
 import {ISnowballLend} from "../interfaces/ISnowballLend.sol";
 
 interface IOracle {
@@ -19,7 +19,7 @@ interface IOracle {
 ///
 ///         Uses Morpho flash loans for atomic leverage/deleverage.
 ///         Safety: maintains margin below LLTV to avoid liquidation.
-contract StrategyWCTCLoop is SnowballStrategyBase, IMorphoFlashLoanCallback {
+contract StrategyWCTCLoop is SnowballStrategyBase {
     using SafeERC20 for IERC20;
 
     ISnowballLendFull public immutable lend;
@@ -39,10 +39,6 @@ contract StrategyWCTCLoop is SnowballStrategyBase, IMorphoFlashLoanCallback {
     // --- Tracking ---
     uint256 public totalCollateralSupplied;
     uint256 public totalBorrowed;
-
-    // --- Flash loan action types ---
-    uint8 private constant ACTION_LEVERAGE = 1;
-    uint8 private constant ACTION_DELEVERAGE = 2;
 
     event Leveraged(uint256 collateral, uint256 borrowed, uint256 leverageBps);
     event Deleveraged(uint256 collateralWithdrawn, uint256 repaid);
@@ -127,13 +123,16 @@ contract StrategyWCTCLoop is SnowballStrategyBase, IMorphoFlashLoanCallback {
     function balanceOfPool() public view override returns (uint256) {
         (,, uint128 collateral) = lend.position(collateralMarketId, address(this));
         uint256 currentBorrow = _currentBorrowAssets();
-        // Convert borrow (sbUSD) back to wCTC terms using oracle price (1e36 scale)
-        uint256 oraclePrice = collateral > 0
-            ? IOracle(collateralMarket.oracle).price()
-            : 0;
-        uint256 borrowInWCTC = oraclePrice > 0
-            ? (currentBorrow * 1e36) / oraclePrice
-            : 0;
+        // Always convert borrow (sbUSD) back to wCTC terms using oracle price (1e36 scale).
+        // This ensures outstanding debt is accounted for even when collateral == 0
+        // (e.g. after a partial liquidation that wiped out collateral but left residual debt).
+        uint256 borrowInWCTC = 0;
+        if (currentBorrow > 0) {
+            uint256 oraclePrice = IOracle(collateralMarket.oracle).price();
+            if (oraclePrice > 0) {
+                borrowInWCTC = (currentBorrow * 1e36) / oraclePrice;
+            }
+        }
         uint256 col = uint256(collateral);
         return col > borrowInWCTC ? col - borrowInWCTC : 0;
     }
@@ -264,41 +263,6 @@ contract StrategyWCTCLoop is SnowballStrategyBase, IMorphoFlashLoanCallback {
 
         totalCollateralSupplied = 0;
         totalBorrowed = 0;
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // Flash loan callback
-    // ═══════════════════════════════════════════════════════════════
-
-    function onMorphoFlashLoan(uint256 assets, bytes calldata data) external override {
-        require(msg.sender == address(lend), "!lend");
-
-        uint8 action = abi.decode(data, (uint8));
-
-        if (action == ACTION_LEVERAGE) {
-            // Flash borrowed sbUSD -> supply sbUSD -> supply wCTC collateral -> borrow sbUSD to repay flash
-            sbUSD.forceApprove(address(lend), assets);
-            lend.supply(collateralMarket, assets, 0, address(this), "");
-
-            // Borrow sbUSD to repay flash loan
-            lend.borrow(collateralMarket, assets, 0, address(this), address(this));
-            totalBorrowed += assets;
-
-            // Repay flash loan
-            sbUSD.forceApprove(address(lend), assets);
-        } else if (action == ACTION_DELEVERAGE) {
-            // Flash borrowed sbUSD -> repay borrow -> withdraw collateral -> sell wCTC for sbUSD -> repay flash
-            sbUSD.forceApprove(address(lend), assets);
-            lend.repay(collateralMarket, assets, 0, address(this), "");
-            if (totalBorrowed > assets) {
-                totalBorrowed -= assets;
-            } else {
-                totalBorrowed = 0;
-            }
-
-            // Repay flash loan — caller must ensure enough sbUSD is available
-            sbUSD.forceApprove(address(lend), assets);
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════

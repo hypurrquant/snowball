@@ -86,7 +86,7 @@ contract TokenizedSettlementConsumer is IReceiver, AccessControl, Pausable {
         if (msg.sender != forwarder) revert UnauthorizedForwarder();
 
         // Replay protection
-        bytes32 reportHash = keccak256(abi.encodePacked(metadata, report));
+        bytes32 reportHash = keccak256(abi.encode(metadata, report));
         if (processedReports[reportHash]) revert ReportAlreadyProcessed();
         processedReports[reportHash] = true;
 

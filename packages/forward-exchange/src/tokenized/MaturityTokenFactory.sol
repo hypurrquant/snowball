@@ -107,6 +107,10 @@ contract MaturityTokenFactory is IMaturityTokenFactory, AccessControl, Reentranc
         IAccessControl(address(ESCROW_VAULT)).grantRole(factoryRole, address(fToken));
         IAccessControl(address(ESCROW_VAULT)).grantRole(factoryRole, address(sfToken));
 
+        // Authorize each token to release escrow for this specific series
+        EscrowVault(address(ESCROW_VAULT)).authorizeForSeries(seriesId, address(fToken));
+        EscrowVault(address(ESCROW_VAULT)).authorizeForSeries(seriesId, address(sfToken));
+
         _series[seriesId] = Series({
             marketId: marketId,
             maturityTime: maturityTime,

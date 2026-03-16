@@ -150,7 +150,7 @@ contract ForwardSettlementConsumer is
         if (msg.sender != FORWARDER) revert UnauthorizedForwarder();
 
         // Replay protection
-        bytes32 reportHash = keccak256(abi.encodePacked(metadata, report));
+        bytes32 reportHash = keccak256(abi.encode(metadata, report));
         if (processedReports[reportHash]) revert ReportAlreadyProcessed();
         processedReports[reportHash] = true;
 

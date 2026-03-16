@@ -301,6 +301,7 @@ contract Forward is
         if (pos.settled) revert PositionAlreadySettled();
         if (pos.counterparty == address(0)) revert PositionNotActive();
         if (block.timestamp < pos.maturityTime) revert MaturityNotReached();
+        if (pos.locked) revert PositionIsLocked();
         if (settlementRate <= 0) revert InvalidForwardRate();
 
         // Fix #1: Compute PnL on-chain using the DON-reported rate

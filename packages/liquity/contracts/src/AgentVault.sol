@@ -59,6 +59,7 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
         address[] calldata targets,
         bytes4[] calldata functions,
         uint256 expiry,
+        bool validateBeneficiary,
         TokenCapInput[] calldata tokenCaps
     ) external override {
         require(agent != address(0), "AgentVault: zero agent");
@@ -71,7 +72,7 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
             allowedFunctions: functions,
             expiry: expiry,
             active: true,
-            validateBeneficiary: false
+            validateBeneficiary: validateBeneficiary
         });
 
         // Increment nonce to invalidate all previous token allowances

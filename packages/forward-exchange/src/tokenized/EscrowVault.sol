@@ -30,7 +30,11 @@ contract EscrowVault is IEscrowVault, AccessControl, ReentrancyGuard {
     }
 
     /// @notice Grant a FACTORY_ROLE address release rights for a specific series
-    function authorizeForSeries(bytes32 seriesId, address token) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function authorizeForSeries(bytes32 seriesId, address token) external {
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(FACTORY_ROLE, msg.sender),
+            "EscrowVault: caller is not admin or factory"
+        );
         seriesAuthorized[seriesId][token] = true;
     }
 
