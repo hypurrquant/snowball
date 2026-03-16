@@ -166,6 +166,7 @@ contract DNBridgeUSC {
     // ============ Admin Functions ============
 
     function setOperator(address newOperator) external onlyOwner {
+        require(newOperator != address(0), "DNBridge: zero address");
         emit OperatorUpdated(operator, newOperator);
         operator = newOperator;
     }

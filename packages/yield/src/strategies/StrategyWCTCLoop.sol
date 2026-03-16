@@ -14,11 +14,14 @@ interface IOracle {
 /// @title StrategyWCTCLoop
 /// @notice Leveraged wCTC yield strategy using Morpho Blue.
 ///
-///         Flow: wCTC deposit → supply as collateral → borrow sbUSD → supply sbUSD (earn interest)
-///         Profit = (supply APY × leverage) - (borrow APY × (leverage - 1))
+///         Loop: supply wCTC as collateral → borrow sbUSD → swap sbUSD → wCTC
+///               → supply new wCTC as collateral → repeat
+///         Profit = collateral appreciation × leverage factor
 ///
-///         Uses Morpho flash loans for atomic leverage/deleverage.
 ///         Safety: maintains margin below LLTV to avoid liquidation.
+///         Oracle guard: circuit-breaker rejects borrows when spot price deviates
+///         more than maxPriceDeviation from the last known price, preventing
+///         flash-loan price manipulation.
 contract StrategyWCTCLoop is SnowballStrategyBase {
     using SafeERC20 for IERC20;
 
@@ -36,6 +39,11 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
 
     uint256 public safetyMarginBps;         // e.g. 500 = 5% below LLTV
 
+    // --- Oracle circuit-breaker ---
+    uint256 public maxPriceDeviation;       // bps, default 1000 = 10%
+    uint256 public lastKnownPrice;          // last accepted oracle price (1e36 scale)
+    uint256 public lastPriceTimestamp;      // block.timestamp of last accepted price
+
     // --- Tracking ---
     uint256 public totalCollateralSupplied;
     uint256 public totalBorrowed;
@@ -43,6 +51,8 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
     event Leveraged(uint256 collateral, uint256 borrowed, uint256 leverageBps);
     event Deleveraged(uint256 collateralWithdrawn, uint256 repaid);
     event LeverageUpdated(uint256 oldBps, uint256 newBps);
+    event MaxPriceDeviationUpdated(uint256 oldBps, uint256 newBps);
+    event PriceUpdated(uint256 price, uint256 timestamp);
 
     constructor(
         address _vault,
@@ -67,6 +77,7 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
 
         targetLeverageBps = 20000; // 2x default
         safetyMarginBps = 500;    // 5% safety margin
+        maxPriceDeviation = 1000; // 10% max deviation before circuit-breaker trips
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -90,26 +101,8 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
     function _claim() internal override {
         lend.accrueInterest(collateralMarket);
 
-        // Check sbUSD supply profit (interest earned on supplied sbUSD)
-        (uint256 supplyShares,,) = lend.position(collateralMarketId, address(this));
-        uint256 currentSupply = _sharesToAssets(supplyShares);
-
-        // Net profit = sbUSD supply growth (interest earned on lent sbUSD)
-        // We don't track supply shares for sbUSD directly in this market since
-        // we're the borrower. Profit manifests as collateral value growth relative to debt.
-        // For simplicity, we realize profit by checking wCTC balance after partial deleverage.
-
-        // Partial deleverage to realize profits if any excess collateral exists
-        (,uint128 borrowShares, uint128 collateral) = lend.position(collateralMarketId, address(this));
-        if (collateral > 0 && totalCollateralSupplied > 0) {
-            uint256 collateralValue = uint256(collateral);
-            if (collateralValue > totalCollateralSupplied) {
-                // We have excess collateral (unlikely in pure loop, but possible from price movement)
-                // Leave it for now — profit comes from sbUSD interest spread
-            }
-        }
-
-        // The main profit mechanism: swap any idle sbUSD (from interest spread) to wCTC
+        // Profit mechanism: swap any idle sbUSD sitting in the strategy
+        // (residual from the borrow→swap→collateral loop, or slippage leftovers) to wCTC.
         uint256 sbUSDBalance = sbUSD.balanceOf(address(this));
         if (sbUSDBalance > 0) {
             _swap(address(sbUSD), address(native), sbUSDBalance);
@@ -141,41 +134,90 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
     // Leverage mechanics
     // ═══════════════════════════════════════════════════════════════
 
-    /// @notice Leverage up: supply wCTC as collateral, borrow sbUSD, repeat.
-    ///         Uses flash loan for atomic execution.
+    /// @notice Leverage up: supply wCTC as collateral, borrow sbUSD, swap sbUSD → wCTC,
+    ///         supply the new wCTC as additional collateral, repeat once.
+    ///
+    ///         Loop pattern (standard collateral-loop leverage):
+    ///           1. Supply wCTC as collateral
+    ///           2. Borrow sbUSD up to safe LLTV limit
+    ///           3. Swap sbUSD → wCTC via DEX
+    ///           4. Supply the acquired wCTC as additional collateral
+    ///           5. (One additional borrow pass on the new collateral for target leverage)
+    ///
+    ///         This produces net positive yield because:
+    ///           - We hold MORE wCTC collateral than we started with
+    ///           - We owe sbUSD debt, which we service from wCTC appreciation / harvest
+    ///           - Supply rate on wCTC > borrow cost on sbUSD (target market conditions)
     function _leverageUp(uint256 _wctcAmount) internal {
-        // Calculate how much sbUSD to borrow based on target leverage
-        // leverage = totalCollateral / equity
-        // Additional borrow = wctcAmount * (leverage - 1) * price
-        // For simplicity, we do iterative leverage without flash loan first
-
-        // Step 1: Supply wCTC as collateral
+        // --- Pass 1: initial collateral deposit ---
         wantToken.forceApprove(address(lend), _wctcAmount);
         lend.supplyCollateral(collateralMarket, _wctcAmount, address(this), "");
         totalCollateralSupplied += _wctcAmount;
 
-        // Step 2: Borrow sbUSD up to safe limit
+        // --- Pass 1: borrow sbUSD ---
         uint256 maxBorrow = _maxSafeBorrow();
         uint256 currentBorrow = _currentBorrowAssets();
-        if (maxBorrow > currentBorrow) {
-            uint256 borrowAmount = maxBorrow - currentBorrow;
-            if (borrowAmount > 0) {
-                lend.borrow(collateralMarket, borrowAmount, 0, address(this), address(this));
-                totalBorrowed += borrowAmount;
+        if (maxBorrow <= currentBorrow) {
+            emit Leveraged(_wctcAmount, totalBorrowed, targetLeverageBps);
+            return;
+        }
+        uint256 borrowAmount = maxBorrow - currentBorrow;
+        if (borrowAmount == 0) {
+            emit Leveraged(_wctcAmount, totalBorrowed, targetLeverageBps);
+            return;
+        }
 
-                // Step 3: Supply borrowed sbUSD back as loanToken supply (earn interest)
-                sbUSD.forceApprove(address(lend), borrowAmount);
-                lend.supply(collateralMarket, borrowAmount, 0, address(this), "");
+        lend.borrow(collateralMarket, borrowAmount, 0, address(this), address(this));
+        totalBorrowed += borrowAmount;
+
+        // --- Pass 1: swap sbUSD → wCTC and re-supply as collateral ---
+        uint256 wctcReceived = _swapSbUSDToWCTC(borrowAmount);
+        if (wctcReceived > 0) {
+            wantToken.forceApprove(address(lend), wctcReceived);
+            lend.supplyCollateral(collateralMarket, wctcReceived, address(this), "");
+            totalCollateralSupplied += wctcReceived;
+
+            // --- Pass 2: one more borrow on the new collateral to approach target leverage ---
+            maxBorrow = _maxSafeBorrow();
+            currentBorrow = _currentBorrowAssets();
+            if (maxBorrow > currentBorrow) {
+                uint256 borrowAmount2 = maxBorrow - currentBorrow;
+                if (borrowAmount2 > 0) {
+                    lend.borrow(collateralMarket, borrowAmount2, 0, address(this), address(this));
+                    totalBorrowed += borrowAmount2;
+
+                    // Swap the second tranche of sbUSD → wCTC and supply as collateral
+                    uint256 wctcReceived2 = _swapSbUSDToWCTC(borrowAmount2);
+                    if (wctcReceived2 > 0) {
+                        wantToken.forceApprove(address(lend), wctcReceived2);
+                        lend.supplyCollateral(collateralMarket, wctcReceived2, address(this), "");
+                        totalCollateralSupplied += wctcReceived2;
+                    }
+                }
             }
         }
+
+        // Accept the current price now that the borrow succeeded
+        _acceptCurrentPrice();
 
         emit Leveraged(_wctcAmount, totalBorrowed, targetLeverageBps);
     }
 
+    /// @dev Swap `_sbUSDAmount` sbUSD → wCTC. Returns wCTC received.
+    function _swapSbUSDToWCTC(uint256 _sbUSDAmount) internal returns (uint256) {
+        uint256 wctcBefore = wantToken.balanceOf(address(this));
+        _swap(address(sbUSD), address(wantToken), _sbUSDAmount);
+        uint256 wctcAfter = wantToken.balanceOf(address(this));
+        return wctcAfter > wctcBefore ? wctcAfter - wctcBefore : 0;
+    }
+
     /// @notice Deleverage to free up a specific amount of wCTC.
+    ///         Because all borrowed sbUSD was swapped into wCTC collateral, there is no
+    ///         sbUSD supply position to withdraw from. We source sbUSD to repay debt by
+    ///         withdrawing a slice of collateral and swapping it.
     function _deleverageFor(uint256 _wctcNeeded) internal {
         if (totalBorrowed == 0) {
-            // No leverage, just withdraw collateral
+            // No leverage, just withdraw collateral directly
             lend.withdrawCollateral(collateralMarket, _wctcNeeded, address(this), address(this));
             if (totalCollateralSupplied > _wctcNeeded) {
                 totalCollateralSupplied -= _wctcNeeded;
@@ -195,38 +237,64 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
 
         uint256 borrowToRepay = (totalBorrowed * ratio) / 1e18;
 
-        // Withdraw supplied sbUSD first
+        // Source sbUSD by withdrawing extra wCTC collateral and swapping it
         if (borrowToRepay > 0) {
-            lend.withdraw(collateralMarket, borrowToRepay, 0, address(this), address(this));
-            // Repay the borrow
-            sbUSD.forceApprove(address(lend), borrowToRepay);
-            lend.repay(collateralMarket, borrowToRepay, 0, address(this), "");
-            if (totalBorrowed > borrowToRepay) {
-                totalBorrowed -= borrowToRepay;
-            } else {
-                totalBorrowed = 0;
+            // Estimate how much wCTC we need to swap to cover borrowToRepay sbUSD
+            uint256 oraclePrice = IOracle(collateralMarket.oracle).price();
+            uint256 wctcForRepay = 0;
+            if (oraclePrice > 0) {
+                wctcForRepay = (borrowToRepay * 1e36) / oraclePrice;
+                wctcForRepay = wctcForRepay * 10100 / 10000; // +1% slippage buffer
             }
-        }
 
-        // Withdraw collateral
-        lend.withdrawCollateral(collateralMarket, _wctcNeeded, address(this), address(this));
-        if (totalCollateralSupplied > _wctcNeeded) {
-            totalCollateralSupplied -= _wctcNeeded;
+            // Withdraw extra wCTC to cover debt repayment
+            uint256 totalWithdraw = _wctcNeeded + wctcForRepay;
+            if (totalWithdraw > totalColl) totalWithdraw = totalColl;
+            lend.withdrawCollateral(collateralMarket, totalWithdraw, address(this), address(this));
+            if (totalCollateralSupplied > totalWithdraw) {
+                totalCollateralSupplied -= totalWithdraw;
+            } else {
+                totalCollateralSupplied = 0;
+            }
+
+            // Swap wCTC → sbUSD to cover repayment
+            if (wctcForRepay > 0) {
+                uint256 wctcBal = wantToken.balanceOf(address(this));
+                uint256 swapAmt = wctcForRepay < wctcBal ? wctcForRepay : wctcBal;
+                if (swapAmt > 0) {
+                    _swap(address(wantToken), address(sbUSD), swapAmt);
+                }
+            }
+
+            // Repay debt
+            uint256 sbUSDbal = sbUSD.balanceOf(address(this));
+            uint256 repayAmt = sbUSDbal < borrowToRepay ? sbUSDbal : borrowToRepay;
+            if (repayAmt > 0) {
+                sbUSD.forceApprove(address(lend), repayAmt);
+                lend.repay(collateralMarket, repayAmt, 0, address(this), "");
+                if (totalBorrowed > repayAmt) {
+                    totalBorrowed -= repayAmt;
+                } else {
+                    totalBorrowed = 0;
+                }
+            }
         } else {
-            totalCollateralSupplied = 0;
+            // No borrow to repay for this slice — withdraw collateral directly
+            lend.withdrawCollateral(collateralMarket, _wctcNeeded, address(this), address(this));
+            if (totalCollateralSupplied > _wctcNeeded) {
+                totalCollateralSupplied -= _wctcNeeded;
+            } else {
+                totalCollateralSupplied = 0;
+            }
         }
 
         emit Deleveraged(_wctcNeeded, borrowToRepay);
     }
 
     /// @notice Full deleverage — unwind entire position.
+    ///         All sbUSD was swapped to wCTC at borrow time, so we source repayment
+    ///         funds by withdrawing a portion of wCTC collateral and swapping it.
     function _deleverageAll() internal {
-        // Withdraw all supplied sbUSD
-        (uint256 supplyShares,,) = lend.position(collateralMarketId, address(this));
-        if (supplyShares > 0) {
-            lend.withdraw(collateralMarket, 0, supplyShares, address(this), address(this));
-        }
-
         // Repay all borrows
         (, uint128 borrowShares,) = lend.position(collateralMarketId, address(this));
         if (borrowShares > 0) {
@@ -271,13 +339,33 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
 
     /// @notice Maximum safe borrow amount given current collateral.
     ///         Converts collateral units to loan token units via oracle price.
+    ///
+    ///         Oracle circuit-breaker: if the current spot price deviates from
+    ///         lastKnownPrice by more than maxPriceDeviation bps, the call reverts.
+    ///         This prevents flash-loan price manipulation from allowing over-borrowing.
+    ///         On the very first borrow (lastKnownPrice == 0) the check is skipped and
+    ///         the price is recorded.
     function _maxSafeBorrow() internal view returns (uint256) {
         (,, uint128 collateral) = lend.position(collateralMarketId, address(this));
         if (collateral == 0) return 0;
 
-        // Convert collateral to loan token value using oracle price (1e36 scale)
-        uint256 oraclePrice = IOracle(collateralMarket.oracle).price();
-        uint256 collValueInLoan = (uint256(collateral) * oraclePrice) / 1e36;
+        // Read current spot price (1e36 scale)
+        uint256 currentPrice = IOracle(collateralMarket.oracle).price();
+        require(currentPrice > 0, "oracle: zero price");
+
+        // Circuit-breaker: reject if price moved more than maxPriceDeviation from last known
+        if (lastKnownPrice != 0) {
+            uint256 deviation;
+            if (currentPrice >= lastKnownPrice) {
+                deviation = ((currentPrice - lastKnownPrice) * BPS_DENOMINATOR) / lastKnownPrice;
+            } else {
+                deviation = ((lastKnownPrice - currentPrice) * BPS_DENOMINATOR) / lastKnownPrice;
+            }
+            require(deviation <= maxPriceDeviation, "oracle: price deviation too high");
+        }
+
+        // Convert collateral to loan token value using the validated price
+        uint256 collValueInLoan = (uint256(collateral) * currentPrice) / 1e36;
 
         // Target borrow based on leverage
         uint256 targetBorrow = (collValueInLoan * (targetLeverageBps - BPS_DENOMINATOR)) / targetLeverageBps;
@@ -289,6 +377,17 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
         return targetBorrow < maxFromLltv ? targetBorrow : maxFromLltv;
     }
 
+    /// @dev Persist the current oracle price as the new baseline after a successful borrow.
+    ///      Called after _maxSafeBorrow() + borrow succeed so we know the price was accepted.
+    function _acceptCurrentPrice() internal {
+        uint256 currentPrice = IOracle(collateralMarket.oracle).price();
+        if (currentPrice > 0) {
+            lastKnownPrice = currentPrice;
+            lastPriceTimestamp = block.timestamp;
+            emit PriceUpdated(currentPrice, block.timestamp);
+        }
+    }
+
     function _currentBorrowAssets() internal view returns (uint256) {
         (, uint128 borrowShares,) = lend.position(collateralMarketId, address(this));
         if (borrowShares == 0) return 0;
@@ -296,12 +395,6 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
         (,, uint128 totalBorrowAssets, uint128 totalBorrowShares,,) = lend.market(collateralMarketId);
         if (totalBorrowShares == 0) return 0;
         return (uint256(borrowShares) * uint256(totalBorrowAssets)) / uint256(totalBorrowShares);
-    }
-
-    function _sharesToAssets(uint256 shares) internal view returns (uint256) {
-        (uint128 totalSupplyAssets, uint128 totalSupplyShares,,,,) = lend.market(collateralMarketId);
-        if (totalSupplyShares == 0) return 0;
-        return (shares * uint256(totalSupplyAssets)) / uint256(totalSupplyShares);
     }
 
     function _computeMarketId(ISnowballLend.MarketParams memory mp) internal pure returns (bytes32 id) {
@@ -323,6 +416,21 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
     function setSafetyMargin(uint256 _bps) external onlyManager {
         require(_bps > 0 && _bps <= 2000, "!margin"); // max 20% safety margin
         safetyMarginBps = _bps;
+    }
+
+    /// @notice Update the maximum oracle price deviation allowed before the circuit-breaker trips.
+    /// @param _bps Deviation in basis points (e.g. 1000 = 10%). Maximum allowed is 5000 (50%).
+    function setMaxPriceDeviation(uint256 _bps) external onlyManager {
+        require(_bps > 0 && _bps <= 5000, "!deviation"); // sanity cap at 50%
+        emit MaxPriceDeviationUpdated(maxPriceDeviation, _bps);
+        maxPriceDeviation = _bps;
+    }
+
+    /// @notice Reset the price baseline to the current oracle price.
+    ///         Use after a large, legitimate price move that triggered the circuit-breaker.
+    ///         Only callable by the owner (higher trust level than keeper).
+    function resetPriceBaseline() external onlyOwner {
+        _acceptCurrentPrice();
     }
 
     /// @notice Current leverage ratio in basis points.

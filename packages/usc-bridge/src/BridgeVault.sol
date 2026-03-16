@@ -16,9 +16,14 @@ contract BridgeVault {
     /// @notice Contract owner, set at deployment
     address public owner;
 
+    /// @notice Pending owner for two-step ownership transfer
+    address public pendingOwner;
+
     event Deposited(address indexed user, uint256 amount, uint64 destinationChainKey);
     event Withdrawn(address indexed to, uint256 amount);
     event TokenRescued(address indexed token, address indexed to, uint256 amount);
+    event OwnershipProposed(address indexed proposedOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "BridgeVault: not owner");
@@ -28,6 +33,21 @@ contract BridgeVault {
     constructor(address _usdc) {
         usdc = IERC20(_usdc);
         owner = msg.sender;
+    }
+
+    /// @notice Step 1: current owner proposes a new owner address
+    function proposeOwner(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "BridgeVault: zero address");
+        pendingOwner = newOwner;
+        emit OwnershipProposed(newOwner);
+    }
+
+    /// @notice Step 2: proposed owner accepts and becomes the new owner
+    function acceptOwnership() external {
+        require(msg.sender == pendingOwner, "BridgeVault: not pending owner");
+        emit OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = address(0);
     }
 
     function deposit(uint256 amount, uint64 destinationChainKey) external {

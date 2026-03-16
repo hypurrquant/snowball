@@ -22,6 +22,7 @@ contract SnowballOptions is
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     uint256 public constant FEE_DENOMINATOR = 10_000;
+    uint256 public constant MAX_EXECUTION_DELAY = 300; // 5 minutes
 
     IOptionsClearingHouse public clearingHouse;
     IOptionsVault public vault;
@@ -180,9 +181,11 @@ contract SnowballOptions is
     // ─── Round Execution ───
 
     function executeRound(uint256 roundId) external onlyRole(OPERATOR_ROLE) {
+        require(roundId == currentRoundId, "Options: not current round");
         Round storage round = _rounds[roundId];
         require(round.status == RoundStatus.Open, "Options: round not open");
         require(block.timestamp >= round.closeTimestamp, "Options: round not expired");
+        require(block.timestamp <= round.closeTimestamp + MAX_EXECUTION_DELAY, "Options: execution window expired");
 
         (uint256 price, bool isFresh) = oracle.fetchPrice();
         require(isFresh, "Options: stale oracle price");
@@ -191,6 +194,28 @@ contract SnowballOptions is
         round.status = RoundStatus.Locked;
 
         emit RoundExecuted(roundId, price);
+    }
+
+    function expireRound(uint256 roundId) external onlyRole(OPERATOR_ROLE) nonReentrant {
+        require(roundId == currentRoundId, "Options: not current round");
+        Round storage round = _rounds[roundId];
+        require(round.status == RoundStatus.Open, "Options: round not open");
+        require(block.timestamp > round.closeTimestamp + MAX_EXECUTION_DELAY, "Options: execution window still open");
+
+        round.status = RoundStatus.Settled;
+
+        // Refund all participants
+        uint256 count = round.orderCount;
+        for (uint256 i = 0; i < count; i++) {
+            FilledOrder storage order = _orders[roundId][i];
+            if (!order.settled) {
+                order.settled = true;
+                clearingHouse.releaseFromEscrow(order.overUser, order.amount);
+                clearingHouse.releaseFromEscrow(order.underUser, order.amount);
+            }
+        }
+
+        emit RoundExpired(roundId);
     }
 
     // ─── Settlement ───

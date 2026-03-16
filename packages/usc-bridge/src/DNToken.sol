@@ -21,9 +21,14 @@ contract DNToken {
     /// @notice Contract owner — the only address allowed to call mint()
     address public owner;
 
+    /// @notice Pending owner for two-step ownership transfer
+    address public pendingOwner;
+
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event BridgeBurn(address indexed from, uint256 amount, uint64 destinationChainKey);
+    event OwnershipProposed(address indexed proposedOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "DNToken: not owner");
@@ -56,13 +61,21 @@ contract DNToken {
         return _transfer(from, to, amount);
     }
 
-    /**
-     * @notice Burn tokens to bridge to Creditcoin USC.
-     *         Tokens are sent to BURN_ADDRESS (address(1)).
-     *         The Transfer event serves as proof for USC verification.
-     * @param amount Amount to burn and bridge
-     * @param destinationChainKey USC chain key for the destination (unused on-chain, for indexing)
-     */
+    /// @notice Step 1: current owner proposes a new owner address
+    function proposeOwner(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "DNToken: zero address");
+        pendingOwner = newOwner;
+        emit OwnershipProposed(newOwner);
+    }
+
+    /// @notice Step 2: proposed owner accepts and becomes the new owner
+    function acceptOwnership() external {
+        require(msg.sender == pendingOwner, "DNToken: not pending owner");
+        emit OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = address(0);
+    }
+
     /**
      * @notice Mint new DN tokens. Restricted to owner.
      */
@@ -72,8 +85,16 @@ contract DNToken {
         emit Transfer(address(0), to, amount);
     }
 
+    /**
+     * @notice Burn tokens to bridge to Creditcoin USC.
+     *         Tokens are sent to BURN_ADDRESS (address(1)) so a Transfer event is emitted for USC proof.
+     *         totalSupply is decremented so circulating supply stays accurate.
+     * @param amount Amount to burn and bridge
+     * @param destinationChainKey USC chain key for the destination (unused on-chain, for indexing)
+     */
     function bridgeBurn(uint256 amount, uint64 destinationChainKey) external returns (bool) {
         _transfer(msg.sender, BURN_ADDRESS, amount);
+        totalSupply -= amount;
         emit BridgeBurn(msg.sender, amount, destinationChainKey);
         return true;
     }
