@@ -58,6 +58,9 @@ contract MaturityTokenTest is Test {
         vm.startPrank(admin);
         escrow.grantRole(fRole, address(fToken));
         escrow.grantRole(fRole, address(sfToken));
+        // Authorize both tokens for the series so they can call releaseToUser
+        escrow.authorizeForSeries(SERIES_ID, address(fToken));
+        escrow.authorizeForSeries(SERIES_ID, address(sfToken));
         vm.stopPrank();
 
         // Fund escrow for redemption

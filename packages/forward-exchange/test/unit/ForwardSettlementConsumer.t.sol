@@ -64,10 +64,10 @@ contract ForwardSettlementConsumerTest is BaseTest {
     function test_onReport_SettlesPosition_LongWins() public {
         (uint256 longId,) = _createMaturedPosition();
 
-        // PnL: notional * (1450 - 1400) / 1450 = 100000e6 * 50e18 / 1450e18
-        int256 pnl = int256(NOTIONAL) * (SETTLEMENT_RATE - FORWARD_RATE) / SETTLEMENT_RATE;
+        // PnL computed by SettlementEngine: notional * (settlementRate - forwardRate) / forwardRate
+        int256 pnl = int256(NOTIONAL) * (SETTLEMENT_RATE - FORWARD_RATE) / FORWARD_RATE;
 
-        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, pnl, alice, bob);
+        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, 0, address(0), address(0));
 
         uint256 aliceFreeBefore = vault.freeBalance(alice);
         uint256 bobFreeBefore = vault.freeBalance(bob);
@@ -89,11 +89,9 @@ contract ForwardSettlementConsumerTest is BaseTest {
 
         // Settlement rate < forward rate → Short wins
         int256 settlementRate = 1350e18;
-        int256 pnl = int256(NOTIONAL) * (settlementRate - FORWARD_RATE) / settlementRate;
-        // pnl is negative
 
-        // Short wins: winner=bob, loser=alice
-        bytes memory report = _buildReport(longId, settlementRate, pnl, bob, alice);
+        // winner/loser determined on-chain; just pass settlementRate
+        bytes memory report = _buildReport(longId, settlementRate, 0, address(0), address(0));
 
         vm.prank(forwarder);
         consumer.onReport("", report);
@@ -104,8 +102,7 @@ contract ForwardSettlementConsumerTest is BaseTest {
     function test_onReport_RevertsWhenNotForwarder() public {
         (uint256 longId,) = _createMaturedPosition();
 
-        int256 pnl = int256(NOTIONAL) * (SETTLEMENT_RATE - FORWARD_RATE) / SETTLEMENT_RATE;
-        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, pnl, alice, bob);
+        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, 0, address(0), address(0));
 
         vm.prank(alice); // Not the forwarder
         vm.expectRevert(ForwardSettlementConsumer.UnauthorizedForwarder.selector);
@@ -115,17 +112,17 @@ contract ForwardSettlementConsumerTest is BaseTest {
     function test_onReport_RevertsWhenAlreadySettled() public {
         (uint256 longId,) = _createMaturedPosition();
 
-        int256 pnl = int256(NOTIONAL) * (SETTLEMENT_RATE - FORWARD_RATE) / SETTLEMENT_RATE;
-        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, pnl, alice, bob);
+        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, 0, address(0), address(0));
 
         // First settlement
         vm.prank(forwarder);
         consumer.onReport("", report);
 
-        // Second attempt should fail (Forward.settleFromConsumer checks settled)
+        // Second attempt with different metadata (different hash to bypass replay protection)
+        // but same position ID — should fail because position is already settled
         vm.prank(forwarder);
-        vm.expectRevert(IForward.PositionAlreadySettled.selector);
-        consumer.onReport("", report);
+        vm.expectRevert(ForwardSettlementConsumer.PositionAlreadySettled.selector);
+        consumer.onReport("v2", report);
     }
 
     function test_onReport_RevertsWhenNotMatured() public {
@@ -133,8 +130,7 @@ contract ForwardSettlementConsumerTest is BaseTest {
         (uint256 longId,) = _createAndAcceptForward(NOTIONAL, FORWARD_RATE, maturityTime);
         // Do NOT warp past maturity
 
-        int256 pnl = int256(NOTIONAL) * (SETTLEMENT_RATE - FORWARD_RATE) / SETTLEMENT_RATE;
-        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, pnl, alice, bob);
+        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, 0, address(0), address(0));
 
         vm.prank(forwarder);
         vm.expectRevert(ForwardSettlementConsumer.MaturityNotReached.selector);
@@ -160,8 +156,7 @@ contract ForwardSettlementConsumerTest is BaseTest {
 
         vm.warp(block.timestamp + 1 days + 1);
 
-        int256 pnl = 1000e6;
-        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, pnl, alice, bob);
+        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, 0, address(0), address(0));
 
         vm.prank(forwarder);
         vm.expectRevert(ForwardSettlementConsumer.PositionNotActive.selector);
@@ -171,7 +166,7 @@ contract ForwardSettlementConsumerTest is BaseTest {
     function test_onReport_RevertsWhenInvalidSettlementRate() public {
         (uint256 longId,) = _createMaturedPosition();
 
-        bytes memory report = _buildReport(longId, 0, 0, alice, bob);
+        bytes memory report = _buildReport(longId, 0, 0, address(0), address(0));
 
         vm.prank(forwarder);
         vm.expectRevert(ForwardSettlementConsumer.InvalidSettlementRate.selector);
@@ -186,8 +181,7 @@ contract ForwardSettlementConsumerTest is BaseTest {
         assertEq(longOIBefore, NOTIONAL);
         assertEq(shortOIBefore, NOTIONAL);
 
-        int256 pnl = int256(NOTIONAL) * (SETTLEMENT_RATE - FORWARD_RATE) / SETTLEMENT_RATE;
-        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, pnl, alice, bob);
+        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, 0, address(0), address(0));
 
         vm.prank(forwarder);
         consumer.onReport("", report);
@@ -239,12 +233,14 @@ contract ForwardSettlementConsumerTest is BaseTest {
     function test_onReport_EmitsCRESettlementEvent() public {
         (uint256 longId,) = _createMaturedPosition();
 
-        int256 pnl = int256(NOTIONAL) * (SETTLEMENT_RATE - FORWARD_RATE) / SETTLEMENT_RATE;
-        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, pnl, alice, bob);
+        // PnL now computed on-chain: (settlementRate - forwardRate) * notional / 1e18
+        int256 pnl = (SETTLEMENT_RATE - FORWARD_RATE) * int256(NOTIONAL) / 1e18;
+        bytes memory report = _buildReport(longId, SETTLEMENT_RATE, 0, address(0), address(0));
 
         vm.prank(forwarder);
         vm.expectEmit(true, false, false, true);
-        emit ForwardSettlementConsumer.CRESettlement(longId, SETTLEMENT_RATE, pnl, alice, bob);
+        // winner and loser are always address(0) — computed on-chain but not emitted
+        emit ForwardSettlementConsumer.CRESettlement(longId, SETTLEMENT_RATE, pnl, address(0), address(0));
         consumer.onReport("", report);
     }
 }

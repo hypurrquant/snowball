@@ -117,6 +117,9 @@ contract SnowballRouterTest is Test {
         router.setWhitelist(address(swapRouter), true);
         router.setWhitelist(address(vault), true);
 
+        // Whitelist debt tokens
+        router.setTokenWhitelist(address(sbUSD), true);
+
         // Fund alice
         collToken.mint(alice, 100e18);
 

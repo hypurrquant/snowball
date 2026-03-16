@@ -112,10 +112,12 @@ contract FXPoolTest is Test {
         vm.prank(alice);
         (uint256 amountX, uint256 amountY) = pool.removeLiquidity(lp, 0, 0);
 
-        assertEq(amountX, 1000e18);
-        assertEq(amountY, 1000e18);
-        assertEq(fToken.balanceOf(alice) - fBefore, 1000e18);
-        assertEq(sfToken.balanceOf(alice) - sfBefore, 1000e18);
+        // First LP provider gets back slightly less than 1000e18 due to minimum liquidity
+        // lock (1000 wei burned to address(1) on first deposit)
+        assertApproxEqAbs(amountX, 1000e18, 1000);
+        assertApproxEqAbs(amountY, 1000e18, 1000);
+        assertApproxEqAbs(fToken.balanceOf(alice) - fBefore, 1000e18, 1000);
+        assertApproxEqAbs(sfToken.balanceOf(alice) - sfBefore, 1000e18, 1000);
     }
 
     function test_RemoveLiquidity_Partial() public {

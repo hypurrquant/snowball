@@ -25,9 +25,8 @@ contract SnowballOracleTest is Test {
         oracle = new SnowballOracle(admin);
         oracle.grantRole(oracle.OPERATOR_ROLE(), operator);
 
-        // Set initial price before creating adapters (required by constructor)
-        vm.prank(operator);
-        oracle.updatePrice(asset1, PRICE_1E18);
+        // Bootstrap initial price (admin-only, required before updatePrice)
+        oracle.bootstrapPrice(asset1, PRICE_1E18);
 
         liquityAdapter = new LiquityPriceFeedAdapter(address(oracle), asset1, MAX_AGE);
         morphoAdapter = new MorphoOracleAdapter(address(oracle), asset1, MAX_AGE);
@@ -44,9 +43,8 @@ contract SnowballOracleTest is Test {
     }
 
     function test_updatePrice_multiAsset() public {
-        vm.startPrank(operator);
-        oracle.updatePrice(asset2, 1e18); // new asset, no deviation check
-        vm.stopPrank();
+        // Bootstrap asset2 first (admin), then operator can update
+        oracle.bootstrapPrice(asset2, 1e18);
 
         assertEq(oracle.getPrice(asset1), PRICE_1E18);
         assertEq(oracle.getPrice(asset2), 1e18);

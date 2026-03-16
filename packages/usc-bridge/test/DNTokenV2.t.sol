@@ -19,10 +19,10 @@ contract DNTokenV2Test is Test {
         assertEq(token.totalSupply(), 1_000_000 ether + 100 ether);
     }
 
-    function test_mint_anyone_can_call() public {
+    function test_mint_unauthorized_reverts() public {
         vm.prank(alice);
+        vm.expectRevert("DNToken: not owner");
         token.mint(bob, 50 ether);
-        assertEq(token.balanceOf(bob), 50 ether);
     }
 
     function test_mint_emits_transfer() public {

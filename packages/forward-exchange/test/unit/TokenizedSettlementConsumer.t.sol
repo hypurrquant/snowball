@@ -145,10 +145,11 @@ contract TokenizedSettlementConsumerTest is Test {
         vm.prank(forwarder);
         consumer.onReport("", report);
 
-        // Second attempt
+        // Second attempt with different metadata (different hash to bypass replay protection)
+        // but same series ID — should fail because series is already settled
         vm.prank(forwarder);
         vm.expectRevert(abi.encodeWithSelector(IMaturityTokenFactory.SeriesAlreadySettled.selector, seriesId));
-        consumer.onReport("", report);
+        consumer.onReport("v2", report);
     }
 
     function test_onReport_RevertsWhenNotMature() public {

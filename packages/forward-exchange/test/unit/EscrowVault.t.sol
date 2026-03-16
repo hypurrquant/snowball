@@ -56,6 +56,9 @@ contract EscrowVaultTest is Test {
         vm.prank(factory);
         escrow.depositFor(SERIES_ID, 1000e6);
 
+        vm.prank(admin);
+        escrow.authorizeForSeries(SERIES_ID, factory);
+
         vm.prank(factory);
         escrow.releaseToUser(SERIES_ID, alice, 500e6);
 
@@ -66,6 +69,9 @@ contract EscrowVaultTest is Test {
     function test_ReleaseToUser_RevertsWhen_InsufficientBalance() public {
         vm.prank(factory);
         escrow.depositFor(SERIES_ID, 100e6);
+
+        vm.prank(admin);
+        escrow.authorizeForSeries(SERIES_ID, factory);
 
         vm.prank(factory);
         vm.expectRevert(abi.encodeWithSelector(
@@ -78,6 +84,9 @@ contract EscrowVaultTest is Test {
     function test_ReleaseToFactory_Success() public {
         vm.prank(factory);
         escrow.depositFor(SERIES_ID, 1000e6);
+
+        vm.prank(admin);
+        escrow.authorizeForSeries(SERIES_ID, factory);
 
         uint256 balBefore = usdc.balanceOf(factory);
         vm.prank(factory);

@@ -26,6 +26,8 @@ contract MarketplaceTest is BaseTest {
         )));
         bytes32 mpRole = vault.MARKETPLACE_ROLE();
         vault.grantRole(mpRole, address(marketplace));
+        // Grant admin OPERATOR_ROLE so tests can transfer locked collateral when NFT changes hands
+        vault.grantRole(vault.OPERATOR_ROLE(), admin);
         vm.stopPrank();
 
         // Create a matched position: Alice long, Bob short
@@ -303,6 +305,17 @@ contract MarketplaceTest is BaseTest {
         marketplace.buy(longId);
 
         assertEq(forward.ownerOf(longId), carol);
+
+        // Transfer vault locked collateral from alice to carol to reflect NFT ownership change.
+        // The settlement engine uses current NFT owners to determine winner/loser locked balances.
+        // Unlock alice's collateral, then re-lock it under carol's name.
+        vm.prank(admin);
+        vault.unlockCollateral(alice, longId, NOTIONAL);
+        // Fund carol with NOTIONAL so she can lock the position collateral
+        _fundUser(carol, NOTIONAL);
+        _depositToVault(carol, NOTIONAL);
+        vm.prank(admin);
+        vault.lockCollateral(carol, longId, NOTIONAL);
 
         // Settle at maturity - long wins
         vm.warp(maturityTime);

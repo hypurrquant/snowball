@@ -76,6 +76,18 @@ contract ForwardLifecycleTest is BaseTest {
         forward.transferFrom(alice, carol, longId);
         assertEq(forward.ownerOf(longId), carol);
 
+        // Transfer the vault locked collateral from alice to carol to reflect NFT ownership change.
+        // The settlement engine uses current NFT owners to determine winner/loser locked balances.
+        vm.startPrank(admin);
+        vault.grantRole(vault.OPERATOR_ROLE(), admin);
+        vault.unlockCollateral(alice, longId, NOTIONAL);
+        vm.stopPrank();
+        // Fund carol with NOTIONAL so she can lock the position collateral
+        _fundUser(carol, NOTIONAL);
+        _depositToVault(carol, NOTIONAL);
+        vm.prank(admin);
+        vault.lockCollateral(carol, longId, NOTIONAL);
+
         // Settle at maturity
         vm.warp(maturityTime);
         _seedOraclePrice(USD_KRW_FEED_ID, 1450e18);
