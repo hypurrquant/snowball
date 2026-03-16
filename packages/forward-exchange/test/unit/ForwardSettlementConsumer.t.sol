@@ -47,17 +47,14 @@ contract ForwardSettlementConsumerTest is BaseTest {
     function _buildReport(
         uint256 positionId,
         int256 settlementRate,
-        int256 pnl,
-        address winner,
-        address loser
+        int256 /* pnl */,
+        address /* winner */,
+        address /* loser */
     ) internal pure returns (bytes memory) {
         return abi.encode(
             ForwardSettlementConsumer.SettlementReport({
                 positionId: positionId,
-                settlementRate: settlementRate,
-                pnl: pnl,
-                winner: winner,
-                loser: loser
+                settlementRate: settlementRate
             })
         );
     }
@@ -150,7 +147,7 @@ contract ForwardSettlementConsumerTest is BaseTest {
         // Try calling settleFromConsumer directly without CRE_CONSUMER_ROLE
         vm.prank(alice);
         vm.expectRevert();
-        forward.settleFromConsumer(longId);
+        forward.settleFromConsumer(longId, int256(1350e18));
     }
 
     function test_onReport_RevertsWhenPositionNotActive() public {

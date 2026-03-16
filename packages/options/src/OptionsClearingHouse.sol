@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IOptionsClearingHouse} from "./interfaces/IOptionsClearingHouse.sol";
 
 /// @title OptionsClearingHouse
@@ -10,6 +11,7 @@ import {IOptionsClearingHouse} from "./interfaces/IOptionsClearingHouse.sol";
 contract OptionsClearingHouse is
     Initializable,
     UUPSUpgradeable,
+    ReentrancyGuard,
     IOptionsClearingHouse
 {
     bytes32 public constant PRODUCT_ROLE = keccak256("PRODUCT_ROLE");
@@ -62,7 +64,8 @@ contract OptionsClearingHouse is
         emit Deposited(msg.sender, msg.value);
     }
 
-    function withdraw(uint256 amount) external {
+    function withdraw(uint256 amount) external nonReentrant {
+        require(amount > 0, "ClearingHouse: zero amount");
         require(_balances[msg.sender] >= amount, "ClearingHouse: insufficient balance");
         _balances[msg.sender] -= amount;
         (bool ok, ) = msg.sender.call{value: amount}("");

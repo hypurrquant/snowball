@@ -32,15 +32,23 @@ contract SnowballKeeper is Ownable {
         emit KeeperUpdated(msg.sender, true);
     }
 
-    /// @notice Harvest all registered strategies that are ready.
-    function harvestAll() external onlyKeeper {
+    /// @notice Harvest a range of registered strategies that are ready.
+    /// @param _start Inclusive start index.
+    /// @param _end   Exclusive end index (clamped to strategies.length).
+    function harvestAll(uint256 _start, uint256 _end) public onlyKeeper {
         uint256 len = strategies.length;
-        for (uint256 i = 0; i < len; ++i) {
+        if (_end > len) _end = len;
+        for (uint256 i = _start; i < _end; ++i) {
             address strat = strategies[i];
             if (_canHarvest(strat)) {
                 _doHarvest(strat);
             }
         }
+    }
+
+    /// @notice Harvest all registered strategies that are ready (backward-compatible).
+    function harvestAll() external onlyKeeper {
+        harvestAll(0, strategies.length);
     }
 
     /// @notice Harvest a single strategy.

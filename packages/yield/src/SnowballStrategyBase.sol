@@ -25,7 +25,8 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
     // Total fee on profit = 4.5 %
 
     uint256 public constant WITHDRAWAL_FEE_CAP = 50;  // max 0.5 %
-    uint256 public constant WITHDRAWAL_MAX = 10000;
+    /// @dev withdrawalFee is stored and surfaced via withdrawFee() for off-chain display.
+    ///      It is intentionally not applied inside withdraw() — fees are charged at harvest time.
     uint256 public withdrawalFee;
 
     // ─── Locked-profit anti-sandwich ────────────────────────
@@ -182,13 +183,8 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
     }
 
     /// @notice Harvest rewards, charge fees, compound.
-    function harvest() external override {
+    function harvest() external override onlyManager {
         _harvest(msg.sender, false);
-    }
-
-    /// @notice Harvest with explicit fee recipient.
-    function harvest(address callFeeRecipient) external {
-        _harvest(callFeeRecipient, false);
     }
 
     function _harvest(address callFeeRecipient, bool onDeposit) internal whenNotPaused {
@@ -319,7 +315,7 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
                     tokenOut: _to,
                     fee: swapFee,
                     recipient: address(this),
-                    deadline: block.timestamp,
+                    deadline: block.timestamp + 300,
                     amountIn: _amount,
                     amountOutMinimum: _getMinAmountOut(_amount),
                     sqrtPriceLimitX96: 0
@@ -367,6 +363,7 @@ abstract contract SnowballStrategyBase is ISnowballStrategy, Ownable, Pausable, 
     }
 
     function setMaxSlippage(uint256 _bps) external onlyManager {
+        require(_bps >= 10, "min 0.1%");
         require(_bps <= MAX_SLIPPAGE_CAP, "!slippage cap");
         maxSlippageBps = _bps;
     }

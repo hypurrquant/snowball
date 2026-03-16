@@ -40,8 +40,15 @@ contract FXPool is Initializable, ERC20Upgradeable, ReentrancyGuard, UUPSUpgrade
     address public protocolFeeRecipient;
     address public admin;
 
-    error OnlyAdmin();
+    // ─── Upgrade Timelock ───
+    address public pendingImplementation;
+    uint256 public upgradeProposedTime;
 
+    error OnlyAdmin();
+    error UpgradeNotProposed();
+    error TimelockNotExpired();
+
+    event UpgradeProposed(address indexed newImpl, uint256 proposedAt);
     event ParametersUpdated(uint256 tMax, uint256 tMin, uint256 feeMax);
 
     /// @dev Intermediate swap calculation results
@@ -91,13 +98,29 @@ contract FXPool is Initializable, ERC20Upgradeable, ReentrancyGuard, UUPSUpgrade
 
     // ─── Admin ───
 
-    function _authorizeUpgrade(address) internal override {
+    /// @notice Propose a new implementation address; starts the 48-hour timelock
+    function proposeUpgrade(address newImpl) external {
         if (msg.sender != admin) revert OnlyAdmin();
+        if (newImpl == address(0)) revert ZeroAmount();
+        pendingImplementation = newImpl;
+        upgradeProposedTime = block.timestamp;
+        emit UpgradeProposed(newImpl, block.timestamp);
+    }
+
+    function _authorizeUpgrade(address newImpl) internal override {
+        if (msg.sender != admin) revert OnlyAdmin();
+        if (newImpl != pendingImplementation) revert UpgradeNotProposed();
+        if (block.timestamp < upgradeProposedTime + 48 hours) revert TimelockNotExpired();
+        // Reset after use
+        pendingImplementation = address(0);
+        upgradeProposedTime = 0;
     }
 
     /// @notice Update pool curvature and fee parameters
+    /// @dev Parameters are immutable once liquidity has been added
     function setParameters(uint256 tMax_, uint256 tMin_, uint256 feeMax_) external {
         if (msg.sender != admin) revert OnlyAdmin();
+        require(reserveX == 0 && reserveY == 0, "params locked after first LP");
         if (tMin_ >= tMax_) revert ZeroAmount();
         if (tMax_ >= WAD) revert ZeroAmount();
 
@@ -193,8 +216,11 @@ contract FXPool is Initializable, ERC20Upgradeable, ReentrancyGuard, UUPSUpgrade
         uint256 totalSupply_ = totalSupply();
 
         if (totalSupply_ == 0) {
-            lpTokens = _sqrt(amountX * amountY);
-            if (lpTokens == 0) revert InsufficientLiquidity();
+            uint256 MINIMUM_LIQUIDITY = 1000;
+            uint256 geometric = _sqrt(amountX * amountY);
+            if (geometric <= MINIMUM_LIQUIDITY) revert InsufficientLiquidity();
+            _mint(address(1), MINIMUM_LIQUIDITY);
+            lpTokens = geometric - MINIMUM_LIQUIDITY;
             reserveX = amountX;
             reserveY = amountY;
         } else {

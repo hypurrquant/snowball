@@ -43,9 +43,10 @@ interface IForward is IPrimitive {
     /// @param tokenId The token ID of the offer to cancel
     function cancelOffer(uint256 tokenId) external;
 
-    /// @notice CRE Consumer settles a position (oracle price computed off-chain by DON)
+    /// @notice CRE Consumer settles a position (PnL computed on-chain from DON-reported rate)
     /// @param tokenId The position token ID
-    function settleFromConsumer(uint256 tokenId) external;
+    /// @param settlementRate The settlement exchange rate reported by the DON (18 decimals)
+    function settleFromConsumer(uint256 tokenId, int256 settlementRate) external;
 
     /// @notice Get position details
     /// @param tokenId The position NFT token ID
@@ -102,4 +103,5 @@ interface IForward is IPrimitive {
     error InvalidMaturity();
     error InvalidMarket();
     error TransferWhileLocked();
+    error PositionIsLocked();
 }

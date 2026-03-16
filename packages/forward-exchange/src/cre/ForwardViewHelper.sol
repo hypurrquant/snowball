@@ -17,15 +17,17 @@ contract ForwardViewHelper {
         address shortOwner;
     }
 
-    /// @notice Returns all matured, unsettled, matched positions in a single call
+    /// @notice Returns matured, unsettled, matched positions up to an optional cap
     /// @param forward The Forward contract address
+    /// @param maxId   Upper bound on pair IDs to scan (inclusive). Pass 0 to scan all.
     /// @return positions Array of matured positions ready for settlement
-    function getMaturedPositions(address forward) external view returns (MaturedPosition[] memory positions) {
+    function getMaturedPositions(address forward, uint256 maxId) external view returns (MaturedPosition[] memory positions) {
         IForward fwd = IForward(forward);
         IERC721 nft = IERC721(forward);
 
         // First pass: count matured positions
         uint256 nextPairId = _getNextPairId(forward);
+        if (maxId != 0 && maxId < nextPairId) nextPairId = maxId + 1;
         uint256 count;
 
         for (uint256 id = 2; id < nextPairId; id += 2) {

@@ -169,20 +169,16 @@ contract Vault is Initializable, AccessControlUpgradeable, ReentrancyGuard, Paus
             pnl = loserCollateral;
         }
 
-        // Use original collateral depositors (not current NFT owners)
-        // This handles the case where NFTs were transferred after collateral was locked
-        address winnerDepositor = _positionOwner[pairedId];
-        address loserDepositor = _positionOwner[positionId];
-
+        // Fix #2: Use winner/loser (current NFT owners) directly for locked-balance accounting,
+        // removing the stale _positionOwner dependency that breaks after NFT trades.
         // Clear position collateral
         _positionCollateral[pairedId] = 0;
         _positionCollateral[positionId] = 0;
 
-        // Reduce locked balance of original depositors
-        _lockedBalance[winnerDepositor] -= winnerCollateral;
-        _lockedBalance[loserDepositor] -= loserCollateral;
+        // Reduce locked balance of current position holders and credit settlement proceeds
+        _lockedBalance[winner] -= winnerCollateral;
+        _lockedBalance[loser] -= loserCollateral;
 
-        // Credit the current NFT owners (winner/loser params) with the settlement proceeds
         _freeBalance[winner] += winnerCollateral + pnl;
         _freeBalance[loser] += loserCollateral - pnl;
 

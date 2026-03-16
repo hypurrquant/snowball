@@ -24,9 +24,9 @@ contract OptionsRelayer is
         keccak256("Order(address user,uint8 direction,uint256 amount,uint256 roundId,uint256 nonce,uint256 deadline)");
 
     bytes32 public DOMAIN_SEPARATOR;
+    uint256 private _chainIdAtInit;
 
     ISnowballOptions public options;
-    address public clearingHouse;
 
     mapping(address => uint256) public nonces;
 
@@ -53,14 +53,13 @@ contract OptionsRelayer is
 
     function initialize(
         address admin,
-        address _options,
-        address _clearingHouse
+        address _options
     ) external initializer {
         _admin = admin;
         _roles[OPERATOR_ROLE][admin] = true;
         options = ISnowballOptions(_options);
-        clearingHouse = _clearingHouse;
 
+        _chainIdAtInit = block.chainid;
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 DOMAIN_TYPEHASH,
@@ -155,6 +154,22 @@ contract OptionsRelayer is
         }
     }
 
+    /// @dev Returns the current DOMAIN_SEPARATOR, recomputing it if the chain has forked.
+    function _domainSeparator() internal view returns (bytes32) {
+        if (block.chainid == _chainIdAtInit) {
+            return DOMAIN_SEPARATOR;
+        }
+        return keccak256(
+            abi.encode(
+                DOMAIN_TYPEHASH,
+                keccak256("SnowballOptionsRelayer"),
+                keccak256("1"),
+                block.chainid,
+                address(this)
+            )
+        );
+    }
+
     function _verifySignature(SignedOrder calldata order) internal view returns (bool) {
         bytes32 structHash = keccak256(
             abi.encode(
@@ -167,7 +182,7 @@ contract OptionsRelayer is
                 order.deadline
             )
         );
-        bytes32 digest = MessageHashUtils.toTypedDataHash(DOMAIN_SEPARATOR, structHash);
+        bytes32 digest = MessageHashUtils.toTypedDataHash(_domainSeparator(), structHash);
         address signer = ECDSA.recover(digest, order.signature);
 
         return signer == order.user && order.nonce == nonces[order.user];
@@ -184,7 +199,7 @@ contract OptionsRelayer is
         bytes32 structHash = keccak256(
             abi.encode(ORDER_TYPEHASH, user, direction, amount, roundId, nonce, deadline)
         );
-        return MessageHashUtils.toTypedDataHash(DOMAIN_SEPARATOR, structHash);
+        return MessageHashUtils.toTypedDataHash(_domainSeparator(), structHash);
     }
 
     // ─── UUPS ───

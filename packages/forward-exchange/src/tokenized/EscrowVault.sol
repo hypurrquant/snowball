@@ -20,10 +20,18 @@ contract EscrowVault is IEscrowVault, AccessControl, ReentrancyGuard {
     mapping(bytes32 => uint256) private _seriesBalance;
     uint256 private _totalEscrowed;
 
+    /// @notice Tracks which FACTORY_ROLE addresses are authorized to release for a given series
+    mapping(bytes32 => mapping(address => bool)) public seriesAuthorized;
+
     constructor(address _usdc, address _admin) {
         if (_usdc == address(0) || _admin == address(0)) revert ZeroAddress();
         USDC = IERC20(_usdc);
         _grantRole(DEFAULT_ADMIN_ROLE, _admin);
+    }
+
+    /// @notice Grant a FACTORY_ROLE address release rights for a specific series
+    function authorizeForSeries(bytes32 seriesId, address token) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        seriesAuthorized[seriesId][token] = true;
     }
 
     /// @inheritdoc IEscrowVault
@@ -44,6 +52,7 @@ contract EscrowVault is IEscrowVault, AccessControl, ReentrancyGuard {
         address user,
         uint256 amount
     ) external override onlyRole(FACTORY_ROLE) nonReentrant {
+        require(seriesAuthorized[seriesId][msg.sender], "not authorized for series");
         if (amount == 0) revert ZeroAmount();
         if (user == address(0)) revert ZeroAddress();
 
@@ -60,6 +69,7 @@ contract EscrowVault is IEscrowVault, AccessControl, ReentrancyGuard {
 
     /// @inheritdoc IEscrowVault
     function releaseToFactory(bytes32 seriesId, uint256 amount) external override onlyRole(FACTORY_ROLE) nonReentrant {
+        require(seriesAuthorized[seriesId][msg.sender], "not authorized for series");
         if (amount == 0) revert ZeroAmount();
 
         uint256 bal = _seriesBalance[seriesId];

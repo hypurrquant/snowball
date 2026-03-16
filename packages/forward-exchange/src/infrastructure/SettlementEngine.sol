@@ -44,6 +44,7 @@ contract SettlementEngine is Initializable, ISettlementEngine, AccessControlUpgr
     error SettlementTooLate(uint256 maturityTime, uint256 currentTime, uint256 window);
     error InvalidSettlementRate();
     error PositionAlreadySettled();
+    error PositionLocked();
     error InvalidPositionId();
     error InvalidParameter();
 
@@ -102,6 +103,8 @@ contract SettlementEngine is Initializable, ISettlementEngine, AccessControlUpgr
         IForward.ForwardPosition memory pos = FORWARD.getPosition(positionId);
         if (pos.settled) revert PositionAlreadySettled();
         if (pos.counterparty == address(0)) revert InvalidPositionId();
+        // Fix #6: prevent settlement of a locked (structured-product-held) position
+        if (pos.locked) revert PositionLocked();
 
         // Check settlement window
         uint256 matTime = pos.maturityTime;

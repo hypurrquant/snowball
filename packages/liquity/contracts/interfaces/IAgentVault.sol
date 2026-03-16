@@ -9,6 +9,7 @@ interface IAgentVault {
         bytes4[] allowedFunctions;
         uint256 expiry;
         bool active;
+        bool validateBeneficiary; // if true, first address arg in calldata must equal user
     }
 
     struct TokenAllowance {
@@ -78,7 +79,9 @@ interface IAgentVault {
     function executeOnBehalf(
         address user,
         address target,
-        bytes calldata data
+        bytes calldata data,
+        address[] calldata tokens,
+        uint256[] calldata amounts
     ) external returns (bytes memory);
 
     function approveAndExecute(
@@ -114,4 +117,5 @@ interface IAgentVault {
 
     function getBalance(address user, address token) external view returns (uint256);
     function getDelegatedUsers(address agent) external view returns (address[] memory);
+    function getDelegatedUsers(address agent, uint256 offset, uint256 limit) external view returns (address[] memory);
 }

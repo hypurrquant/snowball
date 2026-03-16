@@ -119,6 +119,8 @@ contract Forward is
         VAULT.lockCollateral(msg.sender, isLong ? longTokenId : shortTokenId, notional);
 
         // Create position data for both sides
+        // Fix #3: originalOwner is only set for the creator's side here; the acceptor's
+        // side will be populated in acceptOffer once a counterparty matches.
         _positions[longTokenId] = ForwardPosition({
             marketId: marketId,
             notional: notional,
@@ -193,9 +195,19 @@ contract Forward is
         // Lock collateral for acceptor
         VAULT.lockCollateral(msg.sender, acceptorTokenId, longPos.notional);
 
-        // Set counterparty and original owner on both positions
-        longPos.counterparty = msg.sender;
-        _positions[shortTokenId].counterparty = msg.sender;
+        // Fix #5: counterparty on each position points to the *other* side's current holder.
+        // Long's counterparty = the short holder; Short's counterparty = the long holder.
+        if (creatorIsLong) {
+            // creator holds long, acceptor (msg.sender) holds short
+            longPos.counterparty = msg.sender;            // long's counterparty = short holder
+            _positions[shortTokenId].counterparty = creator; // short's counterparty = long holder
+        } else {
+            // creator holds short, acceptor (msg.sender) holds long
+            longPos.counterparty = creator;               // long's counterparty = short holder (creator)
+            _positions[shortTokenId].counterparty = msg.sender; // short's counterparty = long holder
+        }
+
+        // Fix #3: set originalOwner for the acceptor's side (was address(0) after createOffer)
         _positions[acceptorTokenId].originalOwner = msg.sender;
 
         // Determine original owners for OI registration
@@ -227,6 +239,9 @@ contract Forward is
 
         if (!_exists(creatorTokenId)) revert PositionNotFound();
         if (_ownerOf(creatorTokenId) != msg.sender) revert NotOfferCreator();
+
+        // Fix #4: prevent cancellation of a locked position
+        if (_positions[creatorTokenId].locked) revert PositionIsLocked();
 
         // Unlock collateral
         VAULT.unlockCollateral(msg.sender, creatorTokenId, pos.notional);
@@ -274,9 +289,10 @@ contract Forward is
         // Note: SettlementEngine emits the detailed Settled event
     }
 
-    /// @notice CRE Consumer settles a position (oracle price computed off-chain by DON)
+    /// @notice CRE Consumer settles a position (PnL computed on-chain from DON-reported rate)
     /// @param tokenId The position token ID (normalized to Long internally)
-    function settleFromConsumer(uint256 tokenId) external nonReentrant onlyRole(CRE_CONSUMER_ROLE) {
+    /// @param settlementRate The settlement exchange rate reported by the DON (18 decimals)
+    function settleFromConsumer(uint256 tokenId, int256 settlementRate) external nonReentrant onlyRole(CRE_CONSUMER_ROLE) {
         uint256 longTokenId = (tokenId % 2 == 0) ? tokenId : tokenId - 1;
         uint256 shortTokenId = longTokenId + 1;
 
@@ -285,9 +301,39 @@ contract Forward is
         if (pos.settled) revert PositionAlreadySettled();
         if (pos.counterparty == address(0)) revert PositionNotActive();
         if (block.timestamp < pos.maturityTime) revert MaturityNotReached();
+        if (settlementRate <= 0) revert InvalidForwardRate();
 
+        // Fix #1: Compute PnL on-chain using the DON-reported rate
+        int256 pnl = settlementEngine.calculatePnL(pos.notional, pos.forwardRate, settlementRate);
+
+        // Determine winner/loser from current NFT owners
+        address longOwner = _ownerOf(longTokenId);
+        address shortOwner = _ownerOf(shortTokenId);
+
+        address winner;
+        address loser;
+        uint256 absPnl;
+
+        if (pnl >= 0) {
+            winner = longOwner;
+            loser = shortOwner;
+            absPnl = uint256(pnl);
+            VAULT.settlePosition(shortTokenId, winner, loser, absPnl);
+        } else {
+            winner = shortOwner;
+            loser = longOwner;
+            absPnl = uint256(-pnl);
+            VAULT.settlePosition(longTokenId, winner, loser, absPnl);
+        }
+
+        // Deregister OI using original position creators
+        ForwardPosition storage shortPos = _positions[shortTokenId];
+        RISK_MANAGER.deregisterPosition(pos.marketId, pos.originalOwner, pos.notional, true);
+        RISK_MANAGER.deregisterPosition(pos.marketId, shortPos.originalOwner, pos.notional, false);
+
+        // Mark settled, then burn both NFTs
         pos.settled = true;
-        _positions[shortTokenId].settled = true;
+        shortPos.settled = true;
 
         _burn(longTokenId);
         _burn(shortTokenId);

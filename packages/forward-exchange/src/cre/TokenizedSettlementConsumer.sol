@@ -30,6 +30,9 @@ contract TokenizedSettlementConsumer is IReceiver, AccessControl, Pausable {
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
+    /// @notice Replay-protection: tracks keccak256(metadata ++ report) hashes already processed
+    mapping(bytes32 => bool) public processedReports;
+
     // ─── Errors ──────────────────────────────────────────────────────────
 
     error UnauthorizedForwarder();
@@ -38,6 +41,8 @@ contract TokenizedSettlementConsumer is IReceiver, AccessControl, Pausable {
     error InvalidWorkflowId(bytes32 received, bytes32 expected);
     error InvalidAuthor(address received, address expected);
     error InvalidWorkflowName(bytes10 received, bytes10 expected);
+    error InvalidMetadataLength();
+    error ReportAlreadyProcessed();
 
     // ─── Events ──────────────────────────────────────────────────────────
 
@@ -80,6 +85,11 @@ contract TokenizedSettlementConsumer is IReceiver, AccessControl, Pausable {
     function onReport(bytes calldata metadata, bytes calldata report) external override whenNotPaused {
         if (msg.sender != forwarder) revert UnauthorizedForwarder();
 
+        // Replay protection
+        bytes32 reportHash = keccak256(abi.encodePacked(metadata, report));
+        if (processedReports[reportHash]) revert ReportAlreadyProcessed();
+        processedReports[reportHash] = true;
+
         _validateMetadata(metadata);
 
         (bytes32 seriesId, int256 settlementRate) = abi.decode(report, (bytes32, int256));
@@ -100,7 +110,7 @@ contract TokenizedSettlementConsumer is IReceiver, AccessControl, Pausable {
                 && expectedWorkflowName == bytes10(0)
         ) return;
 
-        if (metadata.length < 62) return; // metadata not present, skip
+        if (metadata.length < 62) revert InvalidMetadataLength();
 
         (bytes32 workflowId, bytes10 workflowName, address workflowOwner) = _decodeMetadata(metadata);
 
@@ -131,6 +141,7 @@ contract TokenizedSettlementConsumer is IReceiver, AccessControl, Pausable {
     // ─── Admin ───────────────────────────────────────────────────────────
 
     function setForwarder(address _forwarder) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_forwarder != address(0), "zero address");
         emit ForwarderUpdated(forwarder, _forwarder);
         forwarder = _forwarder;
     }

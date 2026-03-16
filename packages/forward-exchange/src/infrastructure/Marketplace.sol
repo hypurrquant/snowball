@@ -137,11 +137,12 @@ contract Marketplace is Initializable, AccessControlUpgradeable, ReentrancyGuard
         delete _listings[tokenId];
 
         // ── Interactions ────────────────────────────────────────────────
+        // Fix #7: Transfer NFT first to prevent seller front-running with approval revocation
+        // after USDC has already been sent.
+        nft.transferFrom(seller, msg.sender, tokenId);
+
         // Transfer USDC from buyer to seller via Vault internal balance
         VAULT.internalTransfer(msg.sender, seller, price);
-
-        // Transfer NFT from seller to buyer
-        nft.transferFrom(seller, msg.sender, tokenId);
 
         emit Sold(tokenId, seller, msg.sender, price);
     }

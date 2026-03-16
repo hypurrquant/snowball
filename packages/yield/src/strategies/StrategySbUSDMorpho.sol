@@ -45,17 +45,17 @@ contract StrategySbUSDMorpho is SnowballStrategyBase {
         if (_amount > 0) {
             wantToken.forceApprove(address(lend), _amount);
             lend.supply(marketParams, _amount, 0, address(this), "");
-            _lastSupplyAssets += _amount;
+            // Re-read live position to avoid drift
+            (uint256 shares,,) = lend.position(marketId, address(this));
+            _lastSupplyAssets = _sharesToAssets(shares);
         }
     }
 
     function _withdraw(uint256 _amount) internal override {
         lend.withdraw(marketParams, _amount, 0, address(this), address(this));
-        if (_lastSupplyAssets > _amount) {
-            _lastSupplyAssets -= _amount;
-        } else {
-            _lastSupplyAssets = 0;
-        }
+        // Re-read live position to avoid drift
+        (uint256 shares,,) = lend.position(marketId, address(this));
+        _lastSupplyAssets = _sharesToAssets(shares);
     }
 
     function _emergencyWithdraw() internal override {

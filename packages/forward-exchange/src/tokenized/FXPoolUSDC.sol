@@ -30,6 +30,7 @@ contract FXPoolUSDC is IFXPoolUSDC, ERC20, ReentrancyGuard {
     uint256 public constant PROTOCOL_FEE_SHARE = 80;     // 80% of fee → protocol
     uint256 public constant MIN_LIQUIDITY = 1000;
     uint256 private constant USDC_SCALE = 1e12;          // 6→18 dec
+    uint256 public constant MIN_RESERVE = 1e3;           // minimum reserve after swap
 
     constructor(
         address _fToken,
@@ -96,6 +97,7 @@ contract FXPoolUSDC is IFXPoolUSDC, ERC20, ReentrancyGuard {
         // x·y = k → amountOut = resOut · amountInAfterFee / (resIn + amountInAfterFee)
         amountOut = resOut * amountInAfterFee / (resIn + amountInAfterFee);
         if (amountOut == 0) revert InsufficientLiquidity();
+        require(resOut - amountOut >= MIN_RESERVE, "min reserve breach");
     }
 
     function _applySwap(bool isFTokenIn, uint256 amountIn, uint256 amountOut) internal {

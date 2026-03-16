@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IOptionsVault} from "./interfaces/IOptionsVault.sol";
 
 /// @title OptionsVault
@@ -10,6 +11,7 @@ import {IOptionsVault} from "./interfaces/IOptionsVault.sol";
 contract OptionsVault is
     Initializable,
     UUPSUpgradeable,
+    ReentrancyGuard,
     IOptionsVault
 {
     bytes32 public constant ENGINE_ROLE = keccak256("ENGINE_ROLE");
@@ -62,10 +64,10 @@ contract OptionsVault is
 
     // ─── LP Operations ───
 
-    function deposit() external payable {
+    function deposit() external payable nonReentrant {
         require(msg.value > 0, "Vault: zero deposit");
         uint256 shares;
-        if (totalShares == 0 || totalDeposited == 0) {
+        if (totalShares == 0 && totalDeposited == 0) {
             shares = msg.value;
         } else {
             shares = (msg.value * totalShares) / totalDeposited;
@@ -79,12 +81,13 @@ contract OptionsVault is
     function requestWithdraw(uint256 shares) external {
         require(_shares[msg.sender] >= shares, "Vault: insufficient shares");
         require(shares > 0, "Vault: zero shares");
+        require(_pendingWithdrawShares[msg.sender] == 0, "Vault: pending withdrawal exists");
         _pendingWithdrawShares[msg.sender] = shares;
         _withdrawUnlockTime[msg.sender] = block.timestamp + WITHDRAW_DELAY;
         emit WithdrawRequested(msg.sender, shares, _withdrawUnlockTime[msg.sender]);
     }
 
-    function executeWithdraw() external {
+    function executeWithdraw() external nonReentrant {
         uint256 shares = _pendingWithdrawShares[msg.sender];
         require(shares > 0, "Vault: no pending withdrawal");
         require(block.timestamp >= _withdrawUnlockTime[msg.sender], "Vault: withdrawal locked");
@@ -133,7 +136,7 @@ contract OptionsVault is
         emit CollateralReleased(amount);
     }
 
-    function payWinner(address winner, uint256 amount) external onlyRole(ENGINE_ROLE) {
+    function payWinner(address winner, uint256 amount) external onlyRole(ENGINE_ROLE) nonReentrant {
         require(amount <= lockedCollateral, "Vault: insufficient locked collateral");
         lockedCollateral -= amount;
         totalDeposited -= amount;

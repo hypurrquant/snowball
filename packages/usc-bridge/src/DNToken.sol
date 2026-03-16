@@ -18,11 +18,20 @@ contract DNToken {
 
     address public constant BURN_ADDRESS = address(1);
 
+    /// @notice Contract owner — the only address allowed to call mint()
+    address public owner;
+
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event BridgeBurn(address indexed from, uint256 amount, uint64 destinationChainKey);
 
+    modifier onlyOwner() {
+        require(msg.sender == owner, "DNToken: not owner");
+        _;
+    }
+
     constructor(uint256 initialSupply) {
+        owner = msg.sender;
         totalSupply = initialSupply;
         balanceOf[msg.sender] = initialSupply;
         emit Transfer(address(0), msg.sender, initialSupply);
@@ -55,9 +64,9 @@ contract DNToken {
      * @param destinationChainKey USC chain key for the destination (unused on-chain, for indexing)
      */
     /**
-     * @notice Mint new DN tokens (testnet only, no access control)
+     * @notice Mint new DN tokens. Restricted to owner.
      */
-    function mint(address to, uint256 amount) external {
+    function mint(address to, uint256 amount) external onlyOwner {
         totalSupply += amount;
         balanceOf[to] += amount;
         emit Transfer(address(0), to, amount);

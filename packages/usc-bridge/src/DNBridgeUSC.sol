@@ -66,6 +66,9 @@ contract DNBridgeUSC {
     /// @notice Contract owner (deployer)
     address public owner;
 
+    /// @notice Pending owner for two-step ownership transfer
+    address public pendingOwner;
+
     /// @notice Operator that can submit proofs
     address public operator;
 
@@ -89,6 +92,8 @@ contract DNBridgeUSC {
 
     event OperatorUpdated(address indexed oldOperator, address indexed newOperator);
     event SepoliaDNTokenUpdated(address indexed token);
+    event OwnershipProposed(address indexed proposedOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     // ============ Modifiers ============
 
@@ -134,7 +139,10 @@ contract DNBridgeUSC {
         bytes32 txKey = keccak256(abi.encodePacked(SEPOLIA_CHAIN_KEY, blockHeight, txIndex));
         require(!processedTxKeys[txKey], "DNBridge: already processed");
 
-        // 2. Verify proof via Precompile (direct interface call)
+        // 2. Mark as processed before external calls (CEI pattern)
+        processedTxKeys[txKey] = true;
+
+        // 3. Verify proof via Precompile (direct interface call)
         bool verified = VERIFIER.verifyAndEmit(
             SEPOLIA_CHAIN_KEY,
             blockHeight,
@@ -144,11 +152,8 @@ contract DNBridgeUSC {
         );
         require(verified, "DNBridge: proof verification failed");
 
-        // 3. Decode and verify burn data from encodedTransaction
+        // 4. Decode and verify burn data from encodedTransaction
         _verifyBurnData(encodedTransaction, recipient, amount);
-
-        // 4. Mark as processed (replay protection)
-        processedTxKeys[txKey] = true;
 
         // 5. Mint DN tokens
         _mint(recipient, amount);
@@ -163,6 +168,21 @@ contract DNBridgeUSC {
     function setOperator(address newOperator) external onlyOwner {
         emit OperatorUpdated(operator, newOperator);
         operator = newOperator;
+    }
+
+    /// @notice Step 1: current owner proposes a new owner address
+    function proposeOwner(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "DNBridge: zero address");
+        pendingOwner = newOwner;
+        emit OwnershipProposed(newOwner);
+    }
+
+    /// @notice Step 2: proposed owner accepts and becomes the new owner
+    function acceptOwnership() external {
+        require(msg.sender == pendingOwner, "DNBridge: not pending owner");
+        emit OwnershipTransferred(owner, pendingOwner);
+        owner = pendingOwner;
+        pendingOwner = address(0);
     }
 
     function setSepoliaDNToken(address token) external onlyOwner {

@@ -81,7 +81,14 @@ contract OracleGuard is IOracleAdapter, Ownable2Step, Pausable {
     }
 
     /// @notice Set the secondary (fallback) oracle adapter
+    /// @dev Pass address(0) to disable the fallback. Fallback is only used when fallbackEnabled
+    ///      is true AND secondaryAdapter != address(0), so setting zero effectively disables it.
     function setSecondaryAdapter(address _adapter) external onlyOwner {
+        if (_adapter == address(0) && fallbackEnabled) {
+            // Implicitly disable fallback when clearing the adapter to avoid a broken state
+            fallbackEnabled = false;
+            emit FallbackEnabledUpdated(false);
+        }
         address old = address(secondaryAdapter);
         secondaryAdapter = IOracleAdapter(_adapter);
         emit SecondaryAdapterUpdated(old, _adapter);

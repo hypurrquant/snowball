@@ -9,6 +9,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /// @title ForwardSettlementConsumer
 /// @notice Receives CRE DON-signed settlement reports via KeystoneForwarder and settles forward positions
@@ -24,11 +25,9 @@ contract ForwardSettlementConsumer is
     // ─── Types ───────────────────────────────────────────────────────────
 
     struct SettlementReport {
-        uint256 positionId; // Long token ID (even)
+        uint256 positionId;   // Long token ID (even)
         int256 settlementRate; // Settlement exchange rate (18 decimals)
-        int256 pnl; // PnL amount (6 decimals, signed)
-        address winner; // Address receiving PnL
-        address loser; // Address paying PnL
+        // pnl, winner, loser are intentionally removed; derived on-chain in _processSettlement
     }
 
     // ─── State (original — do NOT reorder for storage compatibility) ─────
@@ -58,6 +57,14 @@ contract ForwardSettlementConsumer is
     /// @notice Expected workflow name, SHA256-truncated to bytes10 (bytes10(0) = disabled)
     bytes10 public expectedWorkflowName;
 
+    // ─── State (new — appended for V3 upgrade) ─────────────────────────
+
+    /// @notice Replay-protection: tracks keccak256(metadata ++ report) hashes already processed
+    mapping(bytes32 => bool) public processedReports;
+
+    /// @notice Maximum seconds after maturity within which settlement is accepted (0 = disabled)
+    uint256 public maxSettlementWindow;
+
     // ─── Errors ──────────────────────────────────────────────────────────
 
     error UnauthorizedForwarder();
@@ -71,6 +78,9 @@ contract ForwardSettlementConsumer is
     error InvalidWorkflowId(bytes32 received, bytes32 expected);
     error InvalidAuthor(address received, address expected);
     error InvalidWorkflowName(bytes10 received, bytes10 expected);
+    error InvalidMetadataLength();
+    error ReportAlreadyProcessed();
+    error SettlementTooLate();
 
     // ─── Events ──────────────────────────────────────────────────────────
 
@@ -81,6 +91,7 @@ contract ForwardSettlementConsumer is
     event ExpectedWorkflowIdUpdated(bytes32 indexed previous, bytes32 indexed newId);
     event ExpectedAuthorUpdated(address indexed previous, address indexed newAuthor);
     event ExpectedWorkflowNameUpdated(bytes10 indexed previous, bytes10 indexed newName);
+    event MaxSettlementWindowUpdated(uint256 oldValue, uint256 newValue);
 
     // ─── Constructor ─────────────────────────────────────────────────────
 
@@ -138,6 +149,11 @@ contract ForwardSettlementConsumer is
     function onReport(bytes calldata metadata, bytes calldata report) external override whenNotPaused {
         if (msg.sender != FORWARDER) revert UnauthorizedForwarder();
 
+        // Replay protection
+        bytes32 reportHash = keccak256(abi.encodePacked(metadata, report));
+        if (processedReports[reportHash]) revert ReportAlreadyProcessed();
+        processedReports[reportHash] = true;
+
         _validateMetadata(metadata);
 
         SettlementReport memory s = abi.decode(report, (SettlementReport));
@@ -153,7 +169,7 @@ contract ForwardSettlementConsumer is
                 && expectedWorkflowName == bytes10(0)
         ) return;
 
-        if (metadata.length < 74) return; // metadata not present, skip
+        if (metadata.length < 74) revert InvalidMetadataLength();
 
         (bytes32 workflowId, bytes10 workflowName, address workflowOwner) = _decodeMetadata(metadata);
 
@@ -185,6 +201,16 @@ contract ForwardSettlementConsumer is
         }
     }
 
+    /// @notice Compute PnL for the long side: (settlementRate - forwardRate) * notional / 1e18
+    /// @dev notional is 6-decimal USDC; rates are 18-decimal. Result is 6-decimal signed USDC.
+    function calculatePnL(uint256 notional, int256 forwardRate, int256 settlementRate)
+        public
+        pure
+        returns (int256)
+    {
+        return (settlementRate - forwardRate) * int256(notional) / 1e18;
+    }
+
     function _processSettlement(SettlementReport memory s) internal {
         // Normalize to Long token ID
         uint256 longTokenId = (s.positionId % 2 == 0) ? s.positionId : s.positionId - 1;
@@ -199,31 +225,32 @@ contract ForwardSettlementConsumer is
         if (block.timestamp < pos.maturityTime) revert MaturityNotReached();
         if (s.settlementRate <= 0) revert InvalidSettlementRate();
 
-        // Calculate absolute PnL and settle via Vault
-        uint256 absPnl = s.pnl >= 0 ? uint256(s.pnl) : uint256(-s.pnl);
-
-        if (s.pnl >= 0) {
-            VAULT.settlePosition(shortTokenId, s.winner, s.loser, absPnl);
-        } else {
-            VAULT.settlePosition(longTokenId, s.winner, s.loser, absPnl);
+        // Settlement window check
+        if (maxSettlementWindow > 0 && block.timestamp > pos.maturityTime + maxSettlementWindow) {
+            revert SettlementTooLate();
         }
 
-        // Deregister OI for both sides
-        IForward.ForwardPosition memory shortPos = FORWARD.getPosition(shortTokenId);
-        RISK_MANAGER.deregisterPosition(pos.marketId, pos.originalOwner, pos.notional, true);
-        RISK_MANAGER.deregisterPosition(pos.marketId, shortPos.originalOwner, pos.notional, false);
+        // Compute PnL locally for event emission only (no state changes here).
+        int256 pnl = calculatePnL(pos.notional, pos.forwardRate, s.settlementRate);
 
-        // Mark settled + burn NFTs via Forward
-        FORWARD.settleFromConsumer(longTokenId);
+        // Delegate all state changes (vault settlement, OI deregistration, mark-settled,
+        // and NFT burning) to Forward.settleFromConsumer so the logic lives in one place.
+        FORWARD.settleFromConsumer(longTokenId, s.settlementRate);
 
-        emit CRESettlement(longTokenId, s.settlementRate, s.pnl, s.winner, s.loser);
+        emit CRESettlement(longTokenId, s.settlementRate, pnl, address(0), address(0));
     }
 
     // ─── Admin ───────────────────────────────────────────────────────────
 
     function setForwarder(address _forwarder) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_forwarder != address(0), "zero address");
         emit ForwarderUpdated(FORWARDER, _forwarder);
         FORWARDER = _forwarder;
+    }
+
+    function setMaxSettlementWindow(uint256 _window) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        emit MaxSettlementWindowUpdated(maxSettlementWindow, _window);
+        maxSettlementWindow = _window;
     }
 
     function setExpectedWorkflowId(bytes32 _id) external onlyRole(DEFAULT_ADMIN_ROLE) {

@@ -25,6 +25,8 @@ contract ReputationRegistry is Ownable {
     mapping(uint256 => mapping(string => ReputationData)) public reputations;
     // agentId => Review[]
     mapping(uint256 => Review[]) public reviews;
+    // reviewer => agentId => has already reviewed
+    mapping(address => mapping(uint256 => bool)) public hasReviewed;
 
     address public identityRegistry;
 
@@ -42,6 +44,9 @@ contract ReputationRegistry is Ownable {
         string calldata _tag
     ) external {
         require(_score >= 100 && _score <= 500, "Score must be 1.00-5.00 (100-500)");
+        require(!hasReviewed[msg.sender][_agentId], "Already reviewed");
+
+        hasReviewed[msg.sender][_agentId] = true;
 
         reviews[_agentId].push(Review({
             reviewer: msg.sender,

@@ -83,7 +83,7 @@ contract OptionsRelayerTest is Test {
         OptionsRelayer rImpl = new OptionsRelayer();
         ERC1967Proxy rProxy = new ERC1967Proxy(
             address(rImpl),
-            abi.encodeCall(OptionsRelayer.initialize, (admin, address(options), address(ch)))
+            abi.encodeCall(OptionsRelayer.initialize, (admin, address(options)))
         );
         relayer = OptionsRelayer(payable(address(rProxy)));
 

@@ -8,6 +8,7 @@ import {IFXPoolUSDC} from "./interfaces/IFXPoolUSDC.sol";
 import {CollateralSwap} from "./CollateralSwap.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Router
@@ -115,16 +116,20 @@ contract Router is IRouter, ReentrancyGuard {
         if (amount == 0) revert ZeroAmount();
         if (altCollateral == address(0) || swapContract == address(0)) revert ZeroAddress();
 
-        // Calculate USDC cost: 2 USDC per token pair
+        // Calculate USDC cost: 2 USDC per token pair (6 decimals)
         uint256 usdcCost = amount * 2e6 / 1e18;
         if (usdcCost == 0) revert ZeroAmount();
 
-        // Take alt collateral from user
-        IERC20(altCollateral).safeTransferFrom(msg.sender, address(this), usdcCost);
+        // Normalize usdcCost to the alt collateral's own decimal precision
+        uint8 altDec = IERC20Metadata(altCollateral).decimals();
+        uint256 altAmount = usdcCost * (10 ** altDec) / 1e6;
 
-        // Swap alt collateral → USDC via CollateralSwap (1:1)
-        IERC20(altCollateral).approve(swapContract, usdcCost);
-        CollateralSwap(swapContract).swap(altCollateral, address(USDC), usdcCost);
+        // Take alt collateral from user
+        IERC20(altCollateral).safeTransferFrom(msg.sender, address(this), altAmount);
+
+        // Swap alt collateral → USDC via CollateralSwap
+        IERC20(altCollateral).approve(swapContract, altAmount);
+        CollateralSwap(swapContract).swap(altCollateral, address(USDC), altAmount);
 
         // Mint normally with USDC
         USDC.approve(address(FACTORY), usdcCost);
@@ -135,7 +140,7 @@ contract Router is IRouter, ReentrancyGuard {
         IERC20(s.fToken).safeTransfer(msg.sender, amount);
         IERC20(s.sfToken).safeTransfer(msg.sender, amount);
 
-        emit MintWithAltCollateral(msg.sender, seriesId, altCollateral, amount, usdcCost);
+        emit MintWithAltCollateral(msg.sender, seriesId, altCollateral, amount, altAmount);
     }
 
     /// @inheritdoc IRouter
@@ -247,8 +252,9 @@ contract Router is IRouter, ReentrancyGuard {
     ) external override nonReentrant checkDeadline(deadline) returns (uint256 amountOut) {
         if (usdcAmount == 0) revert ZeroAmount();
 
-        // Quote Path A: direct swap on USDC pool
-        uint256 pathA = IFXPoolUSDC(usdcPool).quoteSwap(address(USDC), usdcAmount);
+        // Quote Path A: direct swap on USDC pool — only valid when buying fToken.
+        // The USDC pool holds fToken/USDC; it cannot produce sfToken directly.
+        uint256 pathA = wantFToken ? IFXPoolUSDC(usdcPool).quoteSwap(address(USDC), usdcAmount) : 0;
 
         // Quote Path B: mint + swap in Yield Space pool
         uint256 mintAmount = usdcAmount * 1e18 / 2e6;

@@ -84,6 +84,9 @@ contract MaturityToken is IMaturityToken, ERC20, AccessControl, ReentrancyGuard 
         // ratio = S_T / F_0 in WAD (flipped: linear payoff)
         uint256 ratio = absSettlement * 1e18 / absForward;
 
+        // Sanity check: settlement rate must be positive and ratio must be within 10x the forward rate
+        require(absSettlement > 0 && ratio <= 10e18, "implausible rate");
+
         if (IS_LONG) {
             // fToken redemption rate = ratio (WAD) → USDC 6dec
             // Cap at 2 USDC (when S_T > 2 × F_0)
@@ -129,6 +132,7 @@ contract MaturityToken is IMaturityToken, ERC20, AccessControl, ReentrancyGuard 
 
     /// @inheritdoc IMaturityToken
     function setCounterpart(address counterpart_) external override onlyRole(MINTER_ROLE) {
+        require(counterpart == address(0), "counterpart already set");
         if (counterpart_ == address(0)) revert ZeroAddress();
         counterpart = counterpart_;
         emit CounterpartSet(counterpart_);

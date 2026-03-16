@@ -15,7 +15,7 @@ contract ForwardViewHelperTest is BaseTest {
     // ─── No Positions ────────────────────────────────────────────────
 
     function test_GetMaturedPositions_Empty() public view {
-        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward));
+        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward), 0);
         assertEq(positions.length, 0);
     }
 
@@ -26,7 +26,7 @@ contract ForwardViewHelperTest is BaseTest {
         _createAndAcceptForward(NOTIONAL, KRW_PRICE_18D, matTime);
 
         // Not yet matured
-        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward));
+        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward), 0);
         assertEq(positions.length, 0);
     }
 
@@ -38,7 +38,7 @@ contract ForwardViewHelperTest is BaseTest {
 
         vm.warp(matTime);
 
-        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward));
+        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward), 0);
         assertEq(positions.length, 1);
         assertEq(positions[0].longId, longId);
         assertEq(positions[0].marketId, USD_KRW_MARKET);
@@ -77,7 +77,7 @@ contract ForwardViewHelperTest is BaseTest {
         // Warp to only position 1 maturity
         vm.warp(matTime1);
 
-        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward));
+        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward), 0);
         assertEq(positions.length, 1);
     }
 
@@ -94,7 +94,7 @@ contract ForwardViewHelperTest is BaseTest {
         vm.prank(alice);
         forward.settle(longId, _emptyPriceUpdate());
 
-        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward));
+        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward), 0);
         assertEq(positions.length, 0);
     }
 
@@ -108,7 +108,7 @@ contract ForwardViewHelperTest is BaseTest {
 
         vm.warp(block.timestamp + 11 days);
 
-        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward));
+        ForwardViewHelper.MaturedPosition[] memory positions = helper.getMaturedPositions(address(forward), 0);
         assertEq(positions.length, 0);
     }
 

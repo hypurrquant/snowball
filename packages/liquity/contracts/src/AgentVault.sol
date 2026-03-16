@@ -70,7 +70,8 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
             allowedTargets: targets,
             allowedFunctions: functions,
             expiry: expiry,
-            active: true
+            active: true,
+            validateBeneficiary: false
         });
 
         // Increment nonce to invalidate all previous token allowances
@@ -111,9 +112,16 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
 
         uint256 currentNonce = _permNonce[msg.sender][agent];
         for (uint256 i = 0; i < tokenCaps.length; i++) {
+            TokenAllowance storage existing = _tokenAllowances[msg.sender][agent][tokenCaps[i].token];
+            // Preserve spent if the allowance is still on the current nonce;
+            // reset to 0 only when the new cap is less than what was already spent.
+            uint256 preservedSpent = 0;
+            if (existing.nonce == currentNonce) {
+                preservedSpent = (tokenCaps[i].cap >= existing.spent) ? existing.spent : 0;
+            }
             _tokenAllowances[msg.sender][agent][tokenCaps[i].token] = TokenAllowance({
                 cap: tokenCaps[i].cap,
-                spent: 0,
+                spent: preservedSpent,
                 nonce: currentNonce
             });
         }
@@ -124,14 +132,33 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
     // ──────────────────── Agent Execution ────────────────────
 
     /// @notice Execute a whitelisted call on behalf of `user`.
-    ///         No token movement — only execution permission checked.
+    ///         Optionally deducts token allowances before the call (for operations that
+    ///         move tokens without an explicit vault approval).
+    /// @param tokens  Tokens whose allowances to deduct (must be same length as amounts).
+    /// @param amounts Amounts to deduct from each corresponding token allowance.
     function executeOnBehalf(
         address user,
         address target,
-        bytes calldata data
+        bytes calldata data,
+        address[] calldata tokens,
+        uint256[] calldata amounts
     ) external override nonReentrant returns (bytes memory) {
+        // Fix 3: guard against data[:4] panic on short calldata
+        require(data.length >= 4, "AgentVault: data too short");
+        require(tokens.length == amounts.length, "AgentVault: tokens/amounts length mismatch");
+
         bytes4 selector = bytes4(data[:4]);
         _checkExecPermission(user, msg.sender, target, selector);
+
+        // Fix 1: validate beneficiary when the permission requires it
+        _validateBeneficiary(data, user);
+
+        // Fix 2: deduct token allowances to enforce caps before execution
+        for (uint256 i = 0; i < tokens.length; i++) {
+            if (amounts[i] > 0) {
+                _deductTokenAllowance(user, msg.sender, tokens[i], amounts[i]);
+            }
+        }
 
         (bool success, bytes memory result) = target.call(data);
         require(success, "AgentVault: call failed");
@@ -142,6 +169,7 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
 
     /// @notice Atomic approve-execute-cleanup for vault-funded operations.
     ///         Deducts token allowance, approves target, executes call, then cleans up approval.
+    ///         Any tokens not consumed by the target call are credited back to the user's balance.
     function approveAndExecute(
         address user,
         address token,
@@ -149,10 +177,16 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
         address target,
         bytes calldata data
     ) external override nonReentrant returns (bytes memory) {
+        // Fix 3: guard against data[:4] panic on short calldata
+        require(data.length >= 4, "AgentVault: data too short");
+
         bytes4 selector = bytes4(data[:4]);
 
         // 1-4. Check execution permission (active, expiry, target, selector)
         _checkExecPermission(user, msg.sender, target, selector);
+
+        // Fix 1: validate beneficiary when the permission requires it
+        _validateBeneficiary(data, user);
 
         // 5-6. Deduct token allowance (nonce check + cap check)
         _deductTokenAllowance(user, msg.sender, token, amount);
@@ -164,12 +198,23 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
         // Approve target to spend tokens
         IERC20(token).forceApprove(target, amount);
 
+        // Fix 4: snapshot balance before call so we can return unused tokens
+        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
+
         // Execute the call
         (bool success, bytes memory result) = target.call(data);
         require(success, "AgentVault: call failed");
 
         // Cleanup: remove any remaining approval
         IERC20(token).forceApprove(target, 0);
+
+        // Fix 4: credit unused tokens back to the user's vault balance
+        uint256 balanceAfter = IERC20(token).balanceOf(address(this));
+        if (balanceAfter > balanceBefore - amount) {
+            // tokens were returned to us by the target (or only partially consumed)
+            uint256 unused = balanceAfter - (balanceBefore - amount);
+            _balances[user][token] += unused;
+        }
 
         emit ApprovedAndExecuted(user, msg.sender, token, amount, target, selector);
         return result;
@@ -263,29 +308,73 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
         return _balances[user][token];
     }
 
+    /// @notice Returns active delegated users for an agent (backward-compatible, capped at 100).
     function getDelegatedUsers(address agent) external view override returns (address[] memory) {
+        return _getDelegatedUsersPaginated(agent, 0, 100);
+    }
+
+    /// @notice Paginated version of getDelegatedUsers.
+    /// @param offset Index into the active-user list to start from.
+    /// @param limit  Maximum number of entries to return (capped at 100).
+    function getDelegatedUsers(
+        address agent,
+        uint256 offset,
+        uint256 limit
+    ) external view override returns (address[] memory) {
+        if (limit > 100) limit = 100;
+        return _getDelegatedUsersPaginated(agent, offset, limit);
+    }
+
+    /// @dev Shared pagination logic for getDelegatedUsers.
+    function _getDelegatedUsersPaginated(
+        address agent,
+        uint256 offset,
+        uint256 limit
+    ) internal view returns (address[] memory) {
         address[] storage all = _delegatedUsers[agent];
-        // 1st pass: count active + non-expired
-        uint256 count = 0;
+
+        // 1st pass: collect all active + non-expired into a temporary buffer
+        address[] memory temp = new address[](all.length);
+        uint256 total = 0;
         for (uint256 i = 0; i < all.length; i++) {
             ExecutionPermission storage ep = _execPerms[all[i]][agent];
             if (ep.active && (ep.expiry == 0 || block.timestamp <= ep.expiry)) {
-                count++;
+                temp[total++] = all[i];
             }
         }
-        // 2nd pass: collect
-        address[] memory result = new address[](count);
-        uint256 idx = 0;
-        for (uint256 i = 0; i < all.length; i++) {
-            ExecutionPermission storage ep = _execPerms[all[i]][agent];
-            if (ep.active && (ep.expiry == 0 || block.timestamp <= ep.expiry)) {
-                result[idx++] = all[i];
-            }
+
+        // Apply pagination
+        if (offset >= total) {
+            return new address[](0);
+        }
+        uint256 end = offset + limit;
+        if (end > total) end = total;
+        uint256 resultLen = end - offset;
+
+        address[] memory result = new address[](resultLen);
+        for (uint256 i = 0; i < resultLen; i++) {
+            result[i] = temp[offset + i];
         }
         return result;
     }
 
     // ──────────────────── Internal Helpers ────────────────────
+
+    /// @dev Validates that the first address argument in calldata equals `user`
+    ///      when the permission has validateBeneficiary enabled.
+    ///      Calldata layout: [4-byte selector][32-byte slot for first arg, address in low 20 bytes].
+    ///      Requires data.length >= 36.
+    function _validateBeneficiary(bytes calldata data, address user) internal view {
+        // The caller (msg.sender) is the agent; look up the permission for (user, agent).
+        ExecutionPermission storage ep = _execPerms[user][msg.sender];
+        if (!ep.validateBeneficiary) return;
+
+        require(data.length >= 36, "AgentVault: calldata too short for beneficiary check");
+        // The first ABI-encoded address occupies bytes 4..36; the address lives in the
+        // last 20 bytes of that 32-byte word (right-padded in Solidity's ABI encoding).
+        address beneficiary = address(uint160(uint256(bytes32(data[4:36]))));
+        require(beneficiary == user, "AgentVault: beneficiary must be user");
+    }
 
     /// @dev Check execution permission: active, expiry, target whitelist, selector whitelist.
     function _checkExecPermission(

@@ -9,6 +9,7 @@ import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step
 /// @dev Used only for the manual settle() path. CRE workflow handles pricing off-chain.
 contract StubOracleAdapter is IOracleAdapter, Ownable2Step {
     mapping(bytes32 => int256) public prices;
+    mapping(bytes32 => uint256) public lastUpdated;
 
     error PriceNotSet(bytes32 feedId);
 
@@ -17,6 +18,7 @@ contract StubOracleAdapter is IOracleAdapter, Ownable2Step {
     /// @notice Admin sets a price for a feed (for demo/testing purposes)
     function setPrice(bytes32 feedId, int256 price) external onlyOwner {
         prices[feedId] = price;
+        lastUpdated[feedId] = block.timestamp;
     }
 
     /// @inheritdoc IOracleAdapter
@@ -26,7 +28,7 @@ contract StubOracleAdapter is IOracleAdapter, Ownable2Step {
     ) external payable override returns (int256 price, uint256 timestamp) {
         price = prices[feedId];
         if (price <= 0) revert PriceNotSet(feedId);
-        timestamp = block.timestamp;
+        timestamp = lastUpdated[feedId];
     }
 
     /// @inheritdoc IOracleAdapter
@@ -37,7 +39,7 @@ contract StubOracleAdapter is IOracleAdapter, Ownable2Step {
     ) external payable override returns (int256 price, uint256 timestamp) {
         price = prices[feedId];
         if (price <= 0) revert PriceNotSet(feedId);
-        timestamp = block.timestamp;
+        timestamp = lastUpdated[feedId];
     }
 
     /// @inheritdoc IOracleAdapter

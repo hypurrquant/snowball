@@ -130,6 +130,24 @@ contract SnowballYieldVaultV2 is ERC4626, Ownable, ReentrancyGuard {
         return address(strategy) != address(0) ? strategy.balanceOf() : 0;
     }
 
+    // ─── ERC-4626 max* overrides ─────────────────────────
+
+    /// @notice Caps maxWithdraw at the strategy's currently liquid balance.
+    function maxWithdraw(address owner_) public view override returns (uint256) {
+        uint256 vaultMax = super.maxWithdraw(owner_);
+        if (address(strategy) == address(0)) return vaultMax;
+        return Math.min(vaultMax, strategy.balanceOf());
+    }
+
+    /// @notice Caps maxRedeem so the corresponding assets never exceed strategy liquidity.
+    function maxRedeem(address owner_) public view override returns (uint256) {
+        uint256 vaultMax = super.maxRedeem(owner_);
+        if (address(strategy) == address(0)) return vaultMax;
+        // Convert strategy liquid balance to shares, then take the minimum.
+        uint256 stratShares = _convertToShares(strategy.balanceOf(), Math.Rounding.Floor);
+        return Math.min(vaultMax, stratShares);
+    }
+
     // ─── V1 compatibility ────────────────────────────────
 
     /// @notice Price per full share (1e18 unit), matches V1 interface.

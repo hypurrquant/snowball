@@ -32,12 +32,14 @@ contract CreditcoinOracle is IOracle {
 
     /// @notice Set price (1e36 scale). For testnet use.
     function setPrice(uint256 newPrice) external onlyOwner {
+        require(newPrice > 0, "CreditcoinOracle: zero price");
         _price = newPrice;
         emit PriceUpdated(newPrice);
     }
 
     /// @notice Transfer ownership
     function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "CreditcoinOracle: zero address");
         owner = newOwner;
     }
 }
