@@ -23,6 +23,7 @@ contract SnowballOptions is
 
     uint256 public constant FEE_DENOMINATOR = 10_000;
     uint256 public constant MAX_EXECUTION_DELAY = 300; // 5 minutes
+    uint256 public constant MAX_COMMIT_DELAY = 300;    // 5 minutes to commit close price
 
     IOptionsClearingHouse public clearingHouse;
     IOptionsVault public vault;
@@ -180,20 +181,32 @@ contract SnowballOptions is
 
     // ─── Round Execution ───
 
-    function executeRound(uint256 roundId) external onlyRole(OPERATOR_ROLE) {
-        require(roundId == currentRoundId, "Options: not current round");
+    /// @notice Commits the close price for a round. Anyone can call this after closeTimestamp.
+    ///         Must be called before executeRound. Separates price observation from execution.
+    function commitClosePrice(uint256 roundId) external {
         Round storage round = _rounds[roundId];
         require(round.status == RoundStatus.Open, "Options: round not open");
         require(block.timestamp >= round.closeTimestamp, "Options: round not expired");
-        require(block.timestamp <= round.closeTimestamp + MAX_EXECUTION_DELAY, "Options: execution window expired");
+        require(block.timestamp <= round.closeTimestamp + MAX_COMMIT_DELAY, "Options: commit window expired");
+        require(round.closePrice == 0, "Options: close price already committed");
 
         (uint256 price, bool isFresh) = oracle.fetchPrice();
         require(isFresh, "Options: stale oracle price");
 
         round.closePrice = price;
+
+        emit ClosePriceCommitted(roundId, price);
+    }
+
+    function executeRound(uint256 roundId) external onlyRole(OPERATOR_ROLE) {
+        require(roundId == currentRoundId, "Options: not current round");
+        Round storage round = _rounds[roundId];
+        require(round.status == RoundStatus.Open, "Options: round not open");
+        require(round.closePrice > 0, "Options: close price not committed");
+
         round.status = RoundStatus.Locked;
 
-        emit RoundExecuted(roundId, price);
+        emit RoundExecuted(roundId, round.closePrice);
     }
 
     function expireRound(uint256 roundId) external onlyRole(OPERATOR_ROLE) nonReentrant {

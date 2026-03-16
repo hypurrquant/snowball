@@ -109,6 +109,13 @@ contract SnowballMulticall is ReentrancyGuard, Ownable {
         Call[] calldata calls,
         TokenCheck[] calldata tokenChecks
     ) external payable nonReentrant {
+        // Snapshot balances before pulling tokens to prevent stealing pre-existing
+        // contract balances that belong to other users or previous transactions.
+        uint256[] memory balBefore = new uint256[](pullTokens.length);
+        for (uint256 i = 0; i < pullTokens.length; i++) {
+            balBefore[i] = IERC20(pullTokens[i].token).balanceOf(address(this));
+        }
+
         // Pull tokens from user
         for (uint256 i = 0; i < pullTokens.length; i++) {
             IERC20(pullTokens[i].token).safeTransferFrom(
@@ -125,11 +132,18 @@ contract SnowballMulticall is ReentrancyGuard, Ownable {
             if (!success) revert CallFailed(i, result);
         }
 
-        // Return remaining tokens to user
+        // Return only the caller's tokens: the delta above the pre-pull snapshot,
+        // capped at the amount originally deposited. This prevents the caller from
+        // sweeping any residual balance that was already in the contract.
         for (uint256 i = 0; i < pullTokens.length; i++) {
-            uint256 remaining = IERC20(pullTokens[i].token).balanceOf(address(this));
-            if (remaining > 0) {
-                IERC20(pullTokens[i].token).safeTransfer(msg.sender, remaining);
+            uint256 currentBal = IERC20(pullTokens[i].token).balanceOf(address(this));
+            // Maximum returnable = whatever the caller deposited (pulled amount)
+            uint256 maxReturnable = pullTokens[i].amount;
+            // Actual available above the pre-existing baseline
+            uint256 available = currentBal > balBefore[i] ? currentBal - balBefore[i] : 0;
+            uint256 toReturn = available < maxReturnable ? available : maxReturnable;
+            if (toReturn > 0) {
+                IERC20(pullTokens[i].token).safeTransfer(msg.sender, toReturn);
             }
         }
 

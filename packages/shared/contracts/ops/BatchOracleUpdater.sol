@@ -79,7 +79,15 @@ contract BatchOracleUpdater is Ownable {
         uint256 count;
 
         // SnowballOracle 업데이트
+        // Prevent same (oracle, asset) pair from being updated multiple times in one batch
         for (uint256 i = 0; i < snowballUpdates.length; i++) {
+            for (uint256 j = 0; j < i; j++) {
+                require(
+                    snowballUpdates[i].oracle != snowballUpdates[j].oracle ||
+                    snowballUpdates[i].asset  != snowballUpdates[j].asset,
+                    "BatchOracle: duplicate asset"
+                );
+            }
             ISnowballOracle(snowballUpdates[i].oracle).updatePrice(
                 snowballUpdates[i].asset,
                 snowballUpdates[i].price
@@ -109,7 +117,11 @@ contract BatchOracleUpdater is Ownable {
         uint256[] calldata prices
     ) external onlyKeeper {
         if (assets.length != prices.length) revert LengthMismatch();
+        // Prevent same asset from being updated multiple times in one batch
         for (uint256 i = 0; i < assets.length; i++) {
+            for (uint256 j = 0; j < i; j++) {
+                require(assets[i] != assets[j], "BatchOracle: duplicate asset");
+            }
             ISnowballOracle(oracle).updatePrice(assets[i], prices[i]);
         }
     }

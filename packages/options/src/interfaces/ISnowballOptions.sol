@@ -28,6 +28,7 @@ interface ISnowballOptions {
 
     event RoundStarted(uint256 indexed roundId, uint256 lockPrice, uint256 lockTimestamp, uint256 duration);
     event OrderFilled(uint256 indexed roundId, uint256 indexed orderId, address overUser, address underUser, uint256 amount);
+    event ClosePriceCommitted(uint256 indexed roundId, uint256 closePrice);
     event RoundExecuted(uint256 indexed roundId, uint256 closePrice);
     event OrderSettled(uint256 indexed roundId, uint256 indexed orderId, address winner, uint256 payout);
     event CommissionFeeUpdated(uint256 oldFee, uint256 newFee);
@@ -41,6 +42,7 @@ interface ISnowballOptions {
     ) external;
 
     function startRound(uint256 duration) external;
+    function commitClosePrice(uint256 roundId) external;
     function executeRound(uint256 roundId) external;
     function expireRound(uint256 roundId) external;
     function settleOrders(uint256 roundId, uint256 batchSize) external;

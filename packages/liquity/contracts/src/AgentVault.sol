@@ -153,6 +153,7 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
 
         // Fix 1: validate beneficiary when the permission requires it
         _validateBeneficiary(data, user);
+        _validateCriticalArgs(data, user);
 
         // Fix 2: deduct token allowances to enforce caps before execution
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -188,6 +189,7 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
 
         // Fix 1: validate beneficiary when the permission requires it
         _validateBeneficiary(data, user);
+        _validateCriticalArgs(data, user);
 
         // 5-6. Deduct token allowance (nonce check + cap check)
         _deductTokenAllowance(user, msg.sender, token, amount);
@@ -360,6 +362,31 @@ contract AgentVault is IAgentVault, ReentrancyGuard {
     }
 
     // ──────────────────── Internal Helpers ────────────────────
+
+    /// @dev Validates critical non-first arguments for known dangerous selectors.
+    ///      For BorrowerOperations.openTrove, enforces that _removeManager (arg 9)
+    ///      and _receiver (arg 10) are either address(0) or the user, preventing an
+    ///      agent from setting themselves as removeManager+receiver to steal funds.
+    function _validateCriticalArgs(bytes calldata data, address user) internal pure {
+        bytes4 selector = bytes4(data[:4]);
+
+        // BorrowerOperations.openTrove — check _removeManager (arg 9) and _receiver (arg 10)
+        // Selector: openTrove(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,address,address,address)
+        if (selector == bytes4(keccak256("openTrove(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,address,address,address)"))) {
+            if (data.length >= 356) { // 4 + 11*32 = 356
+                address removeManager = address(uint160(uint256(bytes32(data[292:324]))));
+                address receiver = address(uint160(uint256(bytes32(data[324:356]))));
+                require(
+                    removeManager == address(0) || removeManager == user,
+                    "AgentVault: removeManager must be user or zero"
+                );
+                require(
+                    receiver == address(0) || receiver == user,
+                    "AgentVault: receiver must be user or zero"
+                );
+            }
+        }
+    }
 
     /// @dev Validates that the first address argument in calldata equals `user`
     ///      when the permission has validateBeneficiary enabled.

@@ -48,6 +48,11 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
     uint256 public totalCollateralSupplied;
     uint256 public totalBorrowed;
 
+    // --- Swap direction context for _getMinAmountOut ---
+    // true  = swapping sbUSD → wCTC  (amountIn is sbUSD, output is wCTC)
+    // false = swapping wCTC → sbUSD  (amountIn is wCTC,  output is sbUSD)
+    bool private _swapDirectionSbUSDtoWCTC;
+
     event Leveraged(uint256 collateral, uint256 borrowed, uint256 leverageBps);
     event Deleveraged(uint256 collateralWithdrawn, uint256 repaid);
     event LeverageUpdated(uint256 oldBps, uint256 newBps);
@@ -105,7 +110,9 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
         // (residual from the borrow→swap→collateral loop, or slippage leftovers) to wCTC.
         uint256 sbUSDBalance = sbUSD.balanceOf(address(this));
         if (sbUSDBalance > 0) {
+            _swapDirectionSbUSDtoWCTC = true;
             _swap(address(sbUSD), address(native), sbUSDBalance);
+            _swapDirectionSbUSDtoWCTC = false;
         }
     }
 
@@ -206,7 +213,9 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
     /// @dev Swap `_sbUSDAmount` sbUSD → wCTC. Returns wCTC received.
     function _swapSbUSDToWCTC(uint256 _sbUSDAmount) internal returns (uint256) {
         uint256 wctcBefore = wantToken.balanceOf(address(this));
+        _swapDirectionSbUSDtoWCTC = true;
         _swap(address(sbUSD), address(wantToken), _sbUSDAmount);
+        _swapDirectionSbUSDtoWCTC = false;
         uint256 wctcAfter = wantToken.balanceOf(address(this));
         return wctcAfter > wctcBefore ? wctcAfter - wctcBefore : 0;
     }
@@ -262,6 +271,7 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
                 uint256 wctcBal = wantToken.balanceOf(address(this));
                 uint256 swapAmt = wctcForRepay < wctcBal ? wctcForRepay : wctcBal;
                 if (swapAmt > 0) {
+                    // _swapDirectionSbUSDtoWCTC remains false (wCTC → sbUSD direction)
                     _swap(address(wantToken), address(sbUSD), swapAmt);
                 }
             }
@@ -331,6 +341,41 @@ contract StrategyWCTCLoop is SnowballStrategyBase {
 
         totalCollateralSupplied = 0;
         totalBorrowed = 0;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Slippage protection override
+    // ═══════════════════════════════════════════════════════════════
+
+    /// @notice Oracle-aware minimum output calculation for wCTC/sbUSD swaps.
+    ///
+    ///         The base implementation assumes a 1:1 rate (suitable for pegged pairs).
+    ///         wCTC and sbUSD are NOT pegged, so we use the Morpho oracle price
+    ///         (1e36 scale, expressed as sbUSD per wCTC × 1e36 / 1e18 = sbUSD/wCTC × 1e18)
+    ///         to derive a fair expected output before applying the slippage tolerance.
+    ///
+    ///         Direction is communicated via _swapDirectionSbUSDtoWCTC:
+    ///           true  → sbUSD in, wCTC out:  fairOutput = amountIn * 1e36 / price
+    ///           false → wCTC in, sbUSD out:  fairOutput = amountIn * price / 1e36
+    function _getMinAmountOut(uint256 _amountIn) internal view override returns (uint256) {
+        if (maxSlippageBps == 0) return 0;
+
+        uint256 oraclePrice = IOracle(collateralMarket.oracle).price();
+        uint256 fairOutput;
+        if (oraclePrice > 0) {
+            if (_swapDirectionSbUSDtoWCTC) {
+                // sbUSD → wCTC: wCTC out = sbUSD in * 1e36 / price
+                fairOutput = (_amountIn * 1e36) / oraclePrice;
+            } else {
+                // wCTC → sbUSD: sbUSD out = wCTC in * price / 1e36
+                fairOutput = (_amountIn * oraclePrice) / 1e36;
+            }
+        } else {
+            // Oracle unavailable — fall back to 1:1 with slippage applied
+            fairOutput = _amountIn;
+        }
+
+        return fairOutput * (SLIPPAGE_DIVISOR - maxSlippageBps) / SLIPPAGE_DIVISOR;
     }
 
     // ═══════════════════════════════════════════════════════════════
