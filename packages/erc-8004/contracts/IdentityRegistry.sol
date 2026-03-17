@@ -45,7 +45,7 @@ contract IdentityRegistry is ERC721URIStorage, Ownable {
             isActive: true
         });
 
-        ownerAgents[msg.sender].push(agentId);
+        // ownerAgents is updated by the _update() hook called from _mint above.
 
         emit AgentRegistered(agentId, msg.sender, _name, _agentType);
     }
@@ -72,5 +72,35 @@ contract IdentityRegistry is ERC721URIStorage, Ownable {
 
     function totalAgents() external view returns (uint256) {
         return _nextAgentId - 1;
+    }
+
+    /// @dev Override ERC721 transfer hook to keep ownerAgents in sync.
+    ///      Handles mint (from == address(0)), burn (to == address(0)), and transfers.
+    function _update(address to, uint256 tokenId, address auth)
+        internal
+        override
+        returns (address)
+    {
+        address from = super._update(to, tokenId, auth);
+
+        // Remove from old owner's array (skip for mint)
+        if (from != address(0)) {
+            uint256[] storage fromList = ownerAgents[from];
+            uint256 len = fromList.length;
+            for (uint256 i = 0; i < len; i++) {
+                if (fromList[i] == tokenId) {
+                    fromList[i] = fromList[len - 1];
+                    fromList.pop();
+                    break;
+                }
+            }
+        }
+
+        // Add to new owner's array (skip for burn)
+        if (to != address(0)) {
+            ownerAgents[to].push(tokenId);
+        }
+
+        return from;
     }
 }

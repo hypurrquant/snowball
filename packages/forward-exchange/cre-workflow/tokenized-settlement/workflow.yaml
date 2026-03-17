@@ -1,0 +1,13 @@
+# ==========================================================================
+# CRE WORKFLOW SETTINGS FILE
+# ==========================================================================
+# Forward Exchange - Tokenized AMM Settlement Workflow
+
+# ==========================================================================
+staging-settings:
+  user-workflow:
+    workflow-name: "tokenized-amm-settlement-staging"
+  workflow-artifacts:
+    workflow-path: "."
+    config-path: "./config.staging.json"
+    secrets-path: "../secrets.yaml"

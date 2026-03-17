@@ -23,6 +23,7 @@ interface ISnowballOptions {
         uint256 totalOverAmount;
         uint256 totalUnderAmount;
         uint256 orderCount;
+        uint256 commissionFee; // fee snapshot at round start (basis points)
     }
 
     event RoundStarted(uint256 indexed roundId, uint256 lockPrice, uint256 lockTimestamp, uint256 duration);

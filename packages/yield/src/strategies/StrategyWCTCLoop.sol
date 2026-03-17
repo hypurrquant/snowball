@@ -126,7 +126,16 @@ contract StrategyWCTCLoop is SnowballStrategyBase, IMorphoFlashLoanCallback {
 
     function balanceOfPool() public view override returns (uint256) {
         (,, uint128 collateral) = lend.position(collateralMarketId, address(this));
-        return uint256(collateral);
+        uint256 currentBorrow = _currentBorrowAssets();
+        // Convert borrow (sbUSD) back to wCTC terms using oracle price (1e36 scale)
+        uint256 oraclePrice = collateral > 0
+            ? IOracle(collateralMarket.oracle).price()
+            : 0;
+        uint256 borrowInWCTC = oraclePrice > 0
+            ? (currentBorrow * 1e36) / oraclePrice
+            : 0;
+        uint256 col = uint256(collateral);
+        return col > borrowInWCTC ? col - borrowInWCTC : 0;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -222,7 +231,27 @@ contract StrategyWCTCLoop is SnowballStrategyBase, IMorphoFlashLoanCallback {
         // Repay all borrows
         (, uint128 borrowShares,) = lend.position(collateralMarketId, address(this));
         if (borrowShares > 0) {
+            uint256 debtAssets = _currentBorrowAssets();
             uint256 sbUSDBalance = sbUSD.balanceOf(address(this));
+
+            // If sbUSD balance is insufficient, swap some wCTC to cover the shortfall
+            if (sbUSDBalance < debtAssets) {
+                uint256 shortfall = debtAssets - sbUSDBalance;
+                // Convert shortfall (sbUSD) to wCTC via oracle price (1e36 scale)
+                uint256 oraclePrice = IOracle(collateralMarket.oracle).price();
+                if (oraclePrice > 0) {
+                    uint256 wctcNeeded = (shortfall * 1e36) / oraclePrice;
+                    // Add 1% buffer for slippage
+                    wctcNeeded = wctcNeeded * 10100 / 10000;
+                    uint256 wctcBal = wantToken.balanceOf(address(this));
+                    uint256 swapAmount = wctcNeeded < wctcBal ? wctcNeeded : wctcBal;
+                    if (swapAmount > 0) {
+                        _swap(address(wantToken), address(sbUSD), swapAmount);
+                    }
+                }
+                sbUSDBalance = sbUSD.balanceOf(address(this));
+            }
+
             sbUSD.forceApprove(address(lend), sbUSDBalance);
             lend.repay(collateralMarket, 0, borrowShares, address(this), "");
         }

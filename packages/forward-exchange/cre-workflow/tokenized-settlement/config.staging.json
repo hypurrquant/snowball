@@ -1,0 +1,18 @@
+{
+  "schedule": "*/5 * * * *",
+  "fxApiUrl": "https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY,EUR",
+  "evms": [
+    {
+      "factoryAddress": "0x68E9e7F096Ee8c0E631Ff77C11e584CA8319D974",
+      "consumerAddress": "0xE911Af007567F376c30A71a77C3b1a68A15EfD8B",
+      "chainSelectorName": "ethereum-testnet-sepolia-base-1",
+      "gasLimit": "500000"
+    },
+    {
+      "factoryAddress": "0xD7966b295a130C33377dE1e8a9D33487098847eD",
+      "consumerAddress": "0xd214359a5B680FAaf43161340cD6FE3872f5C042",
+      "chainSelectorName": "hyperliquid-testnet",
+      "gasLimit": "500000"
+    }
+  ]
+}

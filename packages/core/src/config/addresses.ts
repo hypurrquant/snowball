@@ -182,4 +182,30 @@ export const ERC8004 = {
   defaultAgentId: 1n,
 } as const;
 
+// ─── Aave V3 (미배포 — placeholder) ───
+export const AAVE = {
+  pool: "0x0000000000000000000000000000000000000000" as Address,
+  oracle: "0x0000000000000000000000000000000000000000" as Address,
+  dataProvider: "0x0000000000000000000000000000000000000000" as Address,
+  markets: [
+    { symbol: "wCTC", underlying: TOKENS.wCTC, decimals: 18 },
+    { symbol: "lstCTC", underlying: TOKENS.lstCTC, decimals: 18 },
+    { symbol: "sbUSD", underlying: TOKENS.sbUSD, decimals: 18 },
+    { symbol: "USDC", underlying: TOKENS.USDC, decimals: 18 },
+  ],
+} as const;
+
+// ─── ForwardX (온체인 선물환) ───
+export const FORWARD = {
+  exchange: "0x0000000000000000000000000000000000000000" as Address,
+  vault: "0x0000000000000000000000000000000000000000" as Address,
+  marketplace: "0x0000000000000000000000000000000000000000" as Address,
+  positionNFT: "0x0000000000000000000000000000000000000000" as Address,
+  collateralToken: TOKENS.USDC,
+  markets: [
+    { id: "0x5553442f4b525700000000000000000000000000000000000000000000000000" as `0x${string}`, name: "USD/KRW", pair: "USD/KRW" },
+    { id: "0x5553442f4a505900000000000000000000000000000000000000000000000000" as `0x${string}`, name: "USD/JPY", pair: "USD/JPY" },
+  ],
+} as const;
+
 // Backend API constants are in apps/web (process.env is Next.js-specific)

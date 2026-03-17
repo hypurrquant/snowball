@@ -1,4 +1,10 @@
 {
+  "../aave/lib/forge-std": {
+    "rev": "3e6d5cd6dd0dbe61952e6075ea6d55ed31d26381"
+  },
+  "../aave/lib/openzeppelin-contracts": {
+    "rev": "45f032d1bcf1a88b7bc90154d7eef76c87bf9d45"
+  },
   "../liquity/lib/Solady": {
     "rev": "362b2efd20f38aea7252b391e5e016633ff79641"
   },

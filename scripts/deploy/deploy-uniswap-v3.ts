@@ -53,7 +53,14 @@ const TOKENS = {
   USDC: "0x3e31b08651644b9e6535f5bf0c7a9e7e6ad92e02" as Address,
 };
 
-// Use wCTC as WETH9 equivalent
+// Use wCTC as WETH9 equivalent.
+// PRODUCTION NOTE: TOKENS.wCTC must be the address of a deployed WCTC contract
+// (packages/shared/contracts/WCTC.sol) that implements the full IWETH9 interface
+// (deposit() / withdraw()).  The current MockWCTC does NOT implement those
+// functions and will cause SwapRouter.unwrapWETH9() and PeripheryPayments to
+// fail at runtime.  Deploy WCTC via WCTCDeployer (packages/shared/contracts/
+// WCTCDeployer.sol) and update TOKENS.wCTC before running this script against
+// a production or long-lived testnet environment.
 const WETH9 = TOKENS.wCTC;
 
 // ─── Artifact loader ───

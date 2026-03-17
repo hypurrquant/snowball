@@ -73,10 +73,13 @@ interface IERC4626 {
 contract SnowballRouter is ISnowballRouter, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
-    /// @notice Whitelisted protocol addresses.
+    /// @notice Whitelisted protocol addresses (BorrowerOps, Morpho, SwapRouter, Vault).
     mapping(address => bool) public whitelisted;
+    /// @notice Whitelisted debt tokens that may be borrowed via _borrow().
+    mapping(address => bool) public whitelistedTokens;
 
     event Whitelisted(address indexed addr, bool status);
+    event TokenWhitelisted(address indexed token, bool status);
     event Borrowed(address indexed user, address collToken, uint256 collAmount, uint256 debtReceived);
     event SuppliedMorpho(address indexed user, address morpho, uint256 amount);
     event DepositedVault(address indexed user, address vault, uint256 amount, uint256 shares);
@@ -90,6 +93,12 @@ contract SnowballRouter is ISnowballRouter, ReentrancyGuard, Ownable {
         emit Whitelisted(addr, status);
     }
 
+    /// @notice Add/remove a token from the debt token whitelist.
+    function setTokenWhitelist(address token, bool status) external onlyOwner {
+        whitelistedTokens[token] = status;
+        emit TokenWhitelisted(token, status);
+    }
+
     modifier onlyWhitelisted(address addr) {
         require(whitelisted[addr], "Router: not whitelisted");
         _;
@@ -101,9 +110,11 @@ contract SnowballRouter is ISnowballRouter, ReentrancyGuard, Ownable {
         MorphoSupplyParams calldata mp
     ) external nonReentrant {
         address user = msg.sender;
+        uint256 balBeforeColl = IERC20(bp.collToken).balanceOf(address(this));
+        uint256 balBeforeDebt = IERC20(bp.debtToken).balanceOf(address(this));
         uint256 debtReceived = _borrow(bp, user);
         _supplyMorpho(mp, debtReceived, user);
-        _returnDust(bp, mp.loanToken, user);
+        _returnDust(bp, mp.loanToken, user, balBeforeColl, balBeforeDebt);
     }
 
     /// @notice Borrow sbUSD from Liquity, then deposit into ERC-4626 vault.
@@ -112,10 +123,12 @@ contract SnowballRouter is ISnowballRouter, ReentrancyGuard, Ownable {
         address vault
     ) external nonReentrant onlyWhitelisted(vault) {
         address user = msg.sender;
+        uint256 balBeforeColl = IERC20(bp.collToken).balanceOf(address(this));
+        uint256 balBeforeDebt = IERC20(bp.debtToken).balanceOf(address(this));
         uint256 debtReceived = _borrow(bp, user);
         _depositVault(vault, debtReceived, user);
         address vaultAsset = IERC4626(vault).asset();
-        _returnDust(bp, vaultAsset, user);
+        _returnDust(bp, vaultAsset, user, balBeforeColl, balBeforeDebt);
     }
 
     /// @notice Borrow sbUSD → swap → supply to Morpho.
@@ -125,11 +138,14 @@ contract SnowballRouter is ISnowballRouter, ReentrancyGuard, Ownable {
         MorphoSupplyParams calldata mp
     ) external nonReentrant {
         address user = msg.sender;
+        uint256 balBeforeColl = IERC20(bp.collToken).balanceOf(address(this));
+        uint256 balBeforeDebt = IERC20(bp.debtToken).balanceOf(address(this));
+        uint256 balBeforeTokenOut = IERC20(sp.tokenOut).balanceOf(address(this));
         uint256 debtReceived = _borrow(bp, user);
         uint256 swapped = _swap(sp, debtReceived);
         _supplyMorpho(mp, swapped, user);
-        _returnDust(bp, mp.loanToken, user);
-        _returnDustToken(sp.tokenOut, user);
+        _returnDust(bp, mp.loanToken, user, balBeforeColl, balBeforeDebt);
+        _returnDustToken(sp.tokenOut, user, balBeforeTokenOut);
     }
 
     /// @notice Generic batch execution of multiple actions.
@@ -171,6 +187,8 @@ contract SnowballRouter is ISnowballRouter, ReentrancyGuard, Ownable {
         onlyWhitelisted(bp.borrowerOps)
         returns (uint256)
     {
+        require(whitelistedTokens[bp.debtToken], "Router: debtToken not whitelisted");
+
         // Pull collateral from user
         IERC20(bp.collToken).safeTransferFrom(user, address(this), bp.collAmount);
         IERC20(bp.collToken).forceApprove(bp.borrowerOps, bp.collAmount);
@@ -271,15 +289,23 @@ contract SnowballRouter is ISnowballRouter, ReentrancyGuard, Ownable {
     }
 
     /// @dev Return any leftover collateral and debt tokens to user.
-    function _returnDust(BorrowParams memory bp, address debtToken, address user) internal {
-        _returnDustToken(bp.collToken, user);
-        _returnDustToken(debtToken, user);
+    ///      balBeforeColl / balBeforeDebt are snapshots taken before the borrow operation.
+    function _returnDust(
+        BorrowParams memory bp,
+        address debtToken,
+        address user,
+        uint256 balBeforeColl,
+        uint256 balBeforeDebt
+    ) internal {
+        _returnDustToken(bp.collToken, user, balBeforeColl);
+        _returnDustToken(debtToken, user, balBeforeDebt);
     }
 
-    function _returnDustToken(address token, address user) internal {
-        uint256 bal = IERC20(token).balanceOf(address(this));
-        if (bal > 0) {
-            IERC20(token).safeTransfer(user, bal);
+    /// @dev Transfer only the tokens received during this transaction (balance delta) back to user.
+    function _returnDustToken(address token, address user, uint256 balBefore) internal {
+        uint256 balAfter = IERC20(token).balanceOf(address(this));
+        if (balAfter > balBefore) {
+            IERC20(token).safeTransfer(user, balAfter - balBefore);
         }
     }
 }

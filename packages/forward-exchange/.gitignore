@@ -1,0 +1,46 @@
+# Compiler files
+cache/
+out/
+
+# Broadcast logs
+broadcast/
+
+# Dotenv file
+.env
+
+# Node
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Tooling
+.playwright-mcp/
+.serena/
+
+# Temp / binary files
+*.png
+*.key
+*.pdf
+*.pptx
+replace_theme*.js
+generate_pitchdeck.py
+
+# Frontend build
+frontend/.next/
+.next/
+
+# CRE build artifacts
+cre-workflow/**/.cre_build_tmp.*
+cre-workflow/**/bun.lock
+
+# Old/deprecated
+cre-workflow-old/
+forwardx/
+docs/
+SSOT.md
+PITCHDECK.md

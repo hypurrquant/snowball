@@ -28,26 +28,29 @@ contract BTCMockOracle is IBTCMockOracle, AccessControl {
     }
 
     /// @inheritdoc IBTCMockOracle
+    /// @dev Returns price in 1e18 scale (same as stored) and a freshness flag.
     function fetchPrice() external view returns (uint256, bool) {
         bool isFresh = (block.timestamp - lastUpdated) <= MAX_PRICE_AGE;
-        return (price, isFresh);
+        return (price, isFresh); // price is in 1e18 scale
     }
 
     /// @inheritdoc IBTCMockOracle
+    /// @dev Returns price in 1e36 scale as required by Morpho Blue (price stored at 1e18, multiplied by 1e18).
     function getPrice() external view returns (uint256) {
         require(
             lastUpdated > 0 && (block.timestamp - lastUpdated) <= MAX_PRICE_AGE,
             "BTCMockOracle: stale price"
         );
-        return price * 1e18; // scale to 1e36
+        return price * 1e18; // 1e18 (stored) * 1e18 = 1e36 scale for Morpho Blue
     }
 
     /// @inheritdoc IBTCMockOracle
+    /// @dev Returns price in 1e18 scale (same as fetchPrice, ignores updateData).
     function verifyAndGetPrice(bytes calldata, uint256) external view returns (uint256) {
         require(
             lastUpdated > 0 && (block.timestamp - lastUpdated) <= MAX_PRICE_AGE,
             "BTCMockOracle: stale price"
         );
-        return price;
+        return price; // price is in 1e18 scale, consistent with fetchPrice()
     }
 }

@@ -27,22 +27,33 @@ contract SnowballOracle is ISnowballOracle, AccessControl {
         _grantRole(OPERATOR_ROLE, admin);
     }
 
+    /// @notice Bootstrap the initial price for an asset (admin only).
+    /// @dev Must be called before any operator can update the price via updatePrice().
+    function bootstrapPrice(address asset, uint256 price_) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(asset != address(0), "SnowballOracle: zero address");
+        require(price_ > 0, "SnowballOracle: zero price");
+        require(_prices[asset] == 0, "SnowballOracle: already bootstrapped");
+
+        _prices[asset] = price_;
+        _lastUpdatedAt[asset] = block.timestamp;
+        emit PriceUpdated(asset, price_, block.timestamp);
+    }
+
     /// @inheritdoc ISnowballOracle
     function updatePrice(address asset, uint256 price_) external onlyRole(OPERATOR_ROLE) {
         require(asset != address(0), "SnowballOracle: zero address");
         require(price_ > 0, "SnowballOracle: zero price");
+        require(_prices[asset] > 0, "SnowballOracle: price not bootstrapped");
 
-        // Deviation check: if a price already exists, enforce bounds
+        // Deviation check: enforce bounds against the existing price
         uint256 oldPrice = _prices[asset];
-        if (oldPrice > 0) {
-            uint256 deviation = oldPrice > price_
-                ? oldPrice - price_
-                : price_ - oldPrice;
-            require(
-                deviation * BPS_DIVISOR / oldPrice <= maxDeviationBps,
-                "SnowballOracle: deviation too large"
-            );
-        }
+        uint256 deviation = oldPrice > price_
+            ? oldPrice - price_
+            : price_ - oldPrice;
+        require(
+            deviation * BPS_DIVISOR / oldPrice <= maxDeviationBps,
+            "SnowballOracle: deviation too large"
+        );
 
         _prices[asset] = price_;
         _lastUpdatedAt[asset] = block.timestamp;
@@ -68,7 +79,7 @@ contract SnowballOracle is ISnowballOracle, AccessControl {
 
     /// @notice Update the maximum allowed price deviation (admin only).
     function setMaxDeviation(uint256 _bps) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_bps > 0 && _bps <= 5000, "SnowballOracle: invalid deviation");
+        require(_bps >= 10 && _bps <= 500, "SnowballOracle: invalid deviation");
         maxDeviationBps = _bps;
         emit MaxDeviationUpdated(_bps);
     }

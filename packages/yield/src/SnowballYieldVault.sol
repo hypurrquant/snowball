@@ -153,7 +153,7 @@ contract SnowballYieldVault is ERC20, Ownable, ReentrancyGuard {
     function upgradeStrat() external onlyOwner {
         require(stratCandidate.implementation != address(0), "!candidate");
         require(
-            stratCandidate.proposedTime + UPGRADE_DELAY < block.timestamp,
+            stratCandidate.proposedTime + UPGRADE_DELAY <= block.timestamp,
             "!delay"
         );
 

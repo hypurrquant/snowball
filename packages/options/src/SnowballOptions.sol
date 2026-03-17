@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ISnowballOptions} from "./interfaces/ISnowballOptions.sol";
 import {IOptionsClearingHouse} from "./interfaces/IOptionsClearingHouse.sol";
 import {IOptionsVault} from "./interfaces/IOptionsVault.sol";
@@ -13,6 +14,7 @@ import {IPriceOracle} from "./interfaces/IPriceOracle.sol";
 contract SnowballOptions is
     Initializable,
     UUPSUpgradeable,
+    ReentrancyGuard,
     ISnowballOptions
 {
     bytes32 public constant RELAYER_ROLE = keccak256("RELAYER_ROLE");
@@ -32,6 +34,8 @@ contract SnowballOptions is
 
     mapping(uint256 => Round) private _rounds;
     mapping(uint256 => mapping(uint256 => FilledOrder)) private _orders;
+    mapping(uint256 => uint256) private _nextUnsettledIndex; // roundId => next index to settle
+    mapping(uint256 => uint256) private _settledCount;       // roundId => number of settled orders
 
     address private _admin;
     mapping(bytes32 => mapping(address => bool)) private _roles;
@@ -48,6 +52,9 @@ contract SnowballOptions is
         address _oracle,
         uint256 _commissionFee
     ) external initializer {
+        require(_clearingHouse != address(0), "Options: zero clearingHouse");
+        require(_vault != address(0), "Options: zero vault");
+        require(_oracle != address(0), "Options: zero oracle");
         _admin = admin;
         _roles[ADMIN_ROLE][admin] = true;
         _roles[OPERATOR_ROLE][admin] = true;
@@ -99,7 +106,7 @@ contract SnowballOptions is
     // ─── Round Management ───
 
     function startRound(uint256 duration) external onlyRole(OPERATOR_ROLE) whenNotPaused {
-        require(duration > 0, "Options: zero duration");
+        require(duration >= 60, "Options: min 60s duration");
 
         // If there's a previous round, it must be settled
         if (currentRoundId > 0) {
@@ -124,7 +131,8 @@ contract SnowballOptions is
             status: RoundStatus.Open,
             totalOverAmount: 0,
             totalUnderAmount: 0,
-            orderCount: 0
+            orderCount: 0,
+            commissionFee: commissionFee
         });
 
         emit RoundStarted(currentRoundId, price, block.timestamp, duration);
@@ -137,7 +145,7 @@ contract SnowballOptions is
         address[] calldata overUsers,
         address[] calldata underUsers,
         uint256[] calldata amounts
-    ) external onlyRole(RELAYER_ROLE) whenNotPaused {
+    ) external onlyRole(RELAYER_ROLE) whenNotPaused nonReentrant {
         require(overUsers.length == underUsers.length && underUsers.length == amounts.length, "Options: length mismatch");
 
         Round storage round = _rounds[roundId];
@@ -159,6 +167,8 @@ contract SnowballOptions is
                 settled: false
             });
 
+            // totalOverAmount / totalUnderAmount are accumulated for off-chain indexing only;
+            // they are intentionally not read by any on-chain settlement logic.
             round.totalOverAmount += amount;
             round.totalUnderAmount += amount;
             round.orderCount++;
@@ -185,19 +195,21 @@ contract SnowballOptions is
 
     // ─── Settlement ───
 
-    function settleOrders(uint256 roundId, uint256 batchSize) external onlyRole(OPERATOR_ROLE) {
+    function settleOrders(uint256 roundId, uint256 batchSize) external onlyRole(OPERATOR_ROLE) nonReentrant {
         Round storage round = _rounds[roundId];
         require(round.status == RoundStatus.Locked, "Options: round not locked");
 
+        uint256 startIndex = _nextUnsettledIndex[roundId];
         uint256 settled = 0;
-        for (uint256 i = 0; i < round.orderCount && settled < batchSize; i++) {
+        uint256 i = startIndex;
+
+        for (; i < round.orderCount && settled < batchSize; i++) {
             FilledOrder storage order = _orders[roundId][i];
-            if (order.settled) continue;
 
             order.settled = true;
             settled++;
 
-            uint256 fee = (order.amount * commissionFee) / FEE_DENOMINATOR;
+            uint256 fee = (order.amount * round.commissionFee) / FEE_DENOMINATOR;
             uint256 payout = order.amount * 2 - fee;
 
             address winner;
@@ -229,15 +241,10 @@ contract SnowballOptions is
             emit OrderSettled(roundId, i, winner, payout);
         }
 
-        // Check if all orders settled
-        bool allSettled = true;
-        for (uint256 i = 0; i < round.orderCount; i++) {
-            if (!_orders[roundId][i].settled) {
-                allSettled = false;
-                break;
-            }
-        }
-        if (allSettled) {
+        _nextUnsettledIndex[roundId] = i;
+        _settledCount[roundId] += settled;
+
+        if (_settledCount[roundId] == round.orderCount) {
             round.status = RoundStatus.Settled;
         }
     }
@@ -260,6 +267,7 @@ contract SnowballOptions is
     }
 
     function setOracle(address _oracle) external onlyAdmin {
+        require(_oracle != address(0), "Options: zero oracle");
         oracle = IPriceOracle(_oracle);
     }
 

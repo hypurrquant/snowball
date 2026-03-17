@@ -1,0 +1,17 @@
+{
+  "name": "forward_exchange",
+  "version": "1.0.0",
+  "description": "ForwardX - On-Chain FX Forward Exchange powered by Chainlink CRE",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

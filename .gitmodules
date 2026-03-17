@@ -25,3 +25,22 @@
 [submodule "packages/morpho/lib/openzeppelin-contracts"]
 	path = packages/morpho/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/aave/lib/forge-std"]
+	path = packages/aave/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std.git
+[submodule "packages/aave/lib/openzeppelin-contracts"]
+	path = packages/aave/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts.git
+[submodule "packages/liquity/lib/forge-std"]
+	path = packages/liquity/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std.git
+[submodule "packages/usc-bridge/lib/forge-std"]
+	path = packages/usc-bridge/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std.git
+[submodule "packages/dex/lib/forge-std"]
+	path = packages/dex/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std.git
+[submodule "packages/dex/lib/openzeppelin-contracts"]
+	path = packages/dex/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts.git
+	branch = release-v3.4

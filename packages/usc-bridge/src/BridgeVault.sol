@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 interface IERC20 {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
+    function transfer(address to, uint256 amount) external returns (bool);
 }
 
 /**
@@ -12,15 +13,40 @@ interface IERC20 {
 contract BridgeVault {
     IERC20 public immutable usdc;
 
+    /// @notice Contract owner, set at deployment
+    address public owner;
+
     event Deposited(address indexed user, uint256 amount, uint64 destinationChainKey);
+    event Withdrawn(address indexed to, uint256 amount);
+    event TokenRescued(address indexed token, address indexed to, uint256 amount);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "BridgeVault: not owner");
+        _;
+    }
 
     constructor(address _usdc) {
         usdc = IERC20(_usdc);
+        owner = msg.sender;
     }
 
     function deposit(uint256 amount, uint64 destinationChainKey) external {
         require(amount > 0, "BridgeVault: zero amount");
         usdc.transferFrom(msg.sender, address(this), amount);
         emit Deposited(msg.sender, amount, destinationChainKey);
+    }
+
+    /// @notice Withdraw USDC from the vault to `to`. Owner only.
+    function withdraw(address to, uint256 amount) external onlyOwner {
+        require(to != address(0), "BridgeVault: zero address");
+        usdc.transfer(to, amount);
+        emit Withdrawn(to, amount);
+    }
+
+    /// @notice Rescue arbitrary ERC-20 tokens accidentally sent to this contract. Owner only.
+    function rescueToken(address token, address to, uint256 amount) external onlyOwner {
+        require(to != address(0), "BridgeVault: zero address");
+        IERC20(token).transfer(to, amount);
+        emit TokenRescued(token, to, amount);
     }
 }

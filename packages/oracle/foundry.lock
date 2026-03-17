@@ -1,0 +1,32 @@
+{
+  "../aave/lib/forge-std": {
+    "rev": "3e6d5cd6dd0dbe61952e6075ea6d55ed31d26381"
+  },
+  "../aave/lib/openzeppelin-contracts": {
+    "rev": "45f032d1bcf1a88b7bc90154d7eef76c87bf9d45"
+  },
+  "../liquity/lib/Solady": {
+    "rev": "90db92ce173856605d24a554969f2c67cadbc7e9"
+  },
+  "../liquity/lib/openzeppelin-contracts": {
+    "rev": "45f032d1bcf1a88b7bc90154d7eef76c87bf9d45"
+  },
+  "../morpho/lib/forge-std": {
+    "rev": "0844d7e1fc5e60d77b68e469bff60265f236c398"
+  },
+  "../morpho/lib/openzeppelin-contracts": {
+    "rev": "dc44c9f1a4c3b10af99492eed84f83ed244203f6"
+  },
+  "../options/lib/forge-std": {
+    "rev": "59e4cc349b75f64520fbef515ef44ca03a0a7ef6"
+  },
+  "../options/lib/openzeppelin-contracts": {
+    "rev": "c1edd06131cf989cf3e0c72c089cbead127384e6"
+  },
+  "lib/forge-std": {
+    "rev": "59e4cc349b75f64520fbef515ef44ca03a0a7ef6"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "c1edd06131cf989cf3e0c72c089cbead127384e6"
+  }
+}

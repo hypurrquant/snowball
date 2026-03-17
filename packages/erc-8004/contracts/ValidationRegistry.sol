@@ -3,6 +3,10 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+interface IIdentityRegistry {
+    function ownerOf(uint256 tokenId) external view returns (address);
+}
+
 /// @title ValidationRegistry — ERC-8004 Agent Validation & Certification
 /// @dev Manages agent validation status, certifications, and compliance
 contract ValidationRegistry is Ownable {
@@ -60,6 +64,13 @@ contract ValidationRegistry is Ownable {
         uint256 _validityPeriod,
         string calldata _certificationURI
     ) external onlyValidator {
+        // Verify the agent exists in the IdentityRegistry (ownerOf reverts for nonexistent tokens)
+        try IIdentityRegistry(identityRegistry).ownerOf(_agentId) returns (address) {
+            // Agent exists, proceed
+        } catch {
+            revert("ValidationRegistry: agent does not exist");
+        }
+
         validations[_agentId] = Validation({
             status: ValidationStatus.Validated,
             validator: msg.sender,
