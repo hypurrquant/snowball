@@ -1,0 +1,15 @@
+{
+  "name": "@snowball/aave-credit-import",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "node scripts/aave-credit-e2e.mjs",
+    "build": "forge build",
+    "demo": "node frontend/serve.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "ethers": "^6.15.0"
+  }
+}

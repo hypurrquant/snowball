@@ -182,30 +182,47 @@ export const ERC8004 = {
   defaultAgentId: 1n,
 } as const;
 
-// ─── Aave V3 (미배포 — placeholder) ───
+// ─── Aave V3 ───
 export const AAVE = {
-  pool: "0x0000000000000000000000000000000000000000" as Address,
-  oracle: "0x0000000000000000000000000000000000000000" as Address,
-  dataProvider: "0x0000000000000000000000000000000000000000" as Address,
+  pool: "0xff74e97255d2ecd04572f68ee8f38da10f984638" as Address,
+  poolAddressesProvider: "0x72ef92fc52a722305aca5485eb144392d4676220" as Address,
+  poolConfigurator: "0xa59e069d323ad2bf716f10b28e4fb712c3ce8b2e" as Address,
+  aclManager: "0x75a40a2d75497927ccc4fe856f1eb4405bf0b990" as Address,
+  oracle: "0x3889372de9e6bb5b58c11812859d1a7c688e9492" as Address,
+  dataProvider: "0xb5e57b1208a4b35f3b60a95d0dd70dc058a87b2c" as Address,
   markets: [
-    { symbol: "wCTC", underlying: TOKENS.wCTC, decimals: 18 },
-    { symbol: "lstCTC", underlying: TOKENS.lstCTC, decimals: 18 },
-    { symbol: "sbUSD", underlying: TOKENS.sbUSD, decimals: 18 },
-    { symbol: "USDC", underlying: TOKENS.USDC, decimals: 18 },
+    { symbol: "wCTC", underlying: TOKENS.wCTC, decimals: 18, ltv: 65, liquidationThreshold: 75, reserveFactor: 10 },
+    { symbol: "lstCTC", underlying: TOKENS.lstCTC, decimals: 18, ltv: 70, liquidationThreshold: 80, reserveFactor: 10 },
+    { symbol: "sbUSD", underlying: TOKENS.sbUSD, decimals: 18, ltv: 80, liquidationThreshold: 85, reserveFactor: 10 },
+    { symbol: "USDC", underlying: TOKENS.USDC, decimals: 18, ltv: 80, liquidationThreshold: 85, reserveFactor: 10 },
   ],
 } as const;
 
 // ─── ForwardX (온체인 선물환) ───
 export const FORWARD = {
-  exchange: "0x0000000000000000000000000000000000000000" as Address,
-  vault: "0x0000000000000000000000000000000000000000" as Address,
-  marketplace: "0x0000000000000000000000000000000000000000" as Address,
-  positionNFT: "0x0000000000000000000000000000000000000000" as Address,
+  exchange: "0x021262d1dd684c4163bb3279635bc04ccbdb8721" as Address,
+  vault: "0x8b40cf14d2af490482709fe4c54778c0b36724d5" as Address,
+  marketplace: "0x17b6c56f9ced65c9ce273bd876407f4db67b50f8" as Address,
+  settlementEngine: "0x2ec339e1f0fbd2aeace9d899e3e04aa666201e89" as Address,
+  consumer: "0x112b58c47ff1445422356238ddca5a8a6eb7bd66" as Address,
+  oracleGuard: "0x202e162a0489d4b750ca3db293b788c4b533be8d" as Address,
+  viewHelper: "0x604985b488cfeacf76106a329fa09e13a9d26b59" as Address,
+  positionNFT: "0x021262d1dd684c4163bb3279635bc04ccbdb8721" as Address, // Forward is the ERC721
   collateralToken: TOKENS.USDC,
   markets: [
-    { id: "0x5553442f4b525700000000000000000000000000000000000000000000000000" as `0x${string}`, name: "USD/KRW", pair: "USD/KRW" },
-    { id: "0x5553442f4a505900000000000000000000000000000000000000000000000000" as `0x${string}`, name: "USD/JPY", pair: "USD/JPY" },
+    { id: "0x45c5ae8ce2fdd70d24d0133747983d5ed2e0bc1e40042884ff8e1c4ac7aea89e" as `0x${string}`, name: "USD/KRW", pair: "USD/KRW" },
+    { id: "0x35b8bafff3570683af968b8d36b91b1a19465141d9712425e9f76c68ff8cb152" as `0x${string}`, name: "USD/JPY", pair: "USD/JPY" },
   ],
 } as const;
+
+// ─── SnowballStaker (LP Incentives) ───
+export const STAKER = {
+  snowballStaker: "0x1bea0762c858e56f9aace66280bd713ad17da287" as Address,
+  maxIncentiveStartLeadTime: 2592000, // 30 days
+  maxIncentiveDuration: 63072000, // ~2 years
+} as const;
+
+// ─── Multicall3 ───
+export const MULTICALL3 = "0x85eae284523c979424e431cc2e13e4be3d040527" as Address;
 
 // Backend API constants are in apps/web (process.env is Next.js-specific)

@@ -1,0 +1,10 @@
+{
+  "multicall3": "0x85eae284523c979424e431cc2e13e4be3d040527",
+  "snowballStaker": "0x1bea0762c858e56f9aace66280bd713ad17da287",
+  "config": {
+    "factory": "0x09616b503326dc860b3c3465525b39fe4fcdd049",
+    "nonfungiblePositionManager": "0xa28bfaa2e84098de8d654f690e51c265e4ae01c9",
+    "maxIncentiveStartLeadTime": "2592000",
+    "maxIncentiveDuration": "63072000"
+  }
+}

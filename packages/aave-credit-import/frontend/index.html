@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aave Credit Import — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: { 400: "#60a5fa", 500: "#3b82f6", 600: "#2563eb" },
+            surface: { 800: "#1e1e2e", 900: "#11111b" },
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+  <style>
+    body { background: #11111b; font-family: "Inter", system-ui, sans-serif; }
+    .card { background: #1e1e2e; border: 1px solid #313244; border-radius: 12px; }
+    .step-card { transition: all 0.4s ease; }
+    .step-card.active { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59,130,246,0.25); }
+    .step-card.done { border-color: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,0.2); }
+    .arrow { color: #585b70; transition: color 0.3s; }
+    .arrow.done { color: #22c55e; }
+    .gauge-ring { transition: stroke-dashoffset 1s ease; }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .log-entry { animation: fadeInUp 0.3s ease; }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  </style>
+</head>
+<body class="text-gray-200 min-h-screen">
+
+  <!-- Header -->
+  <header class="border-b border-gray-800 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm">S</div>
+        <h1 class="text-lg font-semibold text-white">Aave Credit Import</h1>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">PoC Dashboard</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm">
+        <span id="networkBadge" class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+          <span class="text-gray-400">USC Testnet</span>
+        </span>
+        <span id="connectionStatus" class="text-gray-500">Checking...</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-8 space-y-8">
+
+    <!-- Pipeline Visualization -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-white">Cross-Chain Credit Import Pipeline</h2>
+        <button id="btnRunDemo" onclick="runDemo()"
+          class="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition">
+          Run Demo
+        </button>
+      </div>
+      <div class="card p-6 overflow-x-auto">
+        <div class="flex items-center gap-2 min-w-[900px]" id="pipeline">
+          <!-- Steps rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+      <!-- Contract Info -->
+      <div class="card p-5 space-y-4">
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Contract Info</h3>
+        <div class="space-y-3 text-sm">
+          <div>
+            <span class="text-gray-500">Importer</span>
+            <div id="importerAddr" class="text-white font-mono text-xs truncate">Not deployed</div>
+          </div>
+          <div>
+            <span class="text-gray-500">Reputation Registry</span>
+            <div id="registryAddr" class="text-white font-mono text-xs truncate">Not deployed</div>
+          </div>
+          <div class="flex gap-6">
+            <div>
+              <span class="text-gray-500">Owner</span>
+              <div id="ownerAddr" class="text-white font-mono text-xs">—</div>
+            </div>
+            <div>
+              <span class="text-gray-500">Operator</span>
+              <div id="operatorAddr" class="text-white font-mono text-xs">—</div>
+            </div>
+          </div>
+          <div>
+            <span class="text-gray-500">Total Records</span>
+            <p id="totalRecords" class="text-2xl font-bold text-white">0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reputation Score -->
+      <div class="card p-5 flex flex-col items-center justify-center space-y-3">
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">ERC-8004 Reputation</h3>
+        <div class="relative w-32 h-32">
+          <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#313244" stroke-width="8" />
+            <circle id="gaugeRing" cx="50" cy="50" r="42" fill="none" stroke="#3b82f6"
+              stroke-width="8" stroke-linecap="round" class="gauge-ring"
+              stroke-dasharray="263.9" stroke-dashoffset="263.9" />
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span id="scoreValue" class="text-2xl font-bold text-white">—</span>
+            <span class="text-xs text-gray-500">/ 5.00</span>
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <span id="scoreTag" class="text-xs px-2 py-0.5 rounded-full bg-blue-900/50 text-blue-400">aave-credit</span>
+        </div>
+        <div class="text-sm text-gray-400">
+          Interactions: <span id="interactionCount" class="text-white font-medium">0</span>
+        </div>
+      </div>
+
+      <!-- Score Mapping -->
+      <div class="card p-5 space-y-4">
+        <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Score Mapping</h3>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-gray-500 text-left">
+              <th class="pb-2">Event Type</th>
+              <th class="pb-2">ID</th>
+              <th class="pb-2 text-right">Score</th>
+            </tr>
+          </thead>
+          <tbody class="text-gray-300">
+            <tr class="border-t border-gray-800">
+              <td class="py-2 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span> Repay
+              </td>
+              <td class="py-2 font-mono text-xs">0</td>
+              <td class="py-2 text-right font-mono text-green-400">4.00</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="py-2 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span> Supply
+              </td>
+              <td class="py-2 font-mono text-xs">1</td>
+              <td class="py-2 text-right font-mono text-blue-400">3.50</td>
+            </tr>
+            <tr class="border-t border-gray-800">
+              <td class="py-2 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-500"></span> Liquidation
+              </td>
+              <td class="py-2 font-mono text-xs">2</td>
+              <td class="py-2 text-right font-mono text-red-400">1.50</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-xs text-gray-600 mt-2">Scale: 1e2 (400 = 4.00/5.00)</p>
+      </div>
+    </section>
+
+    <!-- Credit Records Table -->
+    <section>
+      <h2 class="text-base font-semibold text-white mb-4">Credit Records</h2>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-800/50">
+              <tr class="text-gray-400 text-left text-xs uppercase tracking-wider">
+                <th class="px-4 py-3">#</th>
+                <th class="px-4 py-3">User</th>
+                <th class="px-4 py-3">Event Type</th>
+                <th class="px-4 py-3 text-right">Amount</th>
+                <th class="px-4 py-3 text-right">Score</th>
+                <th class="px-4 py-3">Source Block</th>
+                <th class="px-4 py-3">Time</th>
+              </tr>
+            </thead>
+            <tbody id="recordsBody" class="divide-y divide-gray-800">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div id="noRecords" class="text-center py-8 text-gray-500 text-sm">Loading...</div>
+      </div>
+    </section>
+
+    <!-- Demo Simulation Log -->
+    <section>
+      <h2 class="text-base font-semibold text-white mb-4">Demo Simulation Log</h2>
+      <div class="card p-5">
+        <div id="demoLog" class="space-y-2 font-mono text-xs max-h-64 overflow-y-auto">
+          <p class="text-gray-500">Click "Run Demo" to simulate the cross-chain credit import pipeline.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-800 mt-12 py-6 text-center text-xs text-gray-600">
+    Snowball &middot; Aave Credit Import PoC &middot; ERC-8004
+  </footer>
+
+<script>
+// ─── Config ──────────────────────────────────────────
+const RPC_URL = "https://rpc.usc-testnet2.creditcoin.network";
+const USC_EXPLORER = "https://explorer.usc-testnet2.creditcoin.network";
+const SEPOLIA_EXPLORER = "https://sepolia.etherscan.io";
+
+const params = new URLSearchParams(window.location.search);
+const IMPORTER_ADDR = params.get("importer") || "";
+const REGISTRY_ADDR = params.get("registry") || "";
+
+const importerAbi = [
+  "function totalRecords() view returns (uint256)",
+  "function getRecord(uint256 index) view returns (tuple(address user, uint256 agentId, uint8 eventType, uint256 amount, int128 score, uint64 sourceBlockHeight, bytes32 txKey, uint256 timestamp))",
+  "function getUserRecords(address user) view returns (uint256[])",
+  "function owner() view returns (address)",
+  "function operator() view returns (address)",
+  "function reputationRegistry() view returns (address)",
+];
+
+const reputationRegistryAbi = [
+  "function getReputation(uint256 _agentId, string _tag) view returns (tuple(uint64 totalInteractions, uint64 successfulInteractions, int128 reputationScore, uint8 decimals))",
+];
+
+const EVENT_TYPES = ["Repay", "Supply", "Liquidation"];
+const EVENT_COLORS = ["text-green-400", "text-blue-400", "text-red-400"];
+const EVENT_BG = ["bg-green-500", "bg-blue-500", "bg-red-500"];
+
+// ─── Pipeline Steps ──────────────────────────────────
+const STEPS = [
+  { icon: "&#9670;",  title: "Ethereum",    desc: "Sepolia Aave V3 event" },
+  { icon: "&#9878;",  title: "Attestation", desc: "Block attestation via USC" },
+  { icon: "&#9881;",  title: "Proof",       desc: "Generate Merkle + Continuity" },
+  { icon: "&#10003;", title: "Verify",      desc: "NativeQueryVerifier precompile" },
+  { icon: "&#8615;",  title: "Import",      desc: "AaveCreditImporter.importCredit" },
+  { icon: "&#9733;",  title: "ERC-8004",    desc: "Reputation score submitted" },
+];
+
+function renderPipeline() {
+  const el = document.getElementById("pipeline");
+  el.innerHTML = STEPS.map((s, i) => {
+    const arrow = i < STEPS.length - 1
+      ? `<div class="arrow flex-shrink-0 text-xl" id="arrow-${i}">&#10132;</div>`
+      : "";
+    return `
+      <div id="step-${i}" class="step-card card px-4 py-3 flex-shrink-0 w-[140px] text-center space-y-1 border border-gray-700">
+        <div class="text-2xl" id="stepIcon-${i}">${s.icon}</div>
+        <div class="text-xs font-semibold text-white">${s.title}</div>
+        <div class="text-[10px] text-gray-500 leading-tight">${s.desc}</div>
+      </div>
+      ${arrow}`;
+  }).join("");
+}
+
+// ─── Demo Animation ──────────────────────────────────
+let demoRunning = false;
+
+async function runDemo() {
+  if (demoRunning) return;
+  demoRunning = true;
+  const btn = document.getElementById("btnRunDemo");
+  btn.textContent = "Running...";
+  btn.disabled = true;
+
+  // Reset pipeline
+  STEPS.forEach((_, i) => {
+    document.getElementById(`step-${i}`).className = "step-card card px-4 py-3 flex-shrink-0 w-[140px] text-center space-y-1 border border-gray-700";
+    document.getElementById(`stepIcon-${i}`).innerHTML = STEPS[i].icon;
+    const arrow = document.getElementById(`arrow-${i}`);
+    if (arrow) arrow.className = "arrow flex-shrink-0 text-xl";
+  });
+
+  const log = document.getElementById("demoLog");
+  log.innerHTML = "";
+
+  const messages = [
+    "Detected Aave V3 Repay event on Sepolia block #7,234,567",
+    "Block attested by USC validator set — attestation confirmed",
+    "Merkle proof + continuity proof generated via Proof API",
+    "NativeQueryVerifier (0x...0FD2) verified proof on-chain",
+    "AaveCreditImporter.importCredit() executed — record stored",
+    "ERC-8004 ReputationRegistry.submitReview() — score 4.00 submitted",
+  ];
+
+  for (let i = 0; i < STEPS.length; i++) {
+    const step = document.getElementById(`step-${i}`);
+    step.classList.add("active");
+    step.classList.add("pulse");
+    await sleep(800);
+    step.classList.remove("pulse");
+    step.classList.remove("active");
+    step.classList.add("done");
+    document.getElementById(`stepIcon-${i}`).innerHTML = '<span class="text-green-400">&#10003;</span>';
+
+    const arrow = document.getElementById(`arrow-${i}`);
+    if (arrow) arrow.classList.add("done");
+
+    const entry = document.createElement("div");
+    entry.className = "log-entry flex items-start gap-2";
+    entry.innerHTML = `<span class="text-green-400 flex-shrink-0">&#10003;</span>
+      <span class="text-gray-400">[Step ${i + 1}/${STEPS.length}]</span>
+      <span class="text-gray-200">${messages[i]}</span>`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+
+    await sleep(600);
+  }
+
+  // Add demo record to table
+  addDemoRecord();
+
+  const done = document.createElement("div");
+  done.className = "log-entry mt-2 text-green-400 font-semibold";
+  done.textContent = "Pipeline complete — credit record imported and reputation updated.";
+  log.appendChild(done);
+
+  btn.textContent = "Run Demo";
+  btn.disabled = false;
+  demoRunning = false;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ─── Demo Data ───────────────────────────────────────
+const DEMO_RECORDS = [
+  { user: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", eventType: 0, amount: "1500000000", score: 400, sourceBlockHeight: 7234567, timestamp: Math.floor(Date.now()/1000) - 3600 },
+  { user: "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", eventType: 1, amount: "5000000000", score: 350, sourceBlockHeight: 7234200, timestamp: Math.floor(Date.now()/1000) - 7200 },
+  { user: "0x1Db3439a222C519ab44bb1144fC28167b4Fa6EE6", eventType: 0, amount: "750000000",  score: 400, sourceBlockHeight: 7233890, timestamp: Math.floor(Date.now()/1000) - 10800 },
+];
+
+let demoIndex = 0;
+
+function addDemoRecord() {
+  const rec = {
+    user: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+    eventType: 0,
+    amount: (Math.floor(Math.random() * 5000) + 500) + "000000",
+    score: 400,
+    sourceBlockHeight: 7234567 + Math.floor(Math.random() * 100),
+    timestamp: Math.floor(Date.now() / 1000),
+  };
+  allRecords.unshift(rec);
+  renderRecords(allRecords);
+  document.getElementById("totalRecords").textContent = allRecords.length;
+}
+
+// ─── On-chain Data Loading ───────────────────────────
+let provider = null;
+let importerContract = null;
+let registryContract = null;
+let allRecords = [];
+
+async function initProvider() {
+  try {
+    provider = new ethers.JsonRpcProvider(RPC_URL);
+    const network = await provider.getNetwork();
+    document.getElementById("connectionStatus").textContent = `Chain ${network.chainId}`;
+    document.getElementById("networkBadge").querySelector("span").className = "w-2 h-2 rounded-full bg-green-500";
+    return true;
+  } catch (e) {
+    document.getElementById("connectionStatus").textContent = "RPC offline";
+    document.getElementById("networkBadge").querySelector("span").className = "w-2 h-2 rounded-full bg-red-500";
+    return false;
+  }
+}
+
+async function loadContractData() {
+  if (!IMPORTER_ADDR) {
+    document.getElementById("importerAddr").textContent = "Not deployed (pass ?importer=0x...)";
+    document.getElementById("registryAddr").textContent = "Not deployed (pass ?registry=0x...)";
+    showDemoData();
+    return;
+  }
+
+  document.getElementById("importerAddr").innerHTML = uscAddrLink(IMPORTER_ADDR, IMPORTER_ADDR);
+  importerContract = new ethers.Contract(IMPORTER_ADDR, importerAbi, provider);
+
+  try {
+    const [owner, operator, total] = await Promise.all([
+      importerContract.owner(),
+      importerContract.operator(),
+      importerContract.totalRecords(),
+    ]);
+
+    document.getElementById("ownerAddr").innerHTML = uscAddrLink(owner);
+    document.getElementById("operatorAddr").innerHTML = uscAddrLink(operator);
+    document.getElementById("totalRecords").textContent = total.toString();
+
+    // Load records
+    const count = Number(total);
+    const records = [];
+    for (let i = 0; i < count; i++) {
+      const r = await importerContract.getRecord(i);
+      records.push({
+        user: r.user,
+        eventType: Number(r.eventType),
+        amount: r.amount.toString(),
+        score: Number(r.score),
+        sourceBlockHeight: Number(r.sourceBlockHeight),
+        timestamp: Number(r.timestamp),
+      });
+    }
+    allRecords = records;
+    renderRecords(records);
+
+    // Load reputation if registry is set
+    if (REGISTRY_ADDR) {
+      document.getElementById("registryAddr").innerHTML = uscAddrLink(REGISTRY_ADDR, REGISTRY_ADDR);
+      registryContract = new ethers.Contract(REGISTRY_ADDR, reputationRegistryAbi, provider);
+      try {
+        const rep = await registryContract.getReputation(1, "aave-credit");
+        updateGauge(Number(rep.reputationScore) / 100);
+        document.getElementById("interactionCount").textContent = rep.totalInteractions.toString();
+      } catch (_) {
+        updateGauge(0);
+      }
+    } else {
+      try {
+        const regAddr = await importerContract.reputationRegistry();
+        document.getElementById("registryAddr").innerHTML = uscAddrLink(regAddr);
+      } catch (_) {}
+    }
+  } catch (e) {
+    console.error("Contract read failed:", e);
+    showDemoData();
+  }
+}
+
+function showDemoData() {
+  allRecords = [...DEMO_RECORDS];
+  renderRecords(allRecords);
+  document.getElementById("totalRecords").textContent = allRecords.length;
+  updateGauge(3.83);
+  document.getElementById("interactionCount").textContent = "3";
+  document.getElementById("noRecords").style.display = "none";
+}
+
+// ─── Rendering ───────────────────────────────────────
+function renderRecords(records) {
+  const body = document.getElementById("recordsBody");
+  const noRec = document.getElementById("noRecords");
+
+  if (records.length === 0) {
+    body.innerHTML = "";
+    noRec.textContent = "No credit records found.";
+    noRec.style.display = "";
+    return;
+  }
+
+  noRec.style.display = "none";
+  body.innerHTML = records.map((r, i) => `
+    <tr class="hover:bg-gray-800/30 transition">
+      <td class="px-4 py-3 text-gray-500 font-mono">${i}</td>
+      <td class="px-4 py-3 font-mono text-xs text-gray-300">${sepoliaAddrLink(r.user)}</td>
+      <td class="px-4 py-3">
+        <span class="inline-flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full ${EVENT_BG[r.eventType]}"></span>
+          <span class="${EVENT_COLORS[r.eventType]}">${EVENT_TYPES[r.eventType]}</span>
+        </span>
+      </td>
+      <td class="px-4 py-3 text-right font-mono text-gray-300">${formatAmount(r.amount)}</td>
+      <td class="px-4 py-3 text-right font-mono ${EVENT_COLORS[r.eventType]}">${(r.score / 100).toFixed(2)}</td>
+      <td class="px-4 py-3 font-mono text-xs text-gray-400">${sepoliaBlockLink(r.sourceBlockHeight)}</td>
+      <td class="px-4 py-3 text-xs text-gray-400">${formatTime(r.timestamp)}</td>
+    </tr>
+  `).join("");
+}
+
+function updateGauge(score) {
+  const maxScore = 5.0;
+  const pct = Math.min(score / maxScore, 1);
+  const circumference = 2 * Math.PI * 42;
+  const offset = circumference * (1 - pct);
+  document.getElementById("gaugeRing").style.strokeDashoffset = offset;
+
+  const color = score >= 3.5 ? "#22c55e" : score >= 2.5 ? "#eab308" : "#ef4444";
+  document.getElementById("gaugeRing").setAttribute("stroke", color);
+  document.getElementById("scoreValue").textContent = score.toFixed(2);
+}
+
+function truncAddr(addr) {
+  if (!addr || addr.length < 10) return addr || "—";
+  return addr.slice(0, 6) + "..." + addr.slice(-4);
+}
+
+function uscAddrLink(addr, display) {
+  if (!addr || addr.length < 10) return display || "—";
+  const text = display || truncAddr(addr);
+  return `<a href="${USC_EXPLORER}/address/${addr}" target="_blank" rel="noopener" class="hover:text-blue-400 underline decoration-gray-600 hover:decoration-blue-400 transition">${text}</a>`;
+}
+
+function uscTxLink(hash, display) {
+  if (!hash) return "—";
+  const text = display || truncAddr(hash);
+  return `<a href="${USC_EXPLORER}/tx/${hash}" target="_blank" rel="noopener" class="hover:text-blue-400 underline decoration-gray-600 hover:decoration-blue-400 transition">${text}</a>`;
+}
+
+function sepoliaAddrLink(addr) {
+  if (!addr || addr.length < 10) return truncAddr(addr) || "—";
+  return `<a href="${SEPOLIA_EXPLORER}/address/${addr}" target="_blank" rel="noopener" class="hover:text-blue-400 underline decoration-gray-600 hover:decoration-blue-400 transition">${truncAddr(addr)}</a>`;
+}
+
+function sepoliaBlockLink(block) {
+  return `<a href="${SEPOLIA_EXPLORER}/block/${block}" target="_blank" rel="noopener" class="hover:text-blue-400 underline decoration-gray-600 hover:decoration-blue-400 transition">#${block.toLocaleString()}</a>`;
+}
+
+function formatAmount(raw) {
+  const n = Number(raw) / 1e6;
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " USDC";
+}
+
+function formatTime(ts) {
+  if (!ts) return "—";
+  return new Date(ts * 1000).toLocaleString();
+}
+
+// ─── Init ────────────────────────────────────────────
+(async () => {
+  renderPipeline();
+  const connected = await initProvider();
+  if (connected) {
+    await loadContractData();
+  } else {
+    showDemoData();
+  }
+})();
+</script>
+</body>
+</html>

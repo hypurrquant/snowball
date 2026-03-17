@@ -7,3 +7,4 @@ export * from "./agent";
 export * from "./bridge";
 export * from "./aave";
 export * from "./forward";
+export * from "./staker";

@@ -1,0 +1,51 @@
+{
+  "network": "creditcoin-usc-testnet",
+  "chainId": 102036,
+  "rpc": "https://rpc.usc-testnet2.creditcoin.network",
+  "description": "Aave Credit Import — verifies Aave V3 events via USC proof, records in ERC-8004",
+  "contracts": {
+    "AaveCreditImporter": {
+      "address": "0x497200ED69Fa0675E04B299e9807b6E25fad6b85",
+      "description": "Verifies Sepolia Aave V3 event proofs and submits credit scores to ReputationRegistry"
+    },
+    "IdentityRegistry": {
+      "address": "0xfC774F845C7c28b5eAB47b0c622386CD3A646D6D",
+      "description": "ERC-8004 Agent Identity (PoC deployment on USC testnet)"
+    },
+    "ReputationRegistry": {
+      "address": "0xd49700C60f571714fAea62a14deE03250F876241",
+      "description": "ERC-8004 Agent Reputation (PoC deployment on USC testnet)"
+    }
+  },
+  "agentConfig": {
+    "agentId": 1,
+    "agentName": "Aave Credit PoC Agent",
+    "agentType": "credit-importer",
+    "tag": "aave-credit"
+  },
+  "sourceChain": {
+    "network": "sepolia",
+    "chainId": 11155111,
+    "chainKey": 1,
+    "aaveV3": {
+      "pool": "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951",
+      "usdc": "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
+      "note": "No custom deployment on Sepolia — uses existing Aave V3 contracts"
+    }
+  },
+  "precompiles": {
+    "NativeQueryVerifier": "0x0000000000000000000000000000000000000FD2",
+    "ChainInfo": "0x0000000000000000000000000000000000000fd3"
+  },
+  "proofAPI": "https://proof-gen-api.usc-testnet2.creditcoin.network",
+  "scoreMapping": {
+    "Repay": 400,
+    "Supply": 350,
+    "Liquidation": 150,
+    "scale": "1e2 (400 = 4.00/5.00)"
+  },
+  "e2eTest": {
+    "status": "deployed",
+    "note": "Run: node scripts/aave-credit-e2e.mjs --deploy && node scripts/aave-credit-e2e.mjs"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "core": {
+    "registry": "0x3417d54e4B71D4523F7c4a6Aa48Bef939606a6bB",
+    "provider": "0x72Ef92FC52a722305Aca5485eb144392D4676220",
+    "aclManager": "0x75a40a2d75497927cCC4Fe856F1eb4405Bf0b990",
+    "pool": "0xff74e97255d2ecd04572f68ee8f38da10f984638",
+    "poolImpl": "0xD96917Ef051Ba48EadFf8b164bBDc418904Cf119",
+    "configurator": "0xa59e069d323ad2bf716f10b28e4fb712c3ce8b2e",
+    "configuratorImpl": "0x280b0746fCb63b05A02A3E326B352b7eAC5C62Fe"
+  },
+  "oracle": {
+    "aaveOracle": "0x3889372dE9E6Bb5B58c11812859D1A7c688e9492",
+    "adapters": {
+      "wCTC": "0xbb13987aE1a074d6B92161024b5b2B95ed1ecD07",
+      "lstCTC": "0xe7f15c2A61edB6BdC6ca74C996EE0a2Ef960588D",
+      "sbUSD": "0x25F309F60d8f7DC880949601Ce8254Af646071F0",
+      "USDC": "0x4eE59222B2c3086F81221A474661a794b8233B81"
+    }
+  },
+  "rates": {
+    "volatile": "0x626eA94bcb51BF4eFeC29D9f7B1187C797dAC4E8",
+    "stablecoin": "0x9B0623a8A26b570edfd5c5324736B60dC0A3673A"
+  },
+  "tokens": {
+    "aTokenImpl": "0x69073cea3e729419258d7d4dfAB77bdadEAa752f",
+    "stableDebtImpl": "0x883abAc17331D1250ECd14d1b96b7a80385ceD50",
+    "variableDebtImpl": "0xc304AEDDB567f5e0Cd7D84Edba6Ab5c2b3A551Dd"
+  },
+  "libraries": {
+    "BorrowLogic": "0x9d4A19be28E223dA99f745502Ef1CD4d9D855eEb",
+    "BridgeLogic": "0xF7ba006a6eEbD041Cd35350373BbBF9B4f5A8Cf4",
+    "EModeLogic": "0xFF0B9992333dD30Ada6c811D6A07d4774B6760E3",
+    "FlashLoanLogic": "0x9Cf7373885EE2f6eC784c80B278d12849FBcE34a",
+    "LiquidationLogic": "0xB78b79b996EA32Cb617175f61E53dCe58bc1c2b4",
+    "PoolLogic": "0xD4906d3C186eC5cF7601E037918EdFF7D934FFa7",
+    "SupplyLogic": "0xEaeb6F29504BFD8a398FA6A91982a9026D86DFaA",
+    "ConfiguratorLogic": "0x271Eb1CBB5B8856c6C7fFcC66FcE0C51c0d42603"
+  },
+  "periphery": {
+    "dataProvider": "0xb5e57b1208a4b35f3b60a95d0DD70dc058a87b2C"
+  },
+  "treasury": "0xf00F6cB5D43f9A38B10FA0B8e1B26cDB34D20d9d",
+  "note": "initReserves not yet called — need to call PoolConfigurator.initReserves() to activate 4 markets"
+}

@@ -1,6 +1,5 @@
 import {
   ArrowLeftRight,
-<<<<<<< HEAD
   Droplets,
   Landmark,
   HandCoins,
@@ -16,14 +15,7 @@ import {
   GlassWater,
   Building2,
   TrendingUp,
-=======
-  Landmark,
-  TrendingUp,
-  Vault,
-  Bot,
-  ArrowRightLeft,
   Coins,
->>>>>>> c54f15d (feat: Aave V3 + ForwardX + SnowballStaker 배포 완료 + FE 통합)
 } from "lucide-react";
 
 export interface NavItem {
@@ -33,17 +25,12 @@ export interface NavItem {
 }
 
 export interface NavGroup {
-<<<<<<< HEAD
   title: string;
-=======
-  label: string;
->>>>>>> c54f15d (feat: Aave V3 + ForwardX + SnowballStaker 배포 완료 + FE 통합)
   items: NavItem[];
 }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-<<<<<<< HEAD
     title: "Trade",
     items: [
       { href: "/swap", label: "Swap", icon: (cls) => <ArrowLeftRight className={cls} /> },
@@ -59,6 +46,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/aave", label: "Aave", icon: (cls) => <Building2 className={cls} /> },
       { href: "/yield", label: "Yield", icon: (cls) => <Vault className={cls} /> },
       { href: "/forward", label: "ForwardX", icon: (cls) => <TrendingUp className={cls} /> },
+      { href: "/stake", label: "Stake", icon: (cls) => <Coins className={cls} /> },
       { href: "/bridge", label: "Hyperliquid DN Vault Bridge", icon: (cls) => <Link2 className={cls} /> },
     ],
   },
@@ -78,17 +66,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/analytics", label: "Analytics", icon: (cls) => <BarChart3 className={cls} /> },
       { href: "/agent", label: "Agent", icon: (cls) => <Bot className={cls} /> },
       { href: "/chat", label: "Chat", icon: (cls) => <MessageSquare className={cls} /> },
-=======
-    label: "DeFi",
-    items: [
-      { href: "/swap", label: "Swap", icon: (cls) => <ArrowLeftRight className={cls} /> },
-      { href: "/lend", label: "Lend", icon: (cls) => <Landmark className={cls} /> },
-      { href: "/borrow", label: "Borrow", icon: (cls) => <TrendingUp className={cls} /> },
-      { href: "/yield", label: "Yield", icon: (cls) => <Vault className={cls} /> },
-      { href: "/agent", label: "Agent", icon: (cls) => <Bot className={cls} /> },
-      { href: "/forward", label: "ForwardX", icon: (cls) => <ArrowRightLeft className={cls} /> },
-      { href: "/stake", label: "Stake", icon: (cls) => <Coins className={cls} /> },
->>>>>>> c54f15d (feat: Aave V3 + ForwardX + SnowballStaker 배포 완료 + FE 통합)
     ],
   },
 ];

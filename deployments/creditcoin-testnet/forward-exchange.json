@@ -1,0 +1,23 @@
+{
+  "vault": "0x8b40cf14d2af490482709fe4c54778c0b36724d5",
+  "riskManager": "0x29cb71b52b55c184792e05609db15a570e4bb215",
+  "stubOracle": "0x4af12c0c0b55a2c6f8a52412907bd425bb79b5ad",
+  "oracleGuard": "0x202e162a0489d4b750ca3db293b788c4b533be8d",
+  "forward": "0x021262d1dd684c4163bb3279635bc04ccbdb8721",
+  "settlementEngine": "0x2ec339e1f0fbd2aeace9d899e3e04aa666201e89",
+  "forwardSettlementConsumer": "0x112b58c47ff1445422356238ddca5a8a6eb7bd66",
+  "marketplace": "0x17b6c56f9ced65c9ce273bd876407f4db67b50f8",
+  "forwardViewHelper": "0x604985b488cfeacf76106a329fa09e13a9d26b59",
+  "collateralToken": "0x60e204104cfe1a93f630ea5ebc0a895cc80ebed9",
+  "keystoneForwarder": "0xf00F6cB5D43f9A38B10FA0B8e1B26cDB34D20d9d",
+  "markets": [
+    {
+      "id": "0x45c5ae8ce2fdd70d24d0133747983d5ed2e0bc1e40042884ff8e1c4ac7aea89e",
+      "name": "USD/KRW"
+    },
+    {
+      "id": "0x35b8bafff3570683af968b8d36b91b1a19465141d9712425e9f76c68ff8cb152",
+      "name": "USD/JPY"
+    }
+  ]
+}
