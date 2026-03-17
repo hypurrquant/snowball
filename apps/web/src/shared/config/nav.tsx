@@ -15,6 +15,7 @@ import {
   Building2,
   TrendingUp,
   Coins,
+  Waypoints,
 } from "lucide-react";
 
 export interface NavItem {
@@ -34,6 +35,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Earn",
     items: [
       { href: "/earn/supply", label: "Supply", icon: (cls) => <Landmark className={cls} />, matchPaths: ["/morpho/supply", "/aave/supply"] },
+      { href: "/earn/strategy", label: "Strategy", icon: (cls) => <Waypoints className={cls} />, matchPaths: [] },
       { href: "/yield", label: "Yield Vaults", icon: (cls) => <Vault className={cls} />, matchPaths: ["/yield"] },
       { href: "/stake", label: "LP Staking", icon: (cls) => <Coins className={cls} />, matchPaths: ["/stake"] },
     ],
