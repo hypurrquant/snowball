@@ -47,7 +47,8 @@ export function MobileNav({
           {NAV_GROUPS.flatMap((g) => g.items).map((item) => {
             const isActive =
               pathname === item.href ||
-              (item.href !== "/" && pathname.startsWith(item.href));
+              (item.href !== "/" && pathname.startsWith(item.href)) ||
+              (item.matchPaths?.some((p) => pathname.startsWith(p)) ?? false);
             return (
               <Link
                 key={item.href}

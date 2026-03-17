@@ -2,39 +2,39 @@ import Link from "next/link";
 import {
   ArrowLeftRight,
   Landmark,
-  HandCoins,
-  Percent,
+  Building2,
+  LayoutDashboard,
   ArrowRight,
 } from "lucide-react";
 
 const FEATURES = [
   {
-    href: "/swap",
-    title: "Swap",
-    desc: "Trade tokens with concentrated liquidity AMM",
-    icon: <ArrowLeftRight className="w-6 h-6" />,
+    href: "/earn/supply",
+    title: "Earn",
+    desc: "Supply assets and earn interest across Morpho and Aave markets, or stake LP tokens for emission rewards.",
+    icon: <Landmark className="w-6 h-6" />,
+    gradient: "from-green-500/20 to-emerald-500/20",
+  },
+  {
+    href: "/borrow/lending",
+    title: "Borrow",
+    desc: "Mint sbUSD via CDP or borrow from lending markets at the best rates.",
+    icon: <Building2 className="w-6 h-6" />,
     gradient: "from-blue-500/20 to-cyan-500/20",
   },
   {
-    href: "/lend",
-    title: "Lend",
-    desc: "Supply assets and earn interest via Morpho markets",
-    icon: <Landmark className="w-6 h-6" />,
-    gradient: "from-emerald-500/20 to-teal-500/20",
+    href: "/swap",
+    title: "Trade",
+    desc: "Swap tokens, provide liquidity to pools, or trade forward contracts.",
+    icon: <ArrowLeftRight className="w-6 h-6" />,
+    gradient: "from-purple-500/20 to-violet-500/20",
   },
   {
-    href: "/borrow",
-    title: "Borrow",
-    desc: "Open Troves and borrow sbUSD against collateral",
-    icon: <HandCoins className="w-6 h-6" />,
+    href: "/dashboard",
+    title: "Manage",
+    desc: "View your portfolio, delegate positions to AI agents, or bridge assets.",
+    icon: <LayoutDashboard className="w-6 h-6" />,
     gradient: "from-amber-500/20 to-orange-500/20",
-  },
-  {
-    href: "/earn",
-    title: "Earn",
-    desc: "Deposit sbUSD in the Stability Pool for rewards",
-    icon: <Percent className="w-6 h-6" />,
-    gradient: "from-purple-500/20 to-pink-500/20",
   },
 ];
 
@@ -66,7 +66,7 @@ export default function HomePage() {
       </div>
 
       {/* Feature Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-5xl relative z-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-5xl relative z-10">
         {FEATURES.map((f, i) => (
           <Link
             key={f.href}

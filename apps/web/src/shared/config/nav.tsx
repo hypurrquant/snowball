@@ -1,6 +1,5 @@
 import {
   ArrowLeftRight,
-<<<<<<< HEAD
   Droplets,
   Landmark,
   HandCoins,
@@ -12,54 +11,46 @@ import {
   MessageSquare,
   Vault,
   Link2,
-  Layers,
   GlassWater,
   Building2,
   TrendingUp,
-=======
-  Landmark,
-  TrendingUp,
-  Vault,
-  Bot,
-  ArrowRightLeft,
   Coins,
->>>>>>> c54f15d (feat: Aave V3 + ForwardX + SnowballStaker 배포 완료 + FE 통합)
 } from "lucide-react";
 
 export interface NavItem {
   href: string;
   label: string;
   icon: (className: string) => React.ReactNode;
+  matchPaths?: string[];  // Additional path prefixes that activate this nav item
 }
 
 export interface NavGroup {
-<<<<<<< HEAD
   title: string;
-=======
-  label: string;
->>>>>>> c54f15d (feat: Aave V3 + ForwardX + SnowballStaker 배포 완료 + FE 통합)
   items: NavItem[];
 }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-<<<<<<< HEAD
-    title: "Trade",
+    title: "Earn",
     items: [
-      { href: "/swap", label: "Swap", icon: (cls) => <ArrowLeftRight className={cls} /> },
-      { href: "/pool", label: "Pool", icon: (cls) => <Droplets className={cls} /> },
-      { href: "/pool/positions", label: "Positions", icon: (cls) => <Layers className={cls} /> },
+      { href: "/earn/supply", label: "Supply", icon: (cls) => <Landmark className={cls} />, matchPaths: ["/morpho/supply", "/aave/supply"] },
+      { href: "/yield", label: "Yield Vaults", icon: (cls) => <Vault className={cls} />, matchPaths: ["/yield"] },
+      { href: "/stake", label: "LP Staking", icon: (cls) => <Coins className={cls} />, matchPaths: ["/stake"] },
     ],
   },
   {
-    title: "DeFi",
+    title: "Borrow",
     items: [
-      { href: "/liquity", label: "CDP", icon: (cls) => <HandCoins className={cls} /> },
-      { href: "/morpho", label: "Lending", icon: (cls) => <Landmark className={cls} /> },
-      { href: "/aave", label: "Aave", icon: (cls) => <Building2 className={cls} /> },
-      { href: "/yield", label: "Yield", icon: (cls) => <Vault className={cls} /> },
-      { href: "/forward", label: "ForwardX", icon: (cls) => <TrendingUp className={cls} /> },
-      { href: "/bridge", label: "Hyperliquid DN Vault Bridge", icon: (cls) => <Link2 className={cls} /> },
+      { href: "/liquity", label: "CDP", icon: (cls) => <HandCoins className={cls} />, matchPaths: ["/liquity/borrow", "/liquity/earn"] },
+      { href: "/borrow/lending", label: "Lending", icon: (cls) => <Building2 className={cls} />, matchPaths: ["/morpho/borrow", "/aave/borrow"] },
+    ],
+  },
+  {
+    title: "Trade",
+    items: [
+      { href: "/swap", label: "Swap", icon: (cls) => <ArrowLeftRight className={cls} /> },
+      { href: "/pool", label: "Pool", icon: (cls) => <Droplets className={cls} />, matchPaths: ["/pool/positions", "/pool/add"] },
+      { href: "/forward", label: "ForwardX", icon: (cls) => <TrendingUp className={cls} />, matchPaths: ["/forward/trade", "/forward/positions", "/forward/marketplace"] },
     ],
   },
   // Options: disabled — EIP-712 not implemented + API schema mismatch + withdrawal broken (see options-fe-analysis.md)
@@ -71,24 +62,14 @@ export const NAV_GROUPS: NavGroup[] = [
   //   ],
   // },
   {
-    title: "More",
+    title: "Manage",
     items: [
-      { href: "/faucet", label: "Faucet", icon: (cls) => <GlassWater className={cls} /> },
       { href: "/dashboard", label: "Dashboard", icon: (cls) => <LayoutDashboard className={cls} /> },
+      { href: "/agent", label: "Agent", icon: (cls) => <Bot className={cls} />, matchPaths: ["/agent/register", "/agent/vault"] },
+      { href: "/bridge", label: "Bridge", icon: (cls) => <Link2 className={cls} /> },
       { href: "/analytics", label: "Analytics", icon: (cls) => <BarChart3 className={cls} /> },
-      { href: "/agent", label: "Agent", icon: (cls) => <Bot className={cls} /> },
       { href: "/chat", label: "Chat", icon: (cls) => <MessageSquare className={cls} /> },
-=======
-    label: "DeFi",
-    items: [
-      { href: "/swap", label: "Swap", icon: (cls) => <ArrowLeftRight className={cls} /> },
-      { href: "/lend", label: "Lend", icon: (cls) => <Landmark className={cls} /> },
-      { href: "/borrow", label: "Borrow", icon: (cls) => <TrendingUp className={cls} /> },
-      { href: "/yield", label: "Yield", icon: (cls) => <Vault className={cls} /> },
-      { href: "/agent", label: "Agent", icon: (cls) => <Bot className={cls} /> },
-      { href: "/forward", label: "ForwardX", icon: (cls) => <ArrowRightLeft className={cls} /> },
-      { href: "/stake", label: "Stake", icon: (cls) => <Coins className={cls} /> },
->>>>>>> c54f15d (feat: Aave V3 + ForwardX + SnowballStaker 배포 완료 + FE 통합)
+      { href: "/faucet", label: "Faucet", icon: (cls) => <GlassWater className={cls} /> },
     ],
   },
 ];
