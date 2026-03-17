@@ -16,3 +16,16 @@
 - [ ] **APR/APY compounding period convention** — The plan uses n=365 (daily compounding) for APR-to-APY conversion. Aave uses per-second compounding internally (`(1 + r)^SECONDS_PER_YEAR`). Should the unified display match Aave's per-second convention or use the simpler daily convention? Difference is <0.01% at typical DeFi rates. Recommendation: use daily (n=365) for simplicity; document the <0.01% discrepancy.
 - [ ] **Unified page inline actions vs link-to-protocol** — Should unified supply/borrow pages let users perform actions inline (e.g., supply dialog within the unified page) or always link out to the protocol-specific page? Inline is better UX but significantly more scope. Recommendation: link-to-protocol for MVP, inline as follow-up.
 - [ ] **Earn group ordering: Supply first or Yield Vaults first?** — The plan puts Supply first since it's the new unified aggregator page. But yield vaults may be more compelling for users. This is a UX preference decision.
+
+## strategy-router — 2026-03-17 (v2 — revised after Architect + Critic review)
+
+### Resolved (v2)
+- [x] **Stability Pool APY source** — DECIDED: Show "Variable" badge, sort last. `useYieldVaultAPY` returns `{kind: "variable"}` for SP vaults. pathCalculator sets `estimatedAPY: null`, `apyLabel: "Variable"`.
+- [x] **CDP -> LP -> Staker path: DEX mint step** — DECIDED: Deferred to Phase 2. Requires `mintLP` hook (doesn't exist) + 2 new TxStepTypes (`stake`, `mintLP`). Plan reduced to 5 paths.
+- [x] **Default borrow rate for CDP paths** — DECIDED: Fixed at 5% (`DEFAULT_BORROW_RATE = 0.05`). Footnote in UI "assumes 5% borrow rate". User-configurable slider deferred to Phase 2.
+- [x] **Nav icon choice for Strategy** — DECIDED: `Waypoints` from lucide-react.
+
+### Still Open
+- [ ] **Multi-hop execution: partial failure recovery** — If openTrove succeeds but the subsequent Morpho supply step fails, user has an open CDP with minted sbUSD in wallet. `useTxPipeline` shows per-step error + retry but no rollback. Accepted for MVP with tooltip warning on multi-hop cards. Phase 2 could add a "revert" helper that closes the trove.
+- [ ] **Yield Vault underlying asset matching** — The pathCalculator needs to match user's selected asset to vault's underlying token. Need to verify `VaultData` type exposes the underlying asset address. If not, the vault config in `YIELD.vaults` must be checked for this field.
+- [ ] **lstCTC branch gas compensation UX** — For CDP paths with lstCTC collateral, `useTroveActions` requires a separate wCTC approval for `ETH_GAS_COMPENSATION`. The StrategyExecutor must add an extra `approveGasComp` step. Need to decide: show this as a visible step in the pipeline, or silently bundle it? Recommendation: show as visible step labeled "Approve Gas Deposit (wCTC)" for transparency.
