@@ -7,6 +7,7 @@ import { SnowParticles } from "@/shared/components/background/SnowParticles";
 import { SnowballAnimation } from "@/shared/components/background/SnowballAnimation";
 import { SnowGround } from "@/shared/components/background/SnowGround";
 import { Toaster } from "@/shared/components/ui/sonner";
+import { OpportunityDetectorMount } from "./_global/OpportunityDetectorMount";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ export default function RootLayout({
               <main className="flex-1 overflow-y-auto">{children}</main>
             </div>
           </div>
+          <OpportunityDetectorMount />
           <Toaster />
         </Providers>
       </body>
