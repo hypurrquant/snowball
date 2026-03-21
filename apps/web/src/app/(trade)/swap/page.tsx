@@ -81,7 +81,7 @@ export default function SwapPage() {
       return h as `0x${string}` | undefined;
     };
 
-    await pipeline.run(steps, executors);
+    await pipeline.run(steps, executors, { type: "swap", outputToken: tokenOut, outputAmount: expectedAmountOut });
     setAmountInStr("");
   };
 

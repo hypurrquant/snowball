@@ -162,7 +162,7 @@ export default function EarnSupplyPage() {
         ) : (
           markets.filter((m) => m.isActive).map((market) => (
             <MarketRow
-              key={`${market.protocol}-${market.asset}`}
+              key={`${market.protocol}-${market.raw?.morphoMarketId ?? market.asset}`}
               market={market}
             />
           ))

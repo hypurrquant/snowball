@@ -1,0 +1,84 @@
+# Snowball Ops Cron Services
+# Runs oracle-updater, emission-cron, and mm-monitor on scheduled intervals.
+# Usage: docker-compose -f docker-compose.ops.yml up -d
+
+services:
+  oracle-updater:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    env_file: .env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache python3 make g++ && \
+        cd /app && \
+        NODE_PATH=apps/web/node_modules npm install --prefix apps/web --ignore-scripts 2>/dev/null || true && \
+        while true; do
+          echo "[oracle-updater] $(date -u +%Y-%m-%dT%H:%M:%SZ) — running..."
+          NODE_PATH=apps/web/node_modules npx tsx scripts/ops/oracle-updater.ts || \
+            echo "[oracle-updater] ERROR: script failed (exit $?)"
+          echo "[oracle-updater] sleeping 300s..."
+          sleep 300
+        done
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  emission-cron:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    env_file: .env
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache python3 make g++ && \
+        cd /app && \
+        NODE_PATH=apps/web/node_modules npm install --prefix apps/web --ignore-scripts 2>/dev/null || true && \
+        while true; do
+          echo "[emission-cron] $(date -u +%Y-%m-%dT%H:%M:%SZ) — running..."
+          NODE_PATH=apps/web/node_modules npx tsx scripts/ops/emission-cron.ts || \
+            echo "[emission-cron] ERROR: script failed (exit $?)"
+          echo "[emission-cron] sleeping 86400s (24h)..."
+          sleep 86400
+        done
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mm-monitor:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    env_file: .env
+    environment:
+      - API_BASE_URL=http://snowball-server:3001
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache python3 make g++ && \
+        cd /app && \
+        NODE_PATH=apps/web/node_modules npm install --prefix apps/web --ignore-scripts 2>/dev/null || true && \
+        while true; do
+          echo "[mm-monitor] $(date -u +%Y-%m-%dT%H:%M:%SZ) — running..."
+          NODE_PATH=apps/web/node_modules npx tsx scripts/ops/mm-rebalance.ts || \
+            echo "[mm-monitor] ERROR: script failed (exit $?)"
+          echo "[mm-monitor] sleeping 86400s (24h)..."
+          sleep 86400
+        done
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

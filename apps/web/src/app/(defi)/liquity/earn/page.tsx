@@ -37,6 +37,7 @@ export default function LiquityEarnPage() {
     await pipeline.run(
       [{ id: "deposit", type: "deposit", label: "Deposit sbUSD" }],
       { deposit: async () => { const h = await deposit(amount); refetchBalance(); return h as `0x${string}` | undefined; } },
+      { type: "stability-deposit" },
     );
     setDepositAmount("");
   };

@@ -87,6 +87,18 @@ export function useStakerActions(onSuccess?: () => void) {
     return waitAndCallback(hash);
   };
 
+  // ─── Create Incentive ───
+
+  const createIncentive = async (key: IncentiveKey, reward: bigint) => {
+    const hash = await writeContractAsync({
+      address: STAKER.snowballStaker,
+      abi: SnowballStakerABI,
+      functionName: "createIncentive",
+      args: [toKeyTuple(key), reward],
+    });
+    return waitAndCallback(hash);
+  };
+
   // ─── Withdraw NFT ───
 
   const withdrawToken = async (tokenId: bigint, to: Address) => {
@@ -148,6 +160,7 @@ export function useStakerActions(onSuccess?: () => void) {
     collectFee,
     withdrawToken,
     depositAndStake,
+    createIncentive,
     isPending,
   };
 }

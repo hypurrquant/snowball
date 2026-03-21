@@ -111,7 +111,7 @@ export function VaultActionDialog({ vault, isOpen, onOpenChange, defaultTab }: V
             return hash;
         };
 
-        await pipeline.run(steps, executors);
+        await pipeline.run(steps, executors, { type: "yield-deposit" });
         setAmount("");
     };
 

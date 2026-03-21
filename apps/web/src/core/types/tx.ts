@@ -19,7 +19,11 @@ export type TxStepType =
   | "bridgeBurn"
   | "attestWait"
   | "uscMint"
-  | "delegate";
+  | "delegate"
+  | "stake"
+  | "unstake"
+  | "collect"
+  | "create";
 export type TxPhase = "idle" | "executing" | "complete" | "error";
 
 export interface TxStep {

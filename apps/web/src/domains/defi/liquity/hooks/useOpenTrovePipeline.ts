@@ -9,6 +9,8 @@ import { validateOpenTrove } from "../lib/liquityMath";
 import { ETH_GAS_COMPENSATION, MIN_DEBT } from "../lib/constants";
 import type { TxStep, TxPhase } from "@/shared/types/tx";
 import type { BranchStats } from "../types";
+import { emitTxSuccess } from "@/shared/lib/txSuccessEvent";
+import { TOKENS } from "@/core/config/addresses";
 
 interface UseOpenTrovePipelineParams {
   branch: "wCTC" | "lstCTC";
@@ -170,6 +172,7 @@ export function useOpenTrovePipeline({
       updateStep("open", { status: "done", txHash: hash as `0x${string}` | undefined });
 
       setTxPhase("complete");
+      emitTxSuccess({ type: "cdp-mint", outputToken: TOKENS.sbUSD as Address, outputAmount: parsedDebt });
       setCollAmount("");
       setDebtAmount("");
       setRatePercent(5);

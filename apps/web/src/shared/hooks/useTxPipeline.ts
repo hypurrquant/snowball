@@ -4,6 +4,8 @@ import { useState, useCallback } from "react";
 import { useConfig } from "wagmi";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import type { TxStep, TxPhase, TxStepType } from "@/shared/types/tx";
+import { emitTxSuccess } from "@/shared/lib/txSuccessEvent";
+import type { TxResult } from "@/shared/hooks/useNextActions";
 
 export function useTxPipeline() {
   const config = useConfig();
@@ -18,6 +20,7 @@ export function useTxPipeline() {
   const run = useCallback(async (
     steps: { id: string; type: TxStepType; label: string }[],
     executors: Record<string, () => Promise<`0x${string}` | undefined>>,
+    txResult?: TxResult,
   ) => {
     const txStepList: TxStep[] = steps.map((s) => ({ ...s, status: "pending" as const }));
     setTxSteps(txStepList);
@@ -40,6 +43,7 @@ export function useTxPipeline() {
         setTxSteps((prev) => prev.map((s) => (s.id === step.id ? { ...s, status: "done", txHash: hash } : s)));
       }
       setTxPhase("complete");
+      if (txResult) emitTxSuccess(txResult);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Transaction failed";
       setTxSteps((prev) => prev.map((s) =>

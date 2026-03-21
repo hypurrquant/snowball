@@ -60,6 +60,7 @@ function MarketSupplyCard({
         approve: async () => { const h = await actions.approveLoan(amount); return h as `0x${string}` | undefined; },
         supply: async () => { const h = await actions.supply(amount); return h as `0x${string}` | undefined; },
       },
+      { type: "morpho-supply" },
     );
     setSupplyAmount("");
   };

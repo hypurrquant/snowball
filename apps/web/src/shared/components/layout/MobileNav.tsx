@@ -42,30 +42,38 @@ export function MobileNav({
           </button>
         </div>
 
-        {/* Links */}
-        <nav className="py-4 px-3 space-y-1 overflow-y-auto">
-          {NAV_GROUPS.flatMap((g) => g.items).map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/" && pathname.startsWith(item.href)) ||
-              (item.matchPaths?.some((p) => pathname.startsWith(p)) ?? false);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
-                  isActive
-                    ? "bg-ice-500/10 text-ice-400 font-medium"
-                    : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
-                )}
-              >
-                {item.icon("w-5 h-5")}
-                {item.label}
-              </Link>
-            );
-          })}
+        {/* Grouped Links */}
+        <nav className="py-4 px-3 space-y-5 overflow-y-auto">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.title}>
+              <div className="section-title px-2 mb-1">{group.title}</div>
+              <ul className="space-y-0.5">
+                {group.items.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href !== "/" && pathname.startsWith(item.href)) ||
+                    (item.matchPaths?.some((p) => pathname.startsWith(p)) ?? false);
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onClose}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                          isActive
+                            ? "bg-ice-500/10 text-ice-400 font-medium"
+                            : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
+                        )}
+                      >
+                        {item.icon("w-5 h-5")}
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
       </div>
     </div>

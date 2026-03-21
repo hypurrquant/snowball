@@ -7,6 +7,7 @@ import { SnowParticles } from "@/shared/components/background/SnowParticles";
 import { SnowballAnimation } from "@/shared/components/background/SnowballAnimation";
 import { SnowGround } from "@/shared/components/background/SnowGround";
 import { Toaster } from "@/shared/components/ui/sonner";
+import { TxSuccessOverlay } from "@/shared/components/TxSuccessOverlay";
 import { OpportunityDetectorMount } from "./_global/OpportunityDetectorMount";
 import "./globals.css";
 
@@ -47,6 +48,7 @@ export default function RootLayout({
           </div>
           <OpportunityDetectorMount />
           <Toaster />
+          <TxSuccessOverlay />
         </Providers>
       </body>
     </html>
