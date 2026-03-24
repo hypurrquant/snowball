@@ -35,6 +35,7 @@ import { Shield, TrendingDown, DollarSign, HandCoins, Loader2, Users, AlertTrian
 import { useTroveDelegationStatus } from "@/domains/defi/liquity/hooks/useTroveDelegationStatus";
 import { useVaultPermission } from "@/domains/agent/hooks/useVaultPermission";
 import { MIN_DEBT } from "@/domains/defi/liquity/lib/constants";
+import { CDPSimulator } from "@/shared/components/CDPSimulator";
 
 const IS_TEST_MODE = process.env.NEXT_PUBLIC_TEST_MODE === "true";
 
@@ -437,6 +438,9 @@ export default function LiquityBorrowPage() {
         phase={closePipeline.txPhase}
         title="Close Trove"
       />
+
+      {/* CDP Simulator */}
+      <CDPSimulator />
     </div>
   );
 }

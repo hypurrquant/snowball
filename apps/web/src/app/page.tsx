@@ -20,6 +20,7 @@ import {
 import { QuickStrategies } from "@/shared/components/QuickStrategies";
 import { YieldComparison } from "@/shared/components/YieldComparison";
 import { AgentSaasBanner } from "@/shared/components/AgentSaasBanner";
+import { SavingsAccount } from "@/shared/components/SavingsAccount";
 
 // ─── Token list for balance display ───
 
@@ -265,6 +266,13 @@ export default function HomePage() {
           <div className="mt-6 space-y-3">
             <QuickStrategies />
             <AgentSaasBanner />
+          </div>
+        )}
+
+        {/* Savings Account — only when wallet connected */}
+        {isConnected && (
+          <div className="mt-6 flex justify-center">
+            <SavingsAccount />
           </div>
         )}
 

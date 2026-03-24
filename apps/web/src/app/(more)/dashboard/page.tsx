@@ -5,6 +5,7 @@ import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
 import { StatCard } from "@/shared/components/common/StatCard";
 import { SmartAccountSetup } from "@/shared/components/SmartAccountSetup";
+import { QuickExit } from "@/shared/components/QuickExit";
 import { TOKENS, LIQUITY } from "@/core/config/addresses";
 import { TroveNFTABI, StabilityPoolABI } from "@/core/abis";
 import { formatTokenAmount } from "@/shared/lib/utils";
@@ -145,6 +146,8 @@ export default function DashboardPage() {
           </div>
 
           <SmartAccountSetup />
+
+          <QuickExit />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
