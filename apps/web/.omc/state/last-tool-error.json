@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"wc -l apps/web/src/domains/defi/hyperlend/hooks/useHyperLendActions.ts && head -1 apps/web/src/domains/defi/hyperlend/hooks/useHyperLendActions.ts && sed -n '23p' apps/web/src/domains/defi...",
-  "error": "Exit code 1\n      62 apps/web/src/domains/defi/hyperlend/hooks/useHyperLendActions.ts\n\"use client\";\ncat: illegal option -- A\nusage: cat [-belnstuv] [file ...]",
-  "timestamp": "2026-03-24T07:15:51.404Z",
-  "retry_count": 1
+  "tool_input_preview": "{\"command\":\"git show hyperevm:packages/core/src/config/hyperevm.ts > packages/core/src/config/hyperevm.ts && echo \\\"restored\\\" && npx tsc --noEmit --skipLibCheck 2>&1 | head -5\",\"timeout\":120000,\"desc...",
+  "error": "Exit code 1\n(eval):1: no such file or directory: packages/core/src/config/hyperevm.ts",
+  "timestamp": "2026-03-24T07:34:17.022Z",
+  "retry_count": 4
 }

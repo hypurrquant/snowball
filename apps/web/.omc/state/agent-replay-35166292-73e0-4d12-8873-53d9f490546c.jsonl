@@ -64,3 +64,7 @@
 {"t":0,"agent":"system","event":"skill_invoked","skill_name":"oh-my-claudecode:cancel"}
 {"t":0,"agent":"a328f49","agent_type":"executor","event":"agent_start","parent_mode":"none"}
 {"t":0,"agent":"a328f49","agent_type":"executor","event":"agent_stop","success":true,"duration_ms":71348}
+{"t":0,"agent":"abac62a","agent_type":"executor","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"af8dda1","agent_type":"executor","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"af8dda1","agent_type":"executor","event":"agent_stop","success":true,"duration_ms":228342}
+{"t":0,"agent":"abac62a","agent_type":"executor","event":"agent_stop","success":true,"duration_ms":267437}

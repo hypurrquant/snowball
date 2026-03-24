@@ -17,6 +17,7 @@ import {
   Wallet,
   Bot,
   Zap,
+  Gem,
 } from "lucide-react";
 import { QuickStrategies } from "@/shared/components/QuickStrategies";
 import { YieldComparison } from "@/shared/components/YieldComparison";
@@ -186,6 +187,14 @@ export default function HomePage() {
       desc: "HyperLend + HyperSwap + Felix",
       icon: <Zap className="w-5 h-5" />,
       gradient: "from-orange-500/20 to-amber-400/20",
+      rate: null as string | null,
+    },
+    {
+      href: "/monad",
+      title: "Monad",
+      desc: "10K TPS DeFi Hub",
+      icon: <Gem className="w-5 h-5" />,
+      gradient: "from-purple-500/20 to-pink-400/20",
       rate: null as string | null,
     },
   ];

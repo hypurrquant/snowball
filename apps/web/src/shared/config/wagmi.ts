@@ -1,5 +1,5 @@
 import { http, createConfig, createStorage, cookieStorage, mock, injected } from "wagmi";
-import { creditcoinTestnet, sepoliaChain, uscTestnet, giwaSepoliaChain, hyperEvmMainnet } from "@/core/config/chain";
+import { creditcoinTestnet, sepoliaChain, uscTestnet, giwaSepoliaChain, hyperEvmMainnet, monadTestnet } from "@/core/config/chain";
 import { privateKeyToAccount } from "viem/accounts";
 import type { Transport } from "viem";
 
@@ -31,7 +31,7 @@ function creditcoinHttp(url?: string): Transport {
 }
 
 export const wagmiConfig = createConfig({
-  chains: [creditcoinTestnet, giwaSepoliaChain, sepoliaChain, uscTestnet, hyperEvmMainnet],
+  chains: [creditcoinTestnet, giwaSepoliaChain, sepoliaChain, uscTestnet, hyperEvmMainnet, monadTestnet],
   connectors: [injected()],
   transports: {
     [creditcoinTestnet.id]: creditcoinHttp(),
@@ -39,6 +39,7 @@ export const wagmiConfig = createConfig({
     [sepoliaChain.id]: http("https://1rpc.io/sepolia"),
     [uscTestnet.id]: http("https://rpc.usc-testnet2.creditcoin.network"),
     [hyperEvmMainnet.id]: http("https://rpc.hyperliquid.xyz/evm"),
+    [monadTestnet.id]: http("https://monad-testnet.g.alchemy.com/v2/demo"),
   },
   storage: createStorage({ storage: cookieStorage }),
   ssr: true,

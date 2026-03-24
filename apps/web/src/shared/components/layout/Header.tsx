@@ -15,12 +15,13 @@ import Image from "next/image";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { MobileNav } from "./MobileNav";
 import { GasSponsorBadge } from "@/shared/components/GasSponsorBadge";
-import { creditcoinTestnet, giwaSepoliaChain, hyperEvmMainnet } from "@/core/config/chain";
+import { creditcoinTestnet, giwaSepoliaChain, hyperEvmMainnet, monadTestnet } from "@/core/config/chain";
 
 const SUPPORTED_CHAINS = [
   { id: creditcoinTestnet.id, name: "Creditcoin Testnet", dotClass: "bg-success" },
   { id: giwaSepoliaChain.id, name: "GIWA Sepolia", dotClass: "bg-blue-400" },
   { id: hyperEvmMainnet.id, name: "HyperEVM", dotClass: "bg-orange-400" },
+  { id: monadTestnet.id, name: "Monad Testnet", dotClass: "bg-purple-400" },
 ];
 
 export function Header() {
