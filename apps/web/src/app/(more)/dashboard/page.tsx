@@ -4,6 +4,7 @@ import { useConnection, useReadContracts } from "wagmi";
 import { useTokenBalance } from "@/shared/hooks/useTokenBalance";
 import { Card, CardHeader, CardTitle, CardContent } from "@/shared/components/ui/card";
 import { StatCard } from "@/shared/components/common/StatCard";
+import { SmartAccountSetup } from "@/shared/components/SmartAccountSetup";
 import { TOKENS, LIQUITY } from "@/core/config/addresses";
 import { TroveNFTABI, StabilityPoolABI } from "@/core/abis";
 import { formatTokenAmount } from "@/shared/lib/utils";
@@ -142,6 +143,8 @@ export default function DashboardPage() {
               icon={<Landmark className="w-5 h-5 text-ice-400" />}
             />
           </div>
+
+          <SmartAccountSetup />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">

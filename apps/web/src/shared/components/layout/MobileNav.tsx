@@ -6,6 +6,7 @@ import { cn } from "@/shared/lib/utils";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { NAV_GROUPS } from "@/shared/config/nav";
+import { useEffect, useState } from "react";
 
 export function MobileNav({
   open,
@@ -15,6 +16,17 @@ export function MobileNav({
   onClose: () => void;
 }) {
   const pathname = usePathname();
+  // Drive CSS transition: mounted=true one frame after open becomes true
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      const raf = requestAnimationFrame(() => setMounted(true));
+      return () => cancelAnimationFrame(raf);
+    } else {
+      setMounted(false);
+    }
+  }, [open]);
 
   if (!open) return null;
 
@@ -22,12 +34,20 @@ export function MobileNav({
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className={cn(
+          "absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300",
+          mounted ? "opacity-100" : "opacity-0"
+        )}
         onClick={onClose}
       />
 
-      {/* Drawer */}
-      <div className="absolute left-0 top-0 bottom-0 w-72 bg-bg-secondary border-r border-border animate-slide-up">
+      {/* Drawer — slides in from left */}
+      <div
+        className={cn(
+          "absolute left-0 top-0 bottom-0 w-72 bg-bg-secondary border-r border-border transition-transform duration-300 ease-out",
+          mounted ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
@@ -36,7 +56,7 @@ export function MobileNav({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-bg-hover transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-bg-hover transition-colors"
           >
             <X className="w-5 h-5 text-text-secondary" />
           </button>
@@ -59,7 +79,7 @@ export function MobileNav({
                         href={item.href}
                         onClick={onClose}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
+                          "flex items-center gap-3 px-3 py-3 min-h-[44px] rounded-lg text-sm transition-colors",
                           isActive
                             ? "bg-ice-500/10 text-ice-400 font-medium"
                             : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"

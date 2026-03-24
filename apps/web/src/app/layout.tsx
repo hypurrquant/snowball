@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Providers } from "@/shared/providers";
 import { Sidebar } from "@/shared/components/layout/Sidebar";
 import { Header } from "@/shared/components/layout/Header";
+import { MobileBottomBar } from "@/shared/components/layout/MobileBottomBar";
 import { AuroraBackground } from "@/shared/components/background/AuroraBackground";
 import { SnowParticles } from "@/shared/components/background/SnowParticles";
 import { SnowballAnimation } from "@/shared/components/background/SnowballAnimation";
@@ -43,9 +44,10 @@ export default function RootLayout({
             <Sidebar />
             <div className="flex-1 flex flex-col min-h-screen">
               <Header />
-              <main className="flex-1 overflow-y-auto">{children}</main>
+              <main className="flex-1 overflow-y-auto pb-16 md:pb-0">{children}</main>
             </div>
           </div>
+          <MobileBottomBar />
           <OpportunityDetectorMount />
           <Toaster />
           <TxSuccessOverlay />

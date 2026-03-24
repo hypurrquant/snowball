@@ -149,7 +149,8 @@ export default function StakePage() {
           </div>
         ) : (
           <div className="rounded-xl border border-border bg-bg-card/60 backdrop-blur-xl overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-border text-text-tertiary text-left">
                   <th className="py-3 px-4 font-medium">Pool</th>
@@ -239,6 +240,7 @@ export default function StakePage() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </section>

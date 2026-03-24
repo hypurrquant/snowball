@@ -17,6 +17,9 @@ import {
   Wallet,
   Bot,
 } from "lucide-react";
+import { QuickStrategies } from "@/shared/components/QuickStrategies";
+import { YieldComparison } from "@/shared/components/YieldComparison";
+import { AgentSaasBanner } from "@/shared/components/AgentSaasBanner";
 
 // ─── Token list for balance display ───
 
@@ -257,6 +260,14 @@ export default function HomePage() {
           ))}
         </div>
 
+        {/* Quick Strategies — only when wallet connected */}
+        {isConnected && (
+          <div className="mt-6 space-y-3">
+            <QuickStrategies />
+            <AgentSaasBanner />
+          </div>
+        )}
+
         {/* Agent — full width */}
         <Link href={AGENT_CARD.href} className="group block mt-3">
           <div className="flex items-center justify-between p-4 rounded-xl bg-bg-card/60 backdrop-blur-xl border border-ice-400/20 hover:border-ice-400/40 transition-all duration-200 group-hover:-translate-y-0.5">
@@ -279,6 +290,11 @@ export default function HomePage() {
             </span>
           </div>
         </Link>
+
+        {/* Yield Comparison — visible to all */}
+        <div className="mt-10">
+          <YieldComparison />
+        </div>
       </div>
     </div>
   );

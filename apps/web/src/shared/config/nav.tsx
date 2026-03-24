@@ -50,7 +50,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Manage",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: (cls) => <LayoutDashboard className={cls} />, matchPaths: ["/analytics"] },
-      { href: "/agent", label: "Agent", icon: (cls) => <Bot className={cls} />, matchPaths: ["/agent/register", "/agent/vault", "/chat"] },
+      { href: "/agent", label: "Agent", icon: (cls) => <Bot className={cls} />, matchPaths: ["/agent/register", "/agent/vault", "/agent/saas", "/chat"] },
       { href: "/bridge", label: "Bridge", icon: (cls) => <Link2 className={cls} /> },
     ],
   },

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { X, Bot } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
+export type ToastVariant = "opportunity" | "warning" | "danger";
+
 export interface OpportunityToastProps {
   toastId: number | string;
   title: string;
@@ -11,6 +13,7 @@ export interface OpportunityToastProps {
   directAction: { label: string; href: string };
   agentAction: { label: string; href: string };
   onDismiss: () => void;
+  variant?: ToastVariant;
 }
 
 export function OpportunityToast({
@@ -19,13 +22,28 @@ export function OpportunityToast({
   directAction,
   agentAction,
   onDismiss,
+  variant = "opportunity",
 }: OpportunityToastProps) {
+  const borderColor =
+    variant === "danger"
+      ? "border-l-red-500"
+      : variant === "warning"
+        ? "border-l-yellow-400"
+        : "border-l-ice-400";
+  const shadowColor =
+    variant === "danger"
+      ? "shadow-[0_0_20px_rgba(239,68,68,0.15)]"
+      : variant === "warning"
+        ? "shadow-[0_0_20px_rgba(250,204,21,0.12)]"
+        : "shadow-[0_0_20px_rgba(96,165,250,0.12)]";
+
   return (
     <div
       className={cn(
         "relative w-full max-w-sm rounded-2xl border border-border-hover/40 bg-bg-card",
-        "border-l-4 border-l-ice-400",
-        "shadow-[0_0_20px_rgba(96,165,250,0.12)]",
+        "border-l-4",
+        borderColor,
+        shadowColor,
         "p-4"
       )}
     >
