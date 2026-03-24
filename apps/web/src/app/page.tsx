@@ -16,6 +16,7 @@ import {
   ArrowRight,
   Wallet,
   Bot,
+  Zap,
 } from "lucide-react";
 import { QuickStrategies } from "@/shared/components/QuickStrategies";
 import { YieldComparison } from "@/shared/components/YieldComparison";
@@ -177,6 +178,14 @@ export default function HomePage() {
       desc: "Portfolio, Agent, Bridge",
       icon: <LayoutDashboard className="w-5 h-5" />,
       gradient: "from-amber-500/20 to-orange-500/20",
+      rate: null as string | null,
+    },
+    {
+      href: "/hyperevm",
+      title: "HyperEVM",
+      desc: "HyperLend + HyperSwap + Felix",
+      icon: <Zap className="w-5 h-5" />,
+      gradient: "from-orange-500/20 to-amber-400/20",
       rate: null as string | null,
     },
   ];

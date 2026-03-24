@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/shared/lib/utils";
-import { Landmark, Building2, ArrowLeftRight, LayoutDashboard } from "lucide-react";
+import { Landmark, Building2, ArrowLeftRight, LayoutDashboard, Zap } from "lucide-react";
 
 const BOTTOM_NAV = [
   { href: "/earn/supply", label: "Earn", icon: Landmark },
   { href: "/liquity/borrow", label: "Borrow", icon: Building2 },
   { href: "/swap", label: "Swap", icon: ArrowLeftRight },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/hyperevm", label: "HyperEVM", icon: Zap },
+  { href: "/dashboard", label: "Manage", icon: LayoutDashboard },
 ] as const;
 
 export function MobileBottomBar() {

@@ -9,6 +9,7 @@ import {
   Link2,
   Building2,
   Coins,
+  Zap,
 } from "lucide-react";
 
 export interface NavItem {
@@ -52,6 +53,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/dashboard", label: "Dashboard", icon: (cls) => <LayoutDashboard className={cls} />, matchPaths: ["/analytics"] },
       { href: "/agent", label: "Agent", icon: (cls) => <Bot className={cls} />, matchPaths: ["/agent/register", "/agent/vault", "/agent/saas", "/chat"] },
       { href: "/bridge", label: "Bridge", icon: (cls) => <Link2 className={cls} /> },
+      { href: "/hyperevm", label: "HyperEVM", icon: (cls) => <Zap className={cls} />, matchPaths: ["/hyperevm"] },
     ],
   },
 ];
