@@ -16,7 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { monadTestnet } from "@/core/config/chain";
-import { EULER, KURU, AMBIENT } from "@snowball/core/src/config/monad";
+import { EULER, KURU, AMBIENT } from "@/core/config/monad";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

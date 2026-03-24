@@ -28,7 +28,7 @@ interface ChainBalance {
 
 export function CrossChainPortfolio({ address }: { address: Address }) {
   const [chainBalances, setChainBalances] = useState<ChainBalance[]>(
-    SUPPORTED_CHAINS.map((chainId) => ({
+    SUPPORTED_CHAINS.map((chainId: number) => ({
       chainId,
       chainName: CHAIN_CONFIGS[chainId]?.name ?? String(chainId),
       tokens: [],

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAccount, useReadContracts } from "wagmi";
-import { FELIX } from "@snowball/core/src/config/hyperevm";
+import { FELIX } from "@/core/config/hyperevm";
 import { TroveManagerABI } from "@/core/abis";
 import { encodeAbiParameters, keccak256, zeroAddress } from "viem";
 import type { Address } from "viem";

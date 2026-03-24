@@ -35,7 +35,7 @@ export function useActivityLog(user?: Address) {
         toBlock: "latest",
       });
 
-      const entries: ActivityEntry[] = logs.map((log) => ({
+      const entries: ActivityEntry[] = logs.map((log: any) => ({
         user: log.args.user as Address,
         agent: log.args.agent as Address,
         target: log.args.target as Address,

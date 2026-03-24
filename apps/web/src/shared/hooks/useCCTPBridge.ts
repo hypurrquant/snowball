@@ -27,7 +27,7 @@ export function useCCTPBridge() {
   const sourceChain = chainId ? getCCTPChain(chainId) : undefined;
   const isSourceSupported = !!sourceChain;
 
-  const availableDestinations = CCTP_CHAINS.filter((c) => c.chainId !== chainId);
+  const availableDestinations = CCTP_CHAINS.filter((c: { chainId: number }) => c.chainId !== chainId);
 
   const bridge = async (destChainId: number, amount: bigint) => {
     if (!sourceChain || !address) throw new Error("Source chain not supported");

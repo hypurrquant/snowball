@@ -259,7 +259,7 @@ function CCTPBridgeTab() {
     useCCTPBridge();
 
   const [destChainId, setDestChainId] = useState<number>(
-    CCTP_CHAINS.find((c) => c.chainId !== chainId)?.chainId ?? CCTP_CHAINS[0].chainId,
+    CCTP_CHAINS.find((c: { chainId: number }) => c.chainId !== chainId)?.chainId ?? CCTP_CHAINS[0].chainId,
   );
   const [amountStr, setAmountStr] = useState("");
 

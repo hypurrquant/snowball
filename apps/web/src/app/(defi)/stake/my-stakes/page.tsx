@@ -78,10 +78,10 @@ function useStakedTokenIds(owner: Address | undefined) {
       });
 
       const depositedSet = new Set<string>(
-        depositedLogs.map((l) => (l.args as { tokenId: bigint }).tokenId.toString()),
+        depositedLogs.map((l: any) => (l.args as { tokenId: bigint }).tokenId.toString()),
       );
       const withdrawnSet = new Set<string>(
-        withdrawnLogs.map((l) => (l.args as { tokenId: bigint }).tokenId.toString()),
+        withdrawnLogs.map((l: any) => (l.args as { tokenId: bigint }).tokenId.toString()),
       );
 
       // Still staked = deposited but not withdrawn

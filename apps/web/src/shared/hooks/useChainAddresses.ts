@@ -1,7 +1,7 @@
 "use client";
 
 import { useAccount } from "wagmi";
-import { getChainConfig, DEFAULT_CHAIN_ID } from "@snowball/core/src/config/addresses";
+import { getChainConfig, DEFAULT_CHAIN_ID } from "@/core/config/addresses";
 
 export function useChainAddresses() {
   const { chainId } = useAccount();

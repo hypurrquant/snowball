@@ -58,7 +58,7 @@ export function useActiveIncentives() {
       const now = BigInt(Math.floor(Date.now() / 1000));
 
       const results = await Promise.all(
-        logs.map(async (log) => {
+        logs.map(async (log: any) => {
           const { rewardToken, pool, startTime, endTime, refundee } =
             log.args as {
               rewardToken: `0x${string}`;
@@ -102,7 +102,7 @@ export function useActiveIncentives() {
         }),
       );
 
-      setIncentives(results.filter((x): x is StakerIncentive => x !== null));
+      setIncentives(results.filter((x: StakerIncentive | null): x is StakerIncentive => x !== null));
     } catch (err) {
       console.error("[useActiveIncentives] fetch failed:", err);
       setIncentives([]);

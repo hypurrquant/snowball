@@ -184,7 +184,7 @@ export function useOpportunityDetector(): void {
     address: STAKER.snowballStaker,
     abi: SnowballStakerABI,
     eventName: "IncentiveCreated",
-    onLogs(logs) {
+    onLogs(logs: any[]) {
       for (const log of logs) {
         const args = (log as any).args as {
           rewardToken: Address;

@@ -2,12 +2,12 @@
 
 import { useAccount, useReadContracts } from "wagmi";
 import { erc20Abi } from "viem";
-import { HYPERLEND } from "@snowball/core/src/config/hyperevm";
+import { HYPERLEND } from "@/core/config/hyperevm";
 
 export function useHyperLendPositions() {
   const { address, chainId } = useAccount();
 
-  const contracts = HYPERLEND.markets.flatMap((m) => [
+  const contracts = HYPERLEND.markets.flatMap((m: any) => [
     { address: m.hToken, abi: erc20Abi, functionName: "balanceOf" as const, args: [address!] as const },
     { address: m.debtToken, abi: erc20Abi, functionName: "balanceOf" as const, args: [address!] as const },
   ]);
@@ -17,7 +17,7 @@ export function useHyperLendPositions() {
     query: { enabled: !!address && chainId === 999, refetchInterval: 15_000 },
   });
 
-  const positions = HYPERLEND.markets.map((m, i) => {
+  const positions = HYPERLEND.markets.map((m: any, i: number) => {
     const supplyBal = data?.[i * 2]?.result as bigint | undefined;
     const borrowBal = data?.[i * 2 + 1]?.result as bigint | undefined;
     return {

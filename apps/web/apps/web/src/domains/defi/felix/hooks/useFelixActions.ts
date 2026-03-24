@@ -3,7 +3,7 @@
 import { useAccount, useConfig } from "wagmi";
 import { useChainWriteContract } from "@/shared/hooks/useChainWriteContract";
 import { waitForTransactionReceipt } from "wagmi/actions";
-import { FELIX } from "@snowball/core/src/config/hyperevm";
+import { FELIX } from "@/core/config/hyperevm";
 import type { Address } from "viem";
 
 // Liquity V2 BorrowerOperations ABI (Felix is a Liquity fork)
