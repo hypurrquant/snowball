@@ -16,6 +16,11 @@ import { Input } from "@/shared/components/ui/input";
 import { useHyperLendMarkets } from "@/domains/defi/hyperlend/hooks/useHyperLendMarkets";
 import { useHyperLendActions } from "@/domains/defi/hyperlend/hooks/useHyperLendActions";
 import { useHyperSwap } from "@/domains/trade/hooks/useHyperSwap";
+import { AggregatorSwap } from "@/domains/trade/components/AggregatorSwap";
+import { useHypurrFiMarkets } from "@/domains/defi/hypurrfi/hooks/useHypurrFiMarkets";
+import { useHypurrFiActions } from "@/domains/defi/hypurrfi/hooks/useHypurrFiActions";
+import { useFelixTroves } from "@/domains/defi/felix/hooks/useFelixTroves";
+import { useFelixActions } from "@/domains/defi/felix/hooks/useFelixActions";
 import {
   Landmark,
   ArrowDownUp,
@@ -77,6 +82,154 @@ function MarketRow({
   const [txError, setTxError] = useState<string | null>(null);
 
   const { supply, borrow, approve, isPending } = useHyperLendActions(
+    underlying,
+    () => {
+      setMode("idle");
+      setAmountStr("");
+      setTxError(null);
+    }
+  );
+
+  const parsedAmount = useMemo(() => {
+    try {
+      return amountStr ? parseUnits(amountStr, decimals) : undefined;
+    } catch {
+      return undefined;
+    }
+  }, [amountStr, decimals]);
+
+  const handleAction = async () => {
+    if (!parsedAmount) return;
+    setTxError(null);
+    try {
+      if (mode === "supply") {
+        await approve?.();
+        await supply(parsedAmount);
+      } else if (mode === "borrow") {
+        await borrow(parsedAmount);
+      }
+    } catch (err) {
+      setTxError(err instanceof Error ? err.message : "Transaction failed");
+    }
+  };
+
+  return (
+    <>
+      <tr className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+        <td className="px-4 py-3 font-medium text-white">{symbol}</td>
+        <td className="px-4 py-3 text-right text-emerald-400">
+          {supplyAPY.toFixed(2)}%
+        </td>
+        <td className="px-4 py-3 text-right text-amber-400">
+          {borrowAPY.toFixed(2)}%
+        </td>
+        <td className="px-4 py-3 text-right">
+          {isHyperEVM && (
+            <div className="flex justify-end gap-1">
+              <button
+                onClick={() => {
+                  setMode(mode === "supply" ? "idle" : "supply");
+                  setAmountStr("");
+                  setTxError(null);
+                }}
+                className={`text-xs px-2 py-1 rounded border transition-colors ${
+                  mode === "supply"
+                    ? "bg-emerald-400/20 border-emerald-400/40 text-emerald-400"
+                    : "border-white/10 text-text-secondary hover:text-emerald-400 hover:border-emerald-400/30"
+                }`}
+              >
+                Supply
+              </button>
+              <button
+                onClick={() => {
+                  setMode(mode === "borrow" ? "idle" : "borrow");
+                  setAmountStr("");
+                  setTxError(null);
+                }}
+                className={`text-xs px-2 py-1 rounded border transition-colors ${
+                  mode === "borrow"
+                    ? "bg-amber-400/20 border-amber-400/40 text-amber-400"
+                    : "border-white/10 text-text-secondary hover:text-amber-400 hover:border-amber-400/30"
+                }`}
+              >
+                Borrow
+              </button>
+            </div>
+          )}
+        </td>
+      </tr>
+      {mode !== "idle" && (
+        <tr className="border-b border-white/5 bg-white/[0.02]">
+          <td colSpan={4} className="px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min="0"
+                placeholder={`Amount (${symbol})`}
+                value={amountStr}
+                onChange={(e) => setAmountStr(e.target.value)}
+                className="flex-1 max-w-xs bg-bg-input border-white/10 text-white placeholder:text-text-secondary h-8 text-sm"
+              />
+              <Button
+                size="sm"
+                onClick={handleAction}
+                disabled={isPending || !parsedAmount}
+                className={
+                  mode === "supply"
+                    ? "bg-emerald-500 hover:bg-emerald-600 text-white h-8 text-xs"
+                    : "bg-amber-500 hover:bg-amber-600 text-white h-8 text-xs"
+                }
+              >
+                {isPending && (
+                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                )}
+                {mode === "supply" ? "Supply" : "Borrow"} {symbol}
+              </Button>
+              <button
+                onClick={() => {
+                  setMode("idle");
+                  setAmountStr("");
+                  setTxError(null);
+                }}
+                className="text-xs text-text-secondary hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+            {txError && (
+              <p className="mt-1 text-xs text-red-400">{txError}</p>
+            )}
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+// ─── HypurrFi market action row ───────────────────────────────────────────────
+
+interface HypurrFiMarketRowProps {
+  symbol: string;
+  underlying: Address;
+  decimals: number;
+  supplyAPY: number;
+  borrowAPY: number;
+  isHyperEVM: boolean;
+}
+
+function HypurrFiMarketRow({
+  symbol,
+  underlying,
+  decimals,
+  supplyAPY,
+  borrowAPY,
+  isHyperEVM,
+}: HypurrFiMarketRowProps) {
+  const [mode, setMode] = useState<"idle" | "supply" | "borrow">("idle");
+  const [amountStr, setAmountStr] = useState("");
+  const [txError, setTxError] = useState<string | null>(null);
+
+  const { supply, borrow, approve, isPending } = useHypurrFiActions(
     underlying,
     () => {
       setMode("idle");
@@ -424,6 +577,7 @@ function SwapTab() {
       : undefined;
 
   return (
+    <div className="space-y-4">
     <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5 max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="text-base text-white flex items-center gap-2">
@@ -573,6 +727,18 @@ function SwapTab() {
         </div>
       </CardContent>
     </Card>
+
+    {/* Aggregator comparison */}
+    <div>
+      <p className="text-xs text-text-secondary uppercase tracking-wider mb-3 text-center">
+        Compare with Aggregators
+      </p>
+      <AggregatorSwap
+        chainId={HYPEREVM_CHAIN_ID}
+        tokens={SWAP_TOKENS}
+      />
+    </div>
+    </div>
   );
 }
 
@@ -585,13 +751,15 @@ function shortAddr(addr: string): string {
 // ─── HypurrFi tab ─────────────────────────────────────────────────────────────
 
 function HypurrFiTab() {
+  const { markets, isLoading, isHyperEVM } = useHypurrFiMarkets();
+
   return (
     <div className="space-y-4">
       <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
         <CardHeader>
           <CardTitle className="text-base text-white flex items-center gap-2">
             <Landmark className="w-4 h-4 text-ice-400" />
-            HypurrFi
+            HypurrFi Markets
             <Badge variant="outline" className="ml-auto text-xs">
               Aave V3 Fork
             </Badge>
@@ -604,40 +772,48 @@ function HypurrFiTab() {
               rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs text-text-secondary hover:text-ice-400 transition-colors"
             >
-              app.hypurr.fi <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-3 h-3" />
             </a>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-text-secondary">
-            HypurrFi is an Aave V3 fork on HyperEVM offering lending and
-            borrowing markets for HYPE and major stablecoins.
-          </p>
-          <div className="rounded-lg border border-white/10 divide-y divide-white/5">
-            {[
-              { label: "Pool", value: HYPURRFI.pool },
-              { label: "Oracle", value: HYPURRFI.oracle },
-              { label: "Data Provider", value: HYPURRFI.protocolDataProvider },
-              { label: "Pool Addresses Provider", value: HYPURRFI.poolAddressesProvider },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-xs text-text-secondary uppercase tracking-wider w-40 shrink-0">
-                  {label}
-                </span>
-                <span className="text-xs text-white font-mono">
-                  {shortAddr(value)}
-                </span>
-              </div>
-            ))}
-          </div>
-          <a
-            href="https://app.hypurr.fi"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-ice-400 hover:text-ice-300 transition-colors"
-          >
-            Open HypurrFi App <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="space-y-2 p-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-10 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : markets.length === 0 ? (
+            <div className="py-10 text-center text-text-secondary text-sm">
+              {isHyperEVM
+                ? "No market data available."
+                : "Connect to HyperEVM to view markets."}
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/5 text-text-secondary">
+                  <th className="text-left px-4 py-2 font-medium">Asset</th>
+                  <th className="text-right px-4 py-2 font-medium">Supply APY</th>
+                  <th className="text-right px-4 py-2 font-medium">Borrow APY</th>
+                  <th className="text-right px-4 py-2 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {markets.map((m) => (
+                  <HypurrFiMarketRow
+                    key={m.underlying}
+                    symbol={m.symbol}
+                    underlying={m.underlying}
+                    decimals={m.decimals}
+                    supplyAPY={m.supplyAPY}
+                    borrowAPY={m.borrowAPY}
+                    isHyperEVM={isHyperEVM}
+                  />
+                ))}
+              </tbody>
+            </table>
+          )}
         </CardContent>
       </Card>
     </div>

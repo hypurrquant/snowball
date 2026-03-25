@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useAccount } from "wagmi";
+import type { Address } from "viem";
+import { AggregatorSwap } from "@/domains/trade/components/AggregatorSwap";
 import {
   Card,
   CardHeader,
@@ -9,6 +11,7 @@ import {
   CardContent,
 } from "@/shared/components/ui/card";
 import { Badge } from "@/shared/components/ui/badge";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import {
   Gem,
   Landmark,
@@ -26,9 +29,9 @@ import {
   MONAD_CURVE,
   KURU,
   CURVANCE,
-  NEVERLAND,
   UPSHIFT,
 } from "@/core/config/monad";
+import { useNeverlandMarkets } from "@/domains/defi/neverland/hooks/useNeverlandMarkets";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -50,6 +53,62 @@ function AddrRow({ label, addr }: { label: string; addr: string }) {
 type Tab = "lending" | "dex" | "yield";
 
 // ─── Lending tab ──────────────────────────────────────────────────────────────
+
+function NeverlandMarketsTable() {
+  const { markets, isLoading } = useNeverlandMarkets();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-8 w-full rounded" />
+        ))}
+      </div>
+    );
+  }
+
+  if (markets.length === 0) {
+    return (
+      <p className="text-xs text-text-secondary">
+        No market data available. Switch to Monad to load live rates.
+      </p>
+    );
+  }
+
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b border-white/10">
+          <th className="px-2 py-2 text-left text-xs text-text-secondary font-medium">
+            Asset
+          </th>
+          <th className="px-2 py-2 text-right text-xs text-text-secondary font-medium">
+            Supply APY
+          </th>
+          <th className="px-2 py-2 text-right text-xs text-text-secondary font-medium">
+            Borrow APY
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {markets.map((m) => (
+          <tr
+            key={m.underlying}
+            className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors"
+          >
+            <td className="px-2 py-2 font-medium text-white">{m.symbol}</td>
+            <td className="px-2 py-2 text-right text-emerald-400">
+              {m.supplyAPY.toFixed(2)}%
+            </td>
+            <td className="px-2 py-2 text-right text-amber-400">
+              {m.borrowAPY.toFixed(2)}%
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 function LendingTab() {
   return (
@@ -110,11 +169,7 @@ function LendingTab() {
             Aave V3 fork with veTokenomics. Earn yield by supplying assets or
             borrow against collateral with variable/stable rates.
           </p>
-          <div className="divide-y divide-white/5">
-            <AddrRow label="Pool" addr={NEVERLAND.pool} />
-            <AddrRow label="Oracle" addr={NEVERLAND.oracle} />
-            <AddrRow label="PoolDataProvider" addr={NEVERLAND.poolDataProvider} />
-          </div>
+          <NeverlandMarketsTable />
         </CardContent>
       </Card>
 
@@ -167,6 +222,16 @@ function LendingTab() {
     </div>
   );
 }
+
+// ─── Monad swap token list ─────────────────────────────────────────────────────
+
+const MONAD_SWAP_TOKENS: { symbol: string; address: Address; decimals: number }[] = [
+  { symbol: "WMON", address: MONAD_TOKENS.WMON, decimals: 18 },
+  { symbol: "USDC", address: MONAD_TOKENS.USDC, decimals: 6 },
+  { symbol: "USDT0", address: MONAD_TOKENS.USDT0, decimals: 6 },
+  { symbol: "WETH", address: MONAD_TOKENS.WETH, decimals: 18 },
+  { symbol: "AUSD", address: MONAD_TOKENS.AUSD, decimals: 18 },
+];
 
 // ─── DEX tab ──────────────────────────────────────────────────────────────────
 
@@ -266,6 +331,17 @@ function DexTab() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Aggregator swap */}
+      <div>
+        <p className="text-xs text-text-secondary uppercase tracking-wider mb-3 text-center">
+          Swap via Aggregators
+        </p>
+        <AggregatorSwap
+          chainId={143}
+          tokens={MONAD_SWAP_TOKENS}
+        />
+      </div>
     </div>
   );
 }
