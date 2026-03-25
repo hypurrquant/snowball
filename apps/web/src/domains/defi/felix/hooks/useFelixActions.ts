@@ -11,8 +11,7 @@ import type { Address } from "viem";
 // Zero address sentinel — branch not yet deployed
 const ZERO = zeroAddress;
 
-// HyperEVM chain id
-const HYPEREVM_CHAIN_ID = 999;
+import { HYPEREVM_CHAIN_ID } from "@/core/config/hyperevm";
 
 export function useFelixActions(branch: "HYPE" = "HYPE") {
   const config = useConfig();

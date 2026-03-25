@@ -23,26 +23,35 @@ import {
   ExternalLink,
   Zap,
   Shield,
+  Layers,
+  TrendingUp,
 } from "lucide-react";
+
+import {
+  HYPEREVM_TOKENS,
+  HYPEREVM_CHAIN_ID,
+  FELIX,
+  HYPURRFI,
+  KINETIQ,
+  STAKEDHYPE,
+  HYPERBEAT,
+  HARMONIX,
+  LOOPED,
+} from "@/core/config/hyperevm";
 
 // ─── Token lists ──────────────────────────────────────────────────────────────
 
-const HYPEREVM_CHAIN_ID = 999;
-
-const WHYPE: Address = "0x5555555555555555555555555555555555555555";
-const USDT0: Address = "0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb";
-
 const SWAP_TOKENS: { symbol: string; address: Address; decimals: number }[] = [
-  { symbol: "wHYPE", address: WHYPE, decimals: 18 },
-  { symbol: "USDT0", address: USDT0, decimals: 6 },
-  { symbol: "USDC", address: "0x6d3cC56DFC016151eE2613BdDe0e03Af9ba885CC", decimals: 6 },
-  { symbol: "USDe", address: "0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34", decimals: 18 },
-  { symbol: "feUSD", address: "0x02c6a2fa58cc01a18b8d9e00ea48d65e4df26c70", decimals: 18 },
+  { symbol: "wHYPE", address: HYPEREVM_TOKENS.WHYPE, decimals: 18 },
+  { symbol: "USDT0", address: HYPEREVM_TOKENS.USDT0, decimals: 6 },
+  { symbol: "USDC", address: HYPEREVM_TOKENS.USDC, decimals: 6 },
+  { symbol: "USDe", address: HYPEREVM_TOKENS.USDe, decimals: 18 },
+  { symbol: "feUSD", address: HYPEREVM_TOKENS.feUSD, decimals: 18 },
 ];
 
 // ─── Tab types ────────────────────────────────────────────────────────────────
 
-type Tab = "lending" | "cdp" | "swap";
+type Tab = "lending" | "cdp" | "swap" | "hypurrfi" | "lst" | "yield";
 
 // ─── Inline market action row ────────────────────────────────────────────────
 
@@ -261,12 +270,9 @@ function LendingTab({ isHyperEVM }: { isHyperEVM: boolean }) {
 
 // ─── CDP tab ──────────────────────────────────────────────────────────────────
 
-// Felix contract addresses — set to zero address until verified on HyperEVM
-const FELIX_TROVE_MANAGER: Address = "0x0000000000000000000000000000000000000000";
-
 function CdpTab() {
   const felixDeployed =
-    FELIX_TROVE_MANAGER !== "0x0000000000000000000000000000000000000000";
+    FELIX.branches.HYPE.troveManager !== "0x0000000000000000000000000000000000000000";
 
   return (
     <div className="space-y-4">
@@ -378,8 +384,8 @@ function CdpTab() {
 function SwapTab() {
   const { isConnected } = useConnection();
 
-  const [tokenIn, setTokenIn] = useState<Address>(WHYPE);
-  const [tokenOut, setTokenOut] = useState<Address>(USDT0);
+  const [tokenIn, setTokenIn] = useState<Address>(HYPEREVM_TOKENS.WHYPE);
+  const [tokenOut, setTokenOut] = useState<Address>(HYPEREVM_TOKENS.USDT0);
   const [amountInStr, setAmountInStr] = useState("");
 
   const tokenInMeta = SWAP_TOKENS.find((t) => t.address === tokenIn);
@@ -570,6 +576,363 @@ function SwapTab() {
   );
 }
 
+// ─── Address truncation helper ────────────────────────────────────────────────
+
+function shortAddr(addr: string): string {
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
+// ─── HypurrFi tab ─────────────────────────────────────────────────────────────
+
+function HypurrFiTab() {
+  return (
+    <div className="space-y-4">
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <Landmark className="w-4 h-4 text-ice-400" />
+            HypurrFi
+            <Badge variant="outline" className="ml-auto text-xs">
+              Aave V3 Fork
+            </Badge>
+            <Badge className="bg-emerald-400/10 text-emerald-400 border-emerald-400/20 text-xs">
+              $300M TVL
+            </Badge>
+            <a
+              href="https://app.hypurr.fi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-ice-400 transition-colors"
+            >
+              app.hypurr.fi <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            HypurrFi is an Aave V3 fork on HyperEVM offering lending and
+            borrowing markets for HYPE and major stablecoins.
+          </p>
+          <div className="rounded-lg border border-white/10 divide-y divide-white/5">
+            {[
+              { label: "Pool", value: HYPURRFI.pool },
+              { label: "Oracle", value: HYPURRFI.oracle },
+              { label: "Data Provider", value: HYPURRFI.protocolDataProvider },
+              { label: "Pool Addresses Provider", value: HYPURRFI.poolAddressesProvider },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-text-secondary uppercase tracking-wider w-40 shrink-0">
+                  {label}
+                </span>
+                <span className="text-xs text-white font-mono">
+                  {shortAddr(value)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <a
+            href="https://app.hypurr.fi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-ice-400 hover:text-ice-300 transition-colors"
+          >
+            Open HypurrFi App <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── LST tab ──────────────────────────────────────────────────────────────────
+
+function LSTTab() {
+  return (
+    <div className="space-y-4">
+      {/* Kinetiq */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <Layers className="w-4 h-4 text-ice-400" />
+            Kinetiq
+            <Badge className="bg-emerald-400/10 text-emerald-400 border-emerald-400/20 text-xs ml-auto">
+              ~$639M TVL
+            </Badge>
+            <a
+              href="https://app.kinetiq.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-ice-400 transition-colors"
+            >
+              app.kinetiq.xyz <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Kinetiq is the leading liquid staking protocol on HyperEVM, issuing
+            kHYPE in exchange for staked HYPE.
+          </p>
+          <div className="rounded-lg border border-white/10 divide-y divide-white/5">
+            {[
+              { label: "kHYPE Token", value: KINETIQ.kHYPE },
+              { label: "Staking Manager", value: KINETIQ.stakingManager },
+              { label: "Staking Accountant", value: KINETIQ.stakingAccountant },
+              { label: "Oracle Manager", value: KINETIQ.oracleManager },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-text-secondary uppercase tracking-wider w-44 shrink-0">
+                  {label}
+                </span>
+                <span className="text-xs text-white font-mono">
+                  {shortAddr(value)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <a
+            href="https://app.kinetiq.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-ice-400 hover:text-ice-300 transition-colors"
+          >
+            Open Kinetiq App <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </CardContent>
+      </Card>
+
+      {/* StakedHYPE */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <Layers className="w-4 h-4 text-ice-400" />
+            StakedHYPE
+            <Badge className="bg-emerald-400/10 text-emerald-400 border-emerald-400/20 text-xs ml-auto">
+              ~$200M TVL
+            </Badge>
+            <a
+              href="https://www.thunderhead.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-ice-400 transition-colors"
+            >
+              thunderhead.xyz <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            StakedHYPE (stHYPE / wstHYPE) is a rebasing liquid staking token
+            built by Thunderhead on HyperEVM.
+          </p>
+          <div className="rounded-lg border border-white/10 divide-y divide-white/5">
+            {[
+              { label: "stHYPE Token", value: STAKEDHYPE.stHYPE },
+              { label: "wstHYPE Token", value: STAKEDHYPE.wstHYPE },
+              { label: "Overseer", value: STAKEDHYPE.overseer },
+              { label: "STEX Pool", value: STAKEDHYPE.stexPool },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-text-secondary uppercase tracking-wider w-44 shrink-0">
+                  {label}
+                </span>
+                <span className="text-xs text-white font-mono">
+                  {shortAddr(value)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <a
+            href="https://www.thunderhead.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-ice-400 hover:text-ice-300 transition-colors"
+          >
+            Open StakedHYPE App <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ─── Yield tab ────────────────────────────────────────────────────────────────
+
+function YieldTab() {
+  return (
+    <div className="space-y-4">
+      {/* Hyperbeat */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-ice-400" />
+            Hyperbeat
+            <Badge variant="outline" className="ml-auto text-xs">
+              Yield Aggregator
+            </Badge>
+            <Badge className="bg-emerald-400/10 text-emerald-400 border-emerald-400/20 text-xs">
+              ~$65M TVL
+            </Badge>
+            <a
+              href="https://hyperbeat.fi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-ice-400 transition-colors"
+            >
+              hyperbeat.fi <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Hyperbeat is a multi-protocol yield aggregator on HyperEVM, offering
+            auto-compounding vaults across HYPE, LSTs, and stablecoins.
+          </p>
+          <div className="rounded-lg border border-white/10 divide-y divide-white/5">
+            {[
+              { label: "beHYPE Token", value: HYPERBEAT.beHYPE },
+              { label: "Vault — HYPE", value: HYPERBEAT.vaults.HYPE },
+              { label: "Vault — LST", value: HYPERBEAT.vaults.LST },
+              { label: "Vault — USDC", value: HYPERBEAT.vaults.USDC },
+              { label: "Vault — USDT", value: HYPERBEAT.vaults.USDT },
+              { label: "Staking Core", value: HYPERBEAT.stakingCore },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-text-secondary uppercase tracking-wider w-44 shrink-0">
+                  {label}
+                </span>
+                <span className="text-xs text-white font-mono">
+                  {shortAddr(value)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <a
+            href="https://hyperbeat.fi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-ice-400 hover:text-ice-300 transition-colors"
+          >
+            Open Hyperbeat App <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </CardContent>
+      </Card>
+
+      {/* Harmonix */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-ice-400" />
+            Harmonix
+            <Badge variant="outline" className="ml-auto text-xs">
+              Delta-Neutral
+            </Badge>
+            <Badge className="bg-emerald-400/10 text-emerald-400 border-emerald-400/20 text-xs">
+              ~$4.7M TVL
+            </Badge>
+            <a
+              href="https://harmonix.fi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-ice-400 transition-colors"
+            >
+              harmonix.fi <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Harmonix offers delta-neutral yield strategies on HyperEVM, using
+            kHYPE and HYPE vaults to generate yield with minimized directional
+            exposure.
+          </p>
+          <div className="rounded-lg border border-white/10 divide-y divide-white/5">
+            {[
+              { label: "Vault — kHYPE", value: HARMONIX.vaults.kHYPE },
+              { label: "Vault — HYPE", value: HARMONIX.vaults.HYPE },
+              { label: "HAR Token", value: HARMONIX.HAR },
+              { label: "Staking", value: HARMONIX.staking },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-text-secondary uppercase tracking-wider w-44 shrink-0">
+                  {label}
+                </span>
+                <span className="text-xs text-white font-mono">
+                  {shortAddr(value)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <a
+            href="https://harmonix.fi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-ice-400 hover:text-ice-300 transition-colors"
+          >
+            Open Harmonix App <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </CardContent>
+      </Card>
+
+      {/* Looped */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-ice-400" />
+            Looped
+            <Badge variant="outline" className="ml-auto text-xs">
+              Leveraged HYPE
+            </Badge>
+            <Badge className="bg-emerald-400/10 text-emerald-400 border-emerald-400/20 text-xs">
+              ~$15.8M TVL
+            </Badge>
+            <a
+              href="https://looped.fi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-ice-400 transition-colors"
+            >
+              looped.fi <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-text-secondary">
+            Looped issues LHYPE, a leveraged HYPE token that uses recursive
+            borrowing to amplify HYPE staking yield.
+          </p>
+          <div className="rounded-lg border border-white/10 divide-y divide-white/5">
+            {[
+              { label: "LHYPE Token", value: LOOPED.LHYPE },
+              { label: "Teller", value: LOOPED.teller },
+              { label: "Manager", value: LOOPED.manager },
+              { label: "Accountant", value: LOOPED.accountant },
+              { label: "LOOP Token", value: LOOPED.LOOP },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-text-secondary uppercase tracking-wider w-44 shrink-0">
+                  {label}
+                </span>
+                <span className="text-xs text-white font-mono">
+                  {shortAddr(value)}
+                </span>
+              </div>
+            ))}
+          </div>
+          <a
+            href="https://looped.fi"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-ice-400 hover:text-ice-300 transition-colors"
+          >
+            Open Looped App <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function HyperEVMPage() {
@@ -580,6 +943,9 @@ export default function HyperEVMPage() {
     { id: "lending", label: "Lending" },
     { id: "cdp", label: "CDP" },
     { id: "swap", label: "Swap" },
+    { id: "hypurrfi", label: "HypurrFi" },
+    { id: "lst", label: "LST" },
+    { id: "yield", label: "Yield" },
   ];
 
   return (
@@ -655,6 +1021,9 @@ export default function HyperEVMPage() {
       {activeTab === "lending" && <LendingTab isHyperEVM={isHyperEVM} />}
       {activeTab === "cdp" && <CdpTab />}
       {activeTab === "swap" && <SwapTab />}
+      {activeTab === "hypurrfi" && <HypurrFiTab />}
+      {activeTab === "lst" && <LSTTab />}
+      {activeTab === "yield" && <YieldTab />}
     </div>
   );
 }

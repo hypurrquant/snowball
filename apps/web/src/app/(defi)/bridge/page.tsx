@@ -15,8 +15,10 @@ import { formatTokenAmount } from "@/shared/lib/utils";
 // ─── Chain / Token Definitions ───────────────────────────────────────────────
 
 const BRIDGE_CHAINS = [
-  { id: 102031, name: "CC Testnet" },
-  { id: 91342,  name: "GIWA Sepolia" },
+  { id: 102031, name: "CC Testnet",    symbol: "CTC"  },
+  { id: 91342,  name: "GIWA Sepolia",  symbol: "ETH"  },
+  { id: 999,    name: "HyperEVM",      symbol: "HYPE" },
+  { id: 10143,  name: "Monad Testnet", symbol: "MON"  },
 ] as const;
 
 type BridgeChainId = (typeof BRIDGE_CHAINS)[number]["id"];
@@ -24,7 +26,7 @@ type BridgeChainId = (typeof BRIDGE_CHAINS)[number]["id"];
 const TOKEN_SYMBOLS = ["wCTC", "lstCTC", "sbUSD", "USDC"] as const;
 type TokenSymbol = (typeof TOKEN_SYMBOLS)[number];
 
-// Token addresses per chain — CC Testnet uses deployed addresses; GIWA Sepolia uses same for bridge UI
+// Token addresses per chain — CC Testnet uses deployed addresses; others use same for bridge UI (mock)
 const CHAIN_TOKEN_ADDRESSES: Record<BridgeChainId, Record<TokenSymbol, Address>> = {
   102031: {
     wCTC:   TOKENS.wCTC,
@@ -33,6 +35,18 @@ const CHAIN_TOKEN_ADDRESSES: Record<BridgeChainId, Record<TokenSymbol, Address>>
     USDC:   TOKENS.USDC,
   },
   91342: {
+    wCTC:   TOKENS.wCTC,
+    lstCTC: TOKENS.lstCTC,
+    sbUSD:  TOKENS.sbUSD,
+    USDC:   TOKENS.USDC,
+  },
+  999: {
+    wCTC:   TOKENS.wCTC,
+    lstCTC: TOKENS.lstCTC,
+    sbUSD:  TOKENS.sbUSD,
+    USDC:   TOKENS.USDC,
+  },
+  10143: {
     wCTC:   TOKENS.wCTC,
     lstCTC: TOKENS.lstCTC,
     sbUSD:  TOKENS.sbUSD,
@@ -50,11 +64,11 @@ function InternalBridgeTab() {
   const { address, isConnected } = useAccount();
 
   const [fromChainId, setFromChainId] = useState<BridgeChainId>(102031);
+  const [toChainId, setToChainId] = useState<BridgeChainId>(91342);
   const [selectedToken, setSelectedToken] = useState<TokenSymbol>("wCTC");
   const [amountStr, setAmountStr] = useState("");
   const [isBridging, setIsBridging] = useState(false);
 
-  const toChainId: BridgeChainId = fromChainId === 102031 ? 91342 : 102031;
   const fromChainName = BRIDGE_CHAINS.find((c) => c.id === fromChainId)!.name;
   const toChainName   = BRIDGE_CHAINS.find((c) => c.id === toChainId)!.name;
 
@@ -88,6 +102,7 @@ function InternalBridgeTab() {
 
   const swapChains = () => {
     setFromChainId(toChainId);
+    setToChainId(fromChainId);
     setAmountStr("");
   };
 
@@ -119,7 +134,12 @@ function InternalBridgeTab() {
           <select
             value={fromChainId}
             onChange={(e) => {
-              setFromChainId(Number(e.target.value) as BridgeChainId);
+              const newFrom = Number(e.target.value) as BridgeChainId;
+              setFromChainId(newFrom);
+              if (newFrom === toChainId) {
+                const fallback = BRIDGE_CHAINS.find((c) => c.id !== newFrom)!;
+                setToChainId(fallback.id);
+              }
               setAmountStr("");
             }}
             className="bg-bg-card border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:border-ice-400/60"
@@ -144,9 +164,20 @@ function InternalBridgeTab() {
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-text-tertiary font-semibold uppercase tracking-wider">To</span>
-          <div className="bg-bg-card border border-border rounded-lg px-3 py-1.5 text-sm text-text-secondary">
-            {toChainName}
-          </div>
+          <select
+            value={toChainId}
+            onChange={(e) => {
+              setToChainId(Number(e.target.value) as BridgeChainId);
+              setAmountStr("");
+            }}
+            className="bg-bg-card border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:border-ice-400/60"
+          >
+            {BRIDGE_CHAINS.filter((c) => c.id !== fromChainId).map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

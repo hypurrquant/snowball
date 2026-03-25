@@ -13,86 +13,237 @@ import {
   Gem,
   Landmark,
   ArrowDownUp,
+  TrendingUp,
   ExternalLink,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { monadTestnet } from "@/core/config/chain";
-import { EULER, KURU, AMBIENT } from "@/core/config/monad";
+import {
+  MONAD_TOKENS,
+  MONAD_UNISWAP,
+  MONAD_MORPHO,
+  MONAD_CURVE,
+  KURU,
+  CURVANCE,
+  NEVERLAND,
+  UPSHIFT,
+} from "@/core/config/monad";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+function truncateAddr(addr: string) {
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
 
-const isDeployed = (addr: string) => addr !== ZERO_ADDRESS;
+function AddrRow({ label, addr }: { label: string; addr: string }) {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="text-xs text-text-secondary">{label}</span>
+      <span className="text-xs font-mono text-white/70">{truncateAddr(addr)}</span>
+    </div>
+  );
+}
 
 // ─── Tab types ────────────────────────────────────────────────────────────────
 
-type Tab = "lending" | "swap";
+type Tab = "lending" | "dex" | "yield";
 
 // ─── Lending tab ──────────────────────────────────────────────────────────────
 
 function LendingTab() {
-  const eulerDeployed = isDeployed(EULER.pool);
-
   return (
-    <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
-      <CardHeader>
-        <CardTitle className="text-base text-white flex items-center gap-2">
-          <Landmark className="w-4 h-4 text-purple-400" />
-          Euler Lending
-          <Badge variant="outline" className="ml-auto text-xs">
-            Euler V2
-          </Badge>
-          <a
-            href="https://www.euler.finance"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs text-text-secondary hover:text-purple-400 transition-colors"
-          >
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {eulerDeployed ? (
-          <p className="text-sm text-text-secondary">Euler markets loading…</p>
-        ) : (
-          <div className="rounded-lg bg-purple-400/5 border border-purple-400/20 p-4 text-center">
-            <p className="text-purple-400 text-sm font-medium">Coming Soon</p>
-            <p className="text-text-secondary text-xs mt-1">
-              Euler integration planned — contract addresses being verified on
-              Monad mainnet.
-            </p>
+    <div className="space-y-4">
+      {/* Morpho */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <Landmark className="w-4 h-4 text-purple-400" />
+            Morpho
+            <Badge variant="outline" className="ml-auto text-xs border-purple-400/30 text-purple-300">
+              ~$90M TVL
+            </Badge>
             <a
-              href="https://www.euler.finance"
+              href="https://app.morpho.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 mt-3 text-sm text-purple-400 hover:text-purple-300 transition-colors"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-purple-400 transition-colors"
             >
-              Visit Euler App <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-3 h-3" />
             </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-text-secondary mb-3">
+            Permissionless isolated lending markets. Supply assets or open
+            collateralized borrow positions against any ERC-20 pair.
+          </p>
+          <div className="divide-y divide-white/5">
+            <AddrRow label="Morpho" addr={MONAD_MORPHO.morpho} />
+            <AddrRow label="AdaptiveCurveIRM" addr={MONAD_MORPHO.adaptiveCurveIRM} />
+            <AddrRow label="MetaMorphoFactory" addr={MONAD_MORPHO.metaMorphoFactory} />
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {/* Neverland */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <Landmark className="w-4 h-4 text-purple-400" />
+            Neverland
+            <Badge variant="outline" className="ml-auto text-xs border-purple-400/30 text-purple-300">
+              Aave V3 Fork
+            </Badge>
+            <a
+              href="https://neverland.finance"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-purple-400 transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-text-secondary mb-3">
+            Aave V3 fork with veTokenomics. Earn yield by supplying assets or
+            borrow against collateral with variable/stable rates.
+          </p>
+          <div className="divide-y divide-white/5">
+            <AddrRow label="Pool" addr={NEVERLAND.pool} />
+            <AddrRow label="Oracle" addr={NEVERLAND.oracle} />
+            <AddrRow label="PoolDataProvider" addr={NEVERLAND.poolDataProvider} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Curvance */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <Landmark className="w-4 h-4 text-purple-400" />
+            Curvance
+            <Badge variant="outline" className="ml-auto text-xs border-purple-400/30 text-purple-300">
+              ~$58M TVL
+            </Badge>
+            <a
+              href="https://curvance.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-purple-400 transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-text-secondary mb-3">
+            ERC-4626 vault lending. Deposit LST collateral and borrow against
+            it via isolated cToken markets.
+          </p>
+          <div className="divide-y divide-white/5">
+            <AddrRow label="CentralRegistry" addr={CURVANCE.centralRegistry} />
+            <AddrRow label="OracleManager" addr={CURVANCE.oracleManager} />
+          </div>
+          <p className="text-xs text-text-secondary mt-3 mb-1 uppercase tracking-wider">
+            Markets
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {(["aprMON", "shMON", "sMON", "gMON"] as const).map((key) => (
+              <div
+                key={key}
+                className="rounded-lg bg-purple-400/5 border border-purple-400/10 px-3 py-2"
+              >
+                <p className="text-xs font-medium text-white">{key}</p>
+                <p className="text-xs font-mono text-white/50 mt-0.5">
+                  {truncateAddr(CURVANCE.markets[key].cToken)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
-// ─── Swap tab ─────────────────────────────────────────────────────────────────
+// ─── DEX tab ──────────────────────────────────────────────────────────────────
 
-function SwapTab() {
-  const kuruDeployed = isDeployed(KURU.router);
-  const ambientDeployed = isDeployed(AMBIENT.crocSwapDex);
-
+function DexTab() {
   return (
     <div className="space-y-4">
+      {/* Uniswap V3 */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <ArrowDownUp className="w-4 h-4 text-purple-400" />
+            Uniswap V3
+            <Badge variant="outline" className="ml-auto text-xs border-purple-400/30 text-purple-300">
+              ~$60M TVL
+            </Badge>
+            <a
+              href="https://app.uniswap.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-purple-400 transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-text-secondary mb-3">
+            Concentrated liquidity DEX. Provide liquidity in custom price ranges
+            and earn trading fees proportional to your range position.
+          </p>
+          <div className="divide-y divide-white/5">
+            <AddrRow label="Factory" addr={MONAD_UNISWAP.factory} />
+            <AddrRow label="SwapRouter02" addr={MONAD_UNISWAP.swapRouter02} />
+            <AddrRow label="PositionManager" addr={MONAD_UNISWAP.nonfungiblePositionManager} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Curve */}
+      <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+        <CardHeader>
+          <CardTitle className="text-base text-white flex items-center gap-2">
+            <ArrowDownUp className="w-4 h-4 text-purple-400" />
+            Curve
+            <Badge variant="outline" className="ml-auto text-xs border-purple-400/30 text-purple-300">
+              ~$21M TVL
+            </Badge>
+            <a
+              href="https://curve.fi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-purple-400 transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-text-secondary mb-3">
+            StableSwap AMM optimised for pegged assets. Low slippage stablecoin
+            and LST swaps via stable and crypto pools.
+          </p>
+          <div className="divide-y divide-white/5">
+            <AddrRow label="Router" addr={MONAD_CURVE.router} />
+            <AddrRow label="StableswapFactory" addr={MONAD_CURVE.stableswapFactory} />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Kuru */}
       <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
         <CardHeader>
           <CardTitle className="text-base text-white flex items-center gap-2">
             <ArrowDownUp className="w-4 h-4 text-purple-400" />
             Kuru Exchange
-            <Badge variant="outline" className="ml-auto text-xs">
-              Order Book DEX
+            <Badge variant="outline" className="ml-auto text-xs border-purple-400/30 text-purple-300">
+              ~$1.2M TVL
             </Badge>
             <a
               href="https://www.kuru.io"
@@ -105,68 +256,88 @@ function SwapTab() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {kuruDeployed ? (
-            <p className="text-sm text-text-secondary">Kuru swap loading…</p>
-          ) : (
-            <div className="rounded-lg bg-purple-400/5 border border-purple-400/20 p-4 text-center">
-              <p className="text-purple-400 text-sm font-medium">Coming Soon</p>
-              <p className="text-text-secondary text-xs mt-1">
-                Kuru Exchange integration planned for Monad.
-              </p>
-              <a
-                href="https://www.kuru.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 mt-3 text-sm text-purple-400 hover:text-purple-300 transition-colors"
-              >
-                Visit Kuru Exchange <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          )}
+          <p className="text-sm text-text-secondary mb-3">
+            CLOB + AMM hybrid DEX native to Monad. Ultra-low latency order book
+            execution with on-chain settlement.
+          </p>
+          <div className="divide-y divide-white/5">
+            <AddrRow label="FlowEntrypoint" addr={KURU.flowEntrypoint} />
+            <AddrRow label="Router" addr={KURU.router} />
+          </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
 
-      {/* Ambient */}
+// ─── Yield tab ────────────────────────────────────────────────────────────────
+
+function YieldTab() {
+  return (
+    <div className="space-y-4">
+      {/* Upshift */}
       <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
         <CardHeader>
           <CardTitle className="text-base text-white flex items-center gap-2">
-            <ArrowDownUp className="w-4 h-4 text-pink-400" />
-            Ambient
-            <Badge variant="outline" className="ml-auto text-xs">
-              AMM DEX
+            <TrendingUp className="w-4 h-4 text-purple-400" />
+            Upshift
+            <Badge variant="outline" className="ml-auto text-xs border-purple-400/30 text-purple-300">
+              ~$82M TVL
             </Badge>
             <a
-              href="https://ambient.finance"
+              href="https://upshift.finance"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-text-secondary hover:text-pink-400 transition-colors"
+              className="flex items-center gap-1 text-xs text-text-secondary hover:text-purple-400 transition-colors"
             >
               <ExternalLink className="w-3 h-3" />
             </a>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {ambientDeployed ? (
-            <p className="text-sm text-text-secondary">Ambient swap loading…</p>
-          ) : (
-            <div className="rounded-lg bg-pink-400/5 border border-pink-400/20 p-4 text-center">
-              <p className="text-pink-400 text-sm font-medium">Coming Soon</p>
-              <p className="text-text-secondary text-xs mt-1">
-                Ambient integration planned for Monad.
-              </p>
-              <a
-                href="https://ambient.finance"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 mt-3 text-sm text-pink-400 hover:text-pink-300 transition-colors"
-              >
-                Visit Ambient <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          )}
+          <p className="text-sm text-text-secondary mb-3">
+            Multi-strategy yield vaults. Deposit stablecoins or MON-correlated
+            assets and earn optimised yield routed across Monad DeFi protocols.
+          </p>
+          <div className="divide-y divide-white/5">
+            <AddrRow label="earnAUSD Vault" addr={UPSHIFT.earnAUSD} />
+          </div>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// ─── Token Section ────────────────────────────────────────────────────────────
+
+function TokenSection() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card className="bg-bg-card/60 backdrop-blur-xl border-white/5">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-6 py-4 text-sm font-medium text-white hover:text-purple-300 transition-colors"
+      >
+        <span>Monad Token Addresses</span>
+        {open ? (
+          <ChevronUp className="w-4 h-4 text-text-secondary" />
+        ) : (
+          <ChevronDown className="w-4 h-4 text-text-secondary" />
+        )}
+      </button>
+      {open && (
+        <CardContent className="pt-0">
+          <div className="divide-y divide-white/5">
+            {(Object.entries(MONAD_TOKENS) as [string, string][]).map(
+              ([symbol, addr]) => (
+                <AddrRow key={symbol} label={symbol} addr={addr} />
+              )
+            )}
+          </div>
+        </CardContent>
+      )}
+    </Card>
   );
 }
 
@@ -177,9 +348,10 @@ export default function MonadPage() {
   const { chain } = useAccount();
   const isMonad = chain?.id === monadTestnet.id;
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "lending", label: "Lending" },
-    { id: "swap", label: "Swap" },
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "lending", label: "Lending", icon: <Landmark className="w-3.5 h-3.5" /> },
+    { id: "dex", label: "DEX", icon: <ArrowDownUp className="w-3.5 h-3.5" /> },
+    { id: "yield", label: "Yield", icon: <TrendingUp className="w-3.5 h-3.5" /> },
   ];
 
   return (
@@ -200,30 +372,30 @@ export default function MonadPage() {
         </div>
         <div className="flex gap-3 text-sm text-text-secondary">
           <a
+            href="https://app.morpho.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-purple-400 transition-colors flex items-center gap-1"
+          >
+            Morpho <ExternalLink className="w-3 h-3" />
+          </a>
+          <span>·</span>
+          <a
             href="https://www.kuru.io"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-purple-400 transition-colors flex items-center gap-1"
           >
-            Kuru Exchange <ExternalLink className="w-3 h-3" />
+            Kuru <ExternalLink className="w-3 h-3" />
           </a>
           <span>·</span>
           <a
-            href="https://www.euler.finance"
+            href="https://upshift.finance"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-purple-400 transition-colors flex items-center gap-1"
           >
-            Euler <ExternalLink className="w-3 h-3" />
-          </a>
-          <span>·</span>
-          <a
-            href="https://ambient.finance"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-purple-400 transition-colors flex items-center gap-1"
-          >
-            Ambient <ExternalLink className="w-3 h-3" />
+            Upshift <ExternalLink className="w-3 h-3" />
           </a>
         </div>
       </div>
@@ -238,26 +410,19 @@ export default function MonadPage() {
         </Card>
       )}
 
-      {/* Protocol addresses notice */}
-      <Card className="bg-white/[0.02] border-white/5">
-        <CardContent className="py-3 text-center text-text-secondary text-xs">
-          Protocol addresses are being verified on Monad mainnet. Testnet
-          support coming soon.
-        </CardContent>
-      </Card>
-
       {/* Tabs — pill style */}
       <nav className="flex gap-1 rounded-lg bg-white/5 p-1 w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`rounded-md px-5 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-md px-5 py-2 text-sm font-medium transition-colors flex items-center gap-1.5 ${
               activeTab === tab.id
                 ? "bg-white/10 text-white shadow-sm"
                 : "text-text-secondary hover:text-white"
             }`}
           >
+            {tab.icon}
             {tab.label}
           </button>
         ))}
@@ -265,7 +430,11 @@ export default function MonadPage() {
 
       {/* Tab content */}
       {activeTab === "lending" && <LendingTab />}
-      {activeTab === "swap" && <SwapTab />}
+      {activeTab === "dex" && <DexTab />}
+      {activeTab === "yield" && <YieldTab />}
+
+      {/* Token section */}
+      <TokenSection />
     </div>
   );
 }

@@ -6,9 +6,7 @@ import { waitForTransactionReceipt } from "wagmi/actions";
 import { AavePoolABI } from "@/core/abis";
 import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
 import type { Address } from "viem";
-
-const HYPERLEND_POOL = "0x00A89d7a5A02160f20150EbEA7a2b5E4879A1A8b" as const;
-const HYPEREVM_CHAIN_ID = 999;
+import { HYPERLEND, HYPEREVM_CHAIN_ID } from "@/core/config/hyperevm";
 const RATE_MODE_VARIABLE = 2n;
 
 export function useHyperLendActions(asset: Address, onSuccess?: () => void) {
@@ -17,7 +15,7 @@ export function useHyperLendActions(asset: Address, onSuccess?: () => void) {
 
   const { approve, isApproving } = useTokenApproval({
     token: asset,
-    spender: HYPERLEND_POOL,
+    spender: HYPERLEND.pool,
     amount: undefined,
     owner: address,
   });
@@ -32,7 +30,7 @@ export function useHyperLendActions(asset: Address, onSuccess?: () => void) {
 
   const supply = async (amount: bigint) => {
     const hash = await writeContractAsync({
-      address: HYPERLEND_POOL,
+      address: HYPERLEND.pool,
       abi: AavePoolABI,
       functionName: "supply",
       args: [asset, amount, address!, 0],
@@ -42,7 +40,7 @@ export function useHyperLendActions(asset: Address, onSuccess?: () => void) {
 
   const withdraw = async (amount: bigint) => {
     const hash = await writeContractAsync({
-      address: HYPERLEND_POOL,
+      address: HYPERLEND.pool,
       abi: AavePoolABI,
       functionName: "withdraw",
       args: [asset, amount, address!],
@@ -52,7 +50,7 @@ export function useHyperLendActions(asset: Address, onSuccess?: () => void) {
 
   const borrow = async (amount: bigint) => {
     const hash = await writeContractAsync({
-      address: HYPERLEND_POOL,
+      address: HYPERLEND.pool,
       abi: AavePoolABI,
       functionName: "borrow",
       args: [asset, amount, RATE_MODE_VARIABLE, 0, address!],
@@ -62,7 +60,7 @@ export function useHyperLendActions(asset: Address, onSuccess?: () => void) {
 
   const repay = async (amount: bigint) => {
     const hash = await writeContractAsync({
-      address: HYPERLEND_POOL,
+      address: HYPERLEND.pool,
       abi: AavePoolABI,
       functionName: "repay",
       args: [asset, amount, RATE_MODE_VARIABLE, address!],

@@ -6,9 +6,7 @@ import { useTokenApproval } from "@/shared/hooks/useTokenApproval";
 import { useConnection } from "wagmi";
 import type { Address } from "viem";
 import { DEFAULT_SLIPPAGE_BPS, DEFAULT_DEADLINE_SECONDS } from "../lib/constants";
-
-const HYPERSWAP_ROUTER = "0xda0f518d521e0dE83fAdC8500C2D21b6a6C39bF9" as const;
-const HYPEREVM_CHAIN_ID = 999;
+import { HYPERSWAP, HYPEREVM_CHAIN_ID } from "@/core/config/hyperevm";
 
 const RouterV2ABI = [
   {
@@ -50,7 +48,7 @@ export function useHyperSwap(
 
   // Quote via getAmountsOut
   const { data: quoteData, isLoading: isQuoteLoading } = useReadContract({
-    address: HYPERSWAP_ROUTER,
+    address: HYPERSWAP.router,
     abi: RouterV2ABI,
     functionName: "getAmountsOut",
     args: [amountIn!, path!],
@@ -76,7 +74,7 @@ export function useHyperSwap(
     isApproving: isApprovePending,
   } = useTokenApproval({
     token: tokenIn,
-    spender: HYPERSWAP_ROUTER,
+    spender: HYPERSWAP.router,
     amount: amountIn,
     owner: address,
   });
@@ -96,7 +94,7 @@ export function useHyperSwap(
     );
 
     return swapAsync({
-      address: HYPERSWAP_ROUTER,
+      address: HYPERSWAP.router,
       abi: RouterV2ABI,
       functionName: "swapExactTokensForTokens",
       args: [amountIn, minOut, [tokenIn, tokenOut], address, deadline],

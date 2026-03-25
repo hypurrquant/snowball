@@ -3,8 +3,7 @@
 import { useReadContracts } from "wagmi";
 import { useAccount } from "wagmi";
 import { erc20Abi, type Address } from "viem";
-
-const HYPEREVM_CHAIN_ID = 999;
+import { HYPEREVM_CHAIN_ID } from "@/core/config/hyperevm";
 
 /**
  * Reads a user's supply (hToken) and borrow (debtToken) positions on HyperLend.

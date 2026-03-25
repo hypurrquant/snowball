@@ -44,6 +44,14 @@ export const CCTP_CHAINS: CCTPChain[] = [
     messageTransmitter: "0xc30362313fbba5cf9163f0bb16a0e01f01a896ca" as Address,
     usdc: "0xaf88d065e77c8cc2239327c5edb3a432268e5831" as Address,
   },
+  {
+    chainId: 8453,
+    name: "Base",
+    domain: 6,
+    tokenMessenger: "0x1682Ae6375C4E4A97e4B583BC394c861A46D8962" as Address,
+    messageTransmitter: "0xAD09780d193884d503182aD4F0B364c2B271e5Df" as Address,
+    usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" as Address,
+  },
 ];
 
 export function getCCTPChain(chainId: number): CCTPChain | undefined {
