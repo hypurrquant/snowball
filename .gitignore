@@ -41,3 +41,9 @@ simulation-accounts.json
 data/
 logs/
 
+
+# Serena 프로젝트 캐시 — 도구가 만드는 것이라 커밋하지 않는다
+.serena/
+
+# OMC 세션 상태 — 기기·세션마다 달라야 한다
+.omc/
